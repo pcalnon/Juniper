@@ -1,0 +1,581 @@
+#!/usr/bin/env python
+#####################################################################################################################################################################################################
+# Project:       Juniper
+# Prototype:     Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
+# File Name:     network_visualizer.py
+# Author:        Paul Calnon
+# Version:       1.4.0
+#
+# Date:          2025-10-11
+# Last Modified: 2025-12-03
+#
+# License:       MIT License
+# Copyright:     Copyright (c) 2024-2025 Paul Calnon
+#
+# Description:
+#    This file contains the code to Visualize the current Cascade Correlation Neural Network prototype
+#       including training, state, and architecture with the Juniper prototype Frontend for monitoring and diagnostics.
+#
+#####################################################################################################################################################################################################
+# Notes:
+#
+# Network Visualizer Component
+#
+# Interactive visualization of the Cascade Correlation network topology,
+# showing input, hidden, and output units with weighted connections.
+# Color-coded by layer and connection strength.
+#
+#####################################################################################################################################################################################################
+# References:
+#
+#####################################################################################################################################################################################################
+# TODO :
+#
+#####################################################################################################################################################################################################
+# COMPLETED:
+#
+#####################################################################################################################################################################################################
+from typing import Any, Dict, List, Tuple
+
+import networkx as nx
+import plotly.graph_objects as go
+from dash import dcc, html
+from dash.dependencies import Input, Output
+
+from ..base_component import BaseComponent
+
+# import numpy as np
+
+
+class NetworkVisualizer(BaseComponent):
+    """
+    Network topology visualization component.
+
+    Displays an interactive graph showing:
+    - Input units
+    - Hidden units (added dynamically during training)
+    - Output units
+    - Weighted connections between units
+    - Color-coded by layer and connection strength
+    """
+
+    def __init__(self, config: Dict[str, Any], component_id: str = "network-visualizer"):
+        """
+        Initialize network visualizer component.
+
+        Args:
+            config: Component configuration dictionary
+            component_id: Unique identifier for this component
+        """
+        super().__init__(config, component_id)
+
+        # Configuration
+        self.show_weights = config.get("show_weights", True)
+        self.layout_type = config.get("layout", "hierarchical")  # hierarchical or spring
+
+        # Current network state
+        self.current_topology: Dict[str, Any] = {
+            "input_units": 0,
+            "hidden_units": 0,
+            "output_units": 0,
+            "connections": [],
+        }
+
+        self.logger.info(f"NetworkVisualizer initialized with layout={self.layout_type}")
+
+    def get_layout(self) -> html.Div:
+        """
+        Get Dash layout for network visualizer.
+
+        Returns:
+            Dash Div containing the network visualization
+        """
+        return html.Div(
+            [
+                # Header with controls
+                html.Div(
+                    [
+                        html.H3("Network Topology", style={"display": "inline-block"}),
+                        html.Div(
+                            [
+                                html.Label("Layout:", style={"marginRight": "10px"}),
+                                dcc.Dropdown(
+                                    id=f"{self.component_id}-layout-selector",
+                                    options=[
+                                        {"label": "Hierarchical", "value": "hierarchical"},
+                                        {"label": "Spring", "value": "spring"},
+                                        {"label": "Circular", "value": "circular"},
+                                    ],
+                                    value=self.layout_type,
+                                    style={"width": "150px", "display": "inline-block"},
+                                ),
+                                html.Label("Show Weights:", style={"marginLeft": "20px", "marginRight": "10px"}),
+                                dcc.Checklist(
+                                    id=f"{self.component_id}-show-weights",
+                                    options=[{"label": "", "value": "show"}],
+                                    value=["show"] if self.show_weights else [],
+                                    style={"display": "inline-block"},
+                                ),
+                            ],
+                            style={"display": "inline-block", "float": "right"},
+                        ),
+                    ],
+                    style={"marginBottom": "10px"},
+                ),
+                # Network statistics
+                html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.Strong("Input Units: "),
+                                html.Span(id=f"{self.component_id}-input-count", children="0"),
+                            ],
+                            style={"display": "inline-block", "marginRight": "20px"},
+                        ),
+                        html.Div(
+                            [
+                                html.Strong("Hidden Units: "),
+                                html.Span(id=f"{self.component_id}-hidden-count", children="0"),
+                            ],
+                            style={"display": "inline-block", "marginRight": "20px"},
+                        ),
+                        html.Div(
+                            [
+                                html.Strong("Output Units: "),
+                                html.Span(id=f"{self.component_id}-output-count", children="0"),
+                            ],
+                            style={"display": "inline-block", "marginRight": "20px"},
+                        ),
+                        html.Div(
+                            [
+                                html.Strong("Total Connections: "),
+                                html.Span(id=f"{self.component_id}-connection-count", children="0"),
+                            ],
+                            style={"display": "inline-block"},
+                        ),
+                    ],
+                    style={
+                        "marginBottom": "15px",
+                        "padding": "10px",
+                        "backgroundColor": "#f8f9fa",
+                        "borderRadius": "3px",
+                    },
+                ),
+                # Network graph
+                dcc.Graph(
+                    id=f"{self.component_id}-graph",
+                    config={"displayModeBar": True, "displaylogo": False},
+                    style={"height": "600px"},
+                ),
+                # Topology data store
+                dcc.Store(id=f"{self.component_id}-topology-store", data=self.current_topology),
+            ],
+            style={"padding": "20px"},
+        )
+
+    def register_callbacks(self, app):
+        """
+        Register Dash callbacks for network visualizer.
+
+        Args:
+            app: Dash application instance
+        """
+
+        @app.callback(
+            [
+                Output(f"{self.component_id}-graph", "figure"),
+                Output(f"{self.component_id}-input-count", "children"),
+                Output(f"{self.component_id}-hidden-count", "children"),
+                Output(f"{self.component_id}-output-count", "children"),
+                Output(f"{self.component_id}-connection-count", "children"),
+            ],
+            [
+                Input(f"{self.component_id}-topology-store", "data"),
+                Input(f"{self.component_id}-layout-selector", "value"),
+                Input(f"{self.component_id}-show-weights", "value"),
+                Input("metrics-panel-metrics-store", "data"),
+                Input("theme-state", "data"),
+            ],
+        )
+        def update_network_graph(
+            topology_data: Dict[str, Any],
+            layout_type: str,
+            show_weights: List[str],
+            metrics_data: List[Dict[str, Any]],
+            theme: str,
+        ):
+            """
+            Update network visualization based on topology data.
+
+            Args:
+                topology_data: Network topology dictionary
+                layout_type: Layout algorithm to use
+                show_weights: List containing 'show' if weights should be displayed
+                metrics_data: Historical metrics data for detecting new units
+
+            Returns:
+                Tuple of updated components
+            """
+            if not topology_data or topology_data.get("input_units", 0) == 0:
+                # Return empty state
+                empty_fig = self._create_empty_graph(theme)
+                return empty_fig, "0", "0", "0", "0"
+
+            # Detect newly added hidden unit
+            newly_added_unit = None
+            if metrics_data and len(metrics_data) >= 2:
+                prev_hidden = metrics_data[-2].get("network_topology", {}).get("hidden_units", 0)
+                curr_hidden = metrics_data[-1].get("network_topology", {}).get("hidden_units", 0)
+                if curr_hidden > prev_hidden:
+                    newly_added_unit = curr_hidden - 1  # Index of new unit
+
+            # Create network graph
+            show_weight_labels = bool(show_weights) and ("show" in show_weights)
+            fig = self._create_network_graph(topology_data, layout_type, show_weight_labels, newly_added_unit, theme)
+
+            # Extract counts
+            input_count = str(topology_data.get("input_units", 0))
+            hidden_count = str(topology_data.get("hidden_units", 0))
+            output_count = str(topology_data.get("output_units", 0))
+            connection_count = str(len(topology_data.get("connections", [])))
+
+            return fig, input_count, hidden_count, output_count, connection_count
+
+        self.logger.debug(f"Callbacks registered for {self.component_id}")
+
+    def _create_network_graph(
+        self,
+        topology: Dict[str, Any],
+        layout_type: str,
+        show_weights: bool,
+        newly_added_unit: int = None,
+        theme: str = "light",
+    ) -> go.Figure:
+        """
+        Create network graph visualization.
+
+        Args:
+            topology: Network topology dictionary
+            layout_type: Layout algorithm ('hierarchical', 'spring', 'circular')
+            show_weights: Whether to display weight values on edges
+            newly_added_unit: Index of newly added hidden unit (for highlighting)
+            theme: Current theme ("light" or "dark")
+
+        Returns:
+            Plotly figure object
+        """
+        # Create NetworkX graph
+        G = nx.DiGraph()
+
+        # Add nodes
+        n_input = topology.get("input_units", 0)
+        n_hidden = topology.get("hidden_units", 0)
+        n_output = topology.get("output_units", 0)
+
+        # Add input nodes
+        for i in range(n_input):
+            G.add_node(f"input_{i}", layer="input", index=i)
+
+        # Add hidden nodes
+        for i in range(n_hidden):
+            G.add_node(f"hidden_{i}", layer="hidden", index=i)
+
+        # Add output nodes
+        for i in range(n_output):
+            G.add_node(f"output_{i}", layer="output", index=i)
+
+        # Add edges with weights
+        connections = topology.get("connections", [])
+        for conn in connections:
+            from_node = conn.get("from")
+            to_node = conn.get("to")
+            weight = conn.get("weight", 0.0)
+
+            if from_node and to_node:
+                G.add_edge(from_node, to_node, weight=weight)
+
+        # Calculate layout positions
+        pos = self._calculate_layout(G, layout_type, n_input, n_hidden, n_output)
+
+        # Create edge traces
+        edge_traces = self._create_edge_traces(G, pos, show_weights)
+
+        # Create node traces
+        node_traces = self._create_node_traces(G, pos)
+
+        # Combine traces
+        fig = go.Figure(data=edge_traces + node_traces)
+
+        # Highlight newly added hidden unit
+        if newly_added_unit is not None and newly_added_unit < n_hidden:
+            hidden_node = f"hidden_{newly_added_unit}"
+            if hidden_node in pos:
+                x, y = pos[hidden_node]
+                # Add pulse effect for newly added hidden unit
+                fig.add_trace(
+                    go.Scatter(
+                        x=[x],
+                        y=[y],
+                        mode="markers",
+                        marker={
+                            "size": 28,  # Larger than normal
+                            "color": "#17a2b8",  # Cyan highlight
+                            "line": {"width": 4, "color": "#fff"},
+                            "opacity": 0.9,
+                        },
+                        name="New Unit",
+                        showlegend=False,
+                        hoverinfo="skip",
+                    )
+                )
+
+        # Update layout
+        is_dark = theme == "dark"
+        fig.update_layout(
+            title="Cascade Correlation Network Architecture",
+            showlegend=True,
+            hovermode="closest",
+            margin={"l": 20, "r": 20, "t": 40, "b": 20},
+            xaxis={"showgrid": False, "zeroline": False, "showticklabels": False},
+            yaxis={"showgrid": False, "zeroline": False, "showticklabels": False},
+            template="plotly_dark" if is_dark else "plotly",
+            plot_bgcolor="#242424" if is_dark else "#f8f9fa",
+            paper_bgcolor="#242424" if is_dark else "#ffffff",
+            font={"color": "#e9ecef" if is_dark else "#212529"},
+            legend={"x": 0.7, "y": 0.95},
+            transition={"duration": 500, "easing": "cubic-in-out"},
+        )
+
+        return fig
+
+    def _calculate_layout(
+        self, G: nx.DiGraph, layout_type: str, n_input: int, n_hidden: int, n_output: int
+    ) -> Dict[str, Tuple[float, float]]:
+        """
+        Calculate node positions based on layout algorithm.
+
+        Args:
+            G: NetworkX graph
+            layout_type: Layout algorithm to use
+            n_input: Number of input units
+            n_hidden: Number of hidden units
+            n_output: Number of output units
+
+        Returns:
+            Dictionary mapping node IDs to (x, y) positions
+        """
+        if layout_type == "circular":
+            pos = nx.circular_layout(G, scale=10)
+
+        elif layout_type == "hierarchical":
+            # Hierarchical layout with layers
+            pos = {}
+
+            # Input layer (left)
+            for i in range(n_input):
+                y = (i - n_input / 2) * 1.5
+                pos[f"input_{i}"] = (0, y)
+
+            # Hidden layer (middle)
+            for i in range(n_hidden):
+                y = (i - n_hidden / 2) * 1.5
+                pos[f"hidden_{i}"] = (5, y)
+
+            # Output layer (right)
+            for i in range(n_output):
+                y = (i - n_output / 2) * 1.5
+                pos[f"output_{i}"] = (10, y)
+
+        elif layout_type == "spring":
+            # Spring layout with constraints
+            pos = nx.spring_layout(G, k=2, iterations=50, seed=42)
+            # Scale positions
+            for node in pos:
+                pos[node] = (pos[node][0] * 10, pos[node][1] * 10)
+
+        else:
+            # Default to hierarchical
+            pos = self._calculate_layout(G, "hierarchical", n_input, n_hidden, n_output)
+
+        return pos
+
+    def _create_edge_traces(
+        self, G: nx.DiGraph, pos: Dict[str, Tuple[float, float]], show_weights: bool
+    ) -> List[go.Scatter]:
+        """
+        Create edge traces for the graph.
+
+        Args:
+            G: NetworkX graph
+            pos: Node positions
+            show_weights: Whether to show weight labels
+
+        Returns:
+            List of Scatter traces for edges
+        """
+        edge_traces = []
+
+        # Group edges by weight magnitude for coloring
+        for edge in G.edges(data=True):
+            from_node, to_node, data = edge
+            weight = data.get("weight", 0.0)
+
+            x0, y0 = pos[from_node]
+            x1, y1 = pos[to_node]
+
+            # Color based on weight (red for negative, blue for positive)
+            color = "#3498db" if weight >= 0 else "#e74c3c"
+
+            # Line width based on weight magnitude
+            width = min(5, max(0.5, abs(weight) * 3))
+
+            edge_trace = go.Scatter(
+                x=[x0, x1, None],
+                y=[y0, y1, None],
+                mode="lines",
+                line={"width": width, "color": color},
+                hoverinfo="text",
+                hovertext=f"Weight: {weight:.3f}",
+                showlegend=False,
+            )
+            edge_traces.append(edge_trace)
+
+            # Add weight label if requested
+            if show_weights:
+                mid_x = (x0 + x1) / 2
+                mid_y = (y0 + y1) / 2
+
+                label_trace = go.Scatter(
+                    x=[mid_x],
+                    y=[mid_y],
+                    mode="text",
+                    text=[f"{weight:.2f}"],
+                    textfont={"size": 8, "color": "#7f8c8d"},
+                    hoverinfo="skip",
+                    showlegend=False,
+                )
+                edge_traces.append(label_trace)
+
+        return edge_traces
+
+    def _create_node_traces(self, G: nx.DiGraph, pos: Dict[str, Tuple[float, float]]) -> List[go.Scatter]:
+        """
+        Create node traces for the graph.
+
+        Args:
+            G: NetworkX graph
+            pos: Node positions
+
+        Returns:
+            List of Scatter traces for nodes
+        """
+        # Separate nodes by layer
+        input_nodes = [n for n in G.nodes() if G.nodes[n].get("layer") == "input"]
+        hidden_nodes = [n for n in G.nodes() if G.nodes[n].get("layer") == "hidden"]
+        output_nodes = [n for n in G.nodes() if G.nodes[n].get("layer") == "output"]
+
+        node_traces = []
+
+        # Input nodes (green)
+        if input_nodes:
+            node_trace = self._create_node_trace(input_nodes, pos, "#2ecc71", "Input Units")
+            node_traces.append(node_trace)
+
+        # Hidden nodes (blue)
+        if hidden_nodes:
+            node_trace = self._create_node_trace(hidden_nodes, pos, "#3498db", "Hidden Units")
+            node_traces.append(node_trace)
+
+        # Output nodes (red)
+        if output_nodes:
+            node_trace = self._create_node_trace(output_nodes, pos, "#e74c3c", "Output Units")
+            node_traces.append(node_trace)
+
+        return node_traces
+
+    def _create_node_trace(
+        self, nodes: List[str], pos: Dict[str, Tuple[float, float]], color: str, name: str
+    ) -> go.Scatter:
+        """
+        Create a scatter trace for a group of nodes.
+
+        Args:
+            nodes: List of node IDs
+            pos: Node positions
+            color: Node color
+            name: Trace name for legend
+
+        Returns:
+            Scatter trace object
+        """
+        x_coords = [pos[node][0] for node in nodes]
+        y_coords = [pos[node][1] for node in nodes]
+        labels = [node.replace("_", " ").title() for node in nodes]
+
+        return go.Scatter(
+            x=x_coords,
+            y=y_coords,
+            mode="markers+text",
+            marker={"size": 20, "color": color, "line": {"width": 2, "color": "white"}},
+            text=labels,
+            textposition="middle center",
+            textfont={"size": 10, "color": "white", "family": "Arial Black"},
+            hoverinfo="text",
+            hovertext=labels,
+            name=name,
+        )
+
+    def _create_empty_graph(self, theme: str = "light") -> go.Figure:
+        """
+        Create empty placeholder graph.
+
+        Args:
+            theme: Current theme ("light" or "dark")
+
+        Returns:
+            Empty Plotly figure
+        """
+        fig = go.Figure()
+
+        is_dark = theme == "dark"
+        text_color = "#adb5bd" if is_dark else "#6c757d"
+
+        fig.add_annotation(
+            text="No network topology available",
+            xref="paper",
+            yref="paper",
+            x=0.5,
+            y=0.5,
+            showarrow=False,
+            font={"size": 16, "color": text_color},
+        )
+
+        fig.update_layout(
+            xaxis={"showgrid": False, "showticklabels": False, "zeroline": False},
+            yaxis={"showgrid": False, "showticklabels": False, "zeroline": False},
+            template="plotly_dark" if is_dark else "plotly",
+            plot_bgcolor="#242424" if is_dark else "#f8f9fa",
+            paper_bgcolor="#242424" if is_dark else "#ffffff",
+            margin={"l": 20, "r": 20, "t": 20, "b": 20},
+        )
+
+        return fig
+
+    def update_topology(self, topology: Dict[str, Any]):
+        """
+        Update the network topology.
+
+        Args:
+            topology: New topology dictionary
+        """
+        self.current_topology = topology
+        self.logger.debug(f"Topology updated: {topology.get('hidden_units', 0)} hidden units")
+
+    def get_topology(self) -> Dict[str, Any]:
+        """
+        Get current network topology.
+
+        Returns:
+            Topology dictionary
+        """
+        return self.current_topology.copy()
