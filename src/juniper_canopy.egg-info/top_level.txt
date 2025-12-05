@@ -1,0 +1,13 @@
+__init__
+backend
+communication
+config_manager
+demo_mode
+frontend
+htmlcov
+logger
+logs
+main
+patch_cascor_integration
+reports
+tests
