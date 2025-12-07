@@ -5,6 +5,30 @@ All notable changes to the juniper_canopy prototype will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2025-12-07
+
+### Fixed [0.11.0]
+
+- **TrainingState.update_state() Name Mangling Bug** (2025-12-07)
+  - Fixed critical bug where `update_state()` silently ignored all field updates
+  - Root cause: Python name mangling (`__status` → `_TrainingState__status`) caused `if element in self.__dict__` to always fail
+  - Added `_STATE_FIELDS` class constant with all 19 valid field names
+  - Rewrote `update_state()` to map public kwargs keys to mangled attribute names
+  - Maintains thread safety and atomic update behavior
+  - All 15 previously failing tests now pass
+
+- **YAML Linting Configuration** (2025-12-07)
+  - Created `.yamllint.yaml` with relaxed rules (120-char lines, disabled document-start)
+  - Fixed `conf/logging_config.yaml`: changed `propagate: True` → `propagate: true` (YAML boolean)
+
+### Changed [0.11.0]
+
+- **Pre-commit Hooks** (2025-12-07)
+  - All pre-commit hooks now pass including yamllint
+  - Test suite: 1213 passed, 37 skipped
+
+---
+
 ## [0.10.0] - 2025-12-06
 
 ### Added [0.10.0]
