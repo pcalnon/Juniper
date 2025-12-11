@@ -330,9 +330,13 @@ dependencies:
   - pydantic-core=2.41.5=py314h2e6c369_1
   - pygments=2.19.2=pyhd8ed1ab_0
   - pysocks=1.7.1=pyha55dd90_7
+
   - pytest=9.0.1=pyhcf101f3_0
   - pytest-asyncio=1.3.0=pyhcf101f3_0
   - pytest-cov=7.0.0=pyhcf101f3_1
+  - pytest-metadata=3.1.1=pyhd8ed1ab_1
+  - pytest-html=4.1.1=pyhd8ed1ab_1
+
   - python-dotenv=1.2.1=pyhcf101f3_0
   - python-multipart=0.0.20=pyhff2d567_0
   - python_abi=3.14=8_cp314
