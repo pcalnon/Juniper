@@ -67,6 +67,7 @@ repos:
       - id: flake8
         args:
           - --count
+          - --filename=**/*.py
           - --select=E9,F63,F7,F82
           - --show-source
           - --statistics
@@ -78,6 +79,8 @@ repos:
     hooks:
       - id: flake8
         args:
+          - --count
+          - --filename=**/*.py
           - --max-line-length=120
           - --extend-ignore=E203,E266,E501,W503
           - --max-complexity=15
@@ -97,6 +100,7 @@ repos:
       - id: flake8
         args:
           - --count
+          - --filename=**/*.py
           - --select=B,C,E,F,W,T4,B9
           - --extend-ignore=E203,E266,E501,W503
           - --max-line-length=120
