@@ -150,20 +150,14 @@ class TestCandidatePoolHistoryBuilding:
         metrics_panel.register_callbacks(app)
 
         result = []
-        assert result == []
+        assert not result
 
     def test_update_candidate_history_with_none_history_returns_empty(self, metrics_panel):
         """None history should be treated as empty list."""
-        state = {"candidate_pool_status": "Inactive"}
-        history = None
-        if not state:
-            result = history or []
-        else:
+        if state := {"candidate_pool_status": "Inactive"}:
             pool_status = state.get("candidate_pool_status", "Inactive")
-            if pool_status == "Inactive":
-                result = history or []
-            else:
-                result = history or []
+        history = None
+        result = history or []
         assert result == []
 
     def test_inactive_pool_status_returns_unchanged_history(self, metrics_panel):
@@ -279,8 +273,7 @@ class TestRenderCandidateHistory:
             result = []
         else:
             history_items = []
-            for pool in history[1:]:
-                history_items.append(pool)
+            history_items.extend(iter(history[1:]))
             result = history_items
 
         assert len(result) == 1
@@ -298,8 +291,7 @@ class TestRenderCandidateHistory:
             result = []
         else:
             history_items = []
-            for pool in history[1:]:
-                history_items.append(pool)
+            history_items.extend(iter(history[1:]))
             result = history_items
 
         assert len(result) == 2
@@ -327,12 +319,11 @@ class TestCaptureViewState:
         trigger = "test-panel-loss-plot"
 
         new_state = current_state.copy() if current_state else {}
-        if "loss-plot" in trigger and loss_relayout:
-            if "xaxis.range[0]" in loss_relayout:
-                new_state["loss_xaxis_range"] = [
-                    loss_relayout["xaxis.range[0]"],
-                    loss_relayout["xaxis.range[1]"],
-                ]
+        if "loss-plot" in trigger and loss_relayout and "xaxis.range[0]" in loss_relayout:
+            new_state["loss_xaxis_range"] = [
+                loss_relayout["xaxis.range[0]"],
+                loss_relayout["xaxis.range[1]"],
+            ]
 
         assert new_state["loss_xaxis_range"] == [10, 50]
 
@@ -343,12 +334,11 @@ class TestCaptureViewState:
         trigger = "test-panel-loss-plot"
 
         new_state = current_state.copy() if current_state else {}
-        if "loss-plot" in trigger and loss_relayout:
-            if "yaxis.range[0]" in loss_relayout:
-                new_state["loss_yaxis_range"] = [
-                    loss_relayout["yaxis.range[0]"],
-                    loss_relayout["yaxis.range[1]"],
-                ]
+        if "loss-plot" in trigger and loss_relayout and "yaxis.range[0]" in loss_relayout:
+            new_state["loss_yaxis_range"] = [
+                loss_relayout["yaxis.range[0]"],
+                loss_relayout["yaxis.range[1]"],
+            ]
 
         assert new_state["loss_yaxis_range"] == [0.1, 0.9]
 
@@ -375,12 +365,11 @@ class TestCaptureViewState:
         trigger = "test-panel-accuracy-plot"
 
         new_state = current_state.copy() if current_state else {}
-        if "accuracy-plot" in trigger and accuracy_relayout:
-            if "xaxis.range[0]" in accuracy_relayout:
-                new_state["accuracy_xaxis_range"] = [
-                    accuracy_relayout["xaxis.range[0]"],
-                    accuracy_relayout["xaxis.range[1]"],
-                ]
+        if "accuracy-plot" in trigger and accuracy_relayout and "xaxis.range[0]" in accuracy_relayout:
+            new_state["accuracy_xaxis_range"] = [
+                accuracy_relayout["xaxis.range[0]"],
+                accuracy_relayout["xaxis.range[1]"],
+            ]
 
         assert new_state["accuracy_xaxis_range"] == [5, 25]
 
@@ -391,12 +380,11 @@ class TestCaptureViewState:
         trigger = "test-panel-accuracy-plot"
 
         new_state = current_state.copy() if current_state else {}
-        if "accuracy-plot" in trigger and accuracy_relayout:
-            if "yaxis.range[0]" in accuracy_relayout:
-                new_state["accuracy_yaxis_range"] = [
-                    accuracy_relayout["yaxis.range[0]"],
-                    accuracy_relayout["yaxis.range[1]"],
-                ]
+        if "accuracy-plot" in trigger and accuracy_relayout and "yaxis.range[0]" in accuracy_relayout:
+            new_state["accuracy_yaxis_range"] = [
+                accuracy_relayout["yaxis.range[0]"],
+                accuracy_relayout["yaxis.range[1]"],
+            ]
 
         assert new_state["accuracy_yaxis_range"] == [0.5, 1.0]
 
@@ -597,12 +585,12 @@ class TestHandleReplayControls:
     def test_step_forward_increments_index(self, metrics_panel):
         """Step forward should increment current_index."""
         current_state = {"mode": "stopped", "speed": 1.0, "current_index": 5}
-        max_index = 10
         trigger = "test-panel-replay-step-forward"
 
         state = current_state.copy()
         if "step-forward" in trigger:
             state["mode"] = "paused"
+            max_index = 10
             state["current_index"] = min(max_index, state["current_index"] + 1)
 
         assert state["current_index"] == 6
@@ -611,11 +599,11 @@ class TestHandleReplayControls:
     def test_step_forward_stops_at_max(self, metrics_panel):
         """Step forward should not exceed max_index."""
         current_state = {"mode": "stopped", "speed": 1.0, "current_index": 10}
-        max_index = 10
         trigger = "test-panel-replay-step-forward"
 
         state = current_state.copy()
         if "step-forward" in trigger:
+            max_index = 10
             state["current_index"] = min(max_index, state["current_index"] + 1)
 
         assert state["current_index"] == 10
@@ -682,13 +670,13 @@ class TestHandleReplayControls:
 
     def test_slider_updates_current_index(self, metrics_panel):
         """Slider should update current_index based on percentage."""
-        max_index = 100
-        slider_value = 50
         current_state = {"mode": "playing", "speed": 1.0, "current_index": 10}
         trigger = "test-panel-replay-slider"
 
         state = current_state.copy()
         if "replay-slider" in trigger:
+            max_index = 100
+            slider_value = 50
             state["current_index"] = int((slider_value / 100) * max_index) if max_index > 0 else 0
             state["mode"] = "paused"
 
@@ -710,13 +698,13 @@ class TestHandleReplayControls:
         modes = ["stopped", "paused"]
         for mode in modes:
             disabled = mode != "playing"
-            assert disabled is True
+            assert disabled
 
-    def test_enabled_when_playing(self, metrics_panel):
-        """Interval should be enabled when mode is playing."""
-        mode = "playing"
-        disabled = mode != "playing"
-        assert disabled is False
+    # def test_enabled_when_playing(self, metrics_panel):
+    #     """Interval should be enabled when mode is playing."""
+    #     mode = "playing"
+    #     disabled = mode != "playing"
+    #     assert disabled is False
 
 
 # =============================================================================

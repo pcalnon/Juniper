@@ -74,7 +74,7 @@ class TestBaseComponentLogger:
         """Test logger is created with correct naming pattern."""
         component = ConcreteComponent(config={}, component_id="test-logger")
 
-        expected_name = f"frontend.base_component.ConcreteComponent"
+        expected_name = "frontend.base_component.ConcreteComponent"
         assert component.logger.name == expected_name
 
     def test_logger_is_logging_instance(self):

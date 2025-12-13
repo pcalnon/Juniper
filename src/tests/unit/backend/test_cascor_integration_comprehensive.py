@@ -397,7 +397,7 @@ class TestMonitoringLoop:
             with patch.object(integration, "_broadcast_message", side_effect=mock_broadcast):
                 integration._monitoring_loop(0.01)
 
-            assert len(broadcasts) >= 1
+            assert broadcasts
             assert broadcasts[0]["type"] == "metrics_update"
 
     @patch("backend.cascor_integration.Path.exists")
@@ -466,7 +466,7 @@ class TestMonitoringLoop:
 
             integration.stop_monitoring()
 
-            assert integration.monitoring_active is False
+            assert not integration.monitoring_active
 
 
 class TestTopologyExtractionWithHiddenUnits:

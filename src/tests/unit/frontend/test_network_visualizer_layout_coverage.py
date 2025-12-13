@@ -14,6 +14,8 @@
 #####################################################################
 """Unit tests for NetworkVisualizer layout calculation methods."""
 
+
+import itertools
 import sys
 from pathlib import Path
 
@@ -48,18 +50,15 @@ def build_test_graph(n_input: int, n_hidden: int, n_output: int) -> nx.DiGraph:
 def add_full_connections(G: nx.DiGraph, n_input: int, n_hidden: int, n_output: int):
     """Add edges between all layers with varied weights."""
     if n_hidden > 0:
-        for i in range(n_input):
-            for h in range(n_hidden):
-                weight = 0.5 if (i + h) % 2 == 0 else -0.3
-                G.add_edge(f"input_{i}", f"hidden_{h}", weight=weight)
-        for h in range(n_hidden):
-            for o in range(n_output):
-                weight = 0.8 if h % 2 == 0 else -0.6
-                G.add_edge(f"hidden_{h}", f"output_{o}", weight=weight)
+        for i, h in itertools.product(range(n_input), range(n_hidden)):
+            weight = 0.5 if (i + h) % 2 == 0 else -0.3
+            G.add_edge(f"input_{i}", f"hidden_{h}", weight=weight)
+        for h, o in itertools.product(range(n_hidden), range(n_output)):
+            weight = 0.8 if h % 2 == 0 else -0.6
+            G.add_edge(f"hidden_{h}", f"output_{o}", weight=weight)
     else:
-        for i in range(n_input):
-            for o in range(n_output):
-                G.add_edge(f"input_{i}", f"output_{o}", weight=0.5)
+        for i, o in itertools.product(range(n_input), range(n_output)):
+            G.add_edge(f"input_{i}", f"output_{o}", weight=0.5)
 
 
 class TestCalculateLayoutBranches:
@@ -244,7 +243,7 @@ class TestLayoutTypeStaggered:
         G = build_test_graph(2, 4, 1)
         pos = visualizer._layout_type_staggered(G, n_input=2, n_hidden=4, n_output=4)
         x_positions = [pos[f"hidden_{i}"][0] for i in range(4)]
-        assert not all(x == x_positions[0] for x in x_positions)
+        assert any(x != x_positions[0] for x in x_positions)
         for i in range(4):
             assert 0 < x_positions[i] < 10
 
@@ -327,7 +326,7 @@ class TestCreateEdgeTraces:
         pos = {"input_0": (0, 0), "output_0": (10, 0)}
         traces = visualizer._create_edge_traces(G, pos, show_weights=False)
         label_traces = [t for t in traces if t.mode == "text"]
-        assert len(label_traces) == 0
+        assert not label_traces
 
     def test_edge_traces_positive_weight_color(self, visualizer):
         """Positive weight edges should be blue (#3498db)."""

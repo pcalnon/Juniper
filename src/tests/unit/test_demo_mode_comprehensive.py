@@ -247,9 +247,7 @@ class TestDemoModeFSMFailures:
         def selective_handle(cmd):
             from backend.training_state_machine import Command
 
-            if cmd == Command.RESET:
-                return True
-            return False
+            return cmd == Command.RESET
 
         with patch.object(demo.state_machine, "handle_command", side_effect=selective_handle):
             result = demo.start(reset=True)

@@ -10,7 +10,7 @@ All tests were failing to collect due to a `NameError` in `network_visualizer.py
 
 ### Error Message
 
-```
+```bash
 NameError: name 'DEFAULT_SCALE' is not defined
 ```
 
@@ -82,13 +82,13 @@ This type of error can be caught by:
 
 ---
 
-# Test Suite Expansion - 2025-12-13
+## Test Suite Expansion - 2025-12-13
 
-## Summary
+### Summary
 
 Following the critical bug fix, the test suite was significantly expanded to reach 90% coverage.
 
-### Coverage Improvement
+#### Coverage Improvement
 
 | Metric | Before | After | Change |
 |--------|--------|-------|--------|
@@ -96,7 +96,7 @@ Following the critical bug fix, the test suite was significantly expanded to rea
 | Total Tests | 1213 | 1666 | +453 |
 | Tests Passing | 1213 | 1666 | +453 |
 
-### New Test Files Created
+#### New Test Files Created
 
 | Test File | Tests | Target Component | Coverage Impact |
 |-----------|-------|------------------|-----------------|
@@ -111,7 +111,7 @@ Following the critical bug fix, the test suite was significantly expanded to rea
 | `test_cascor_integration_comprehensive.py` | 49 | `cascor_integration.py` | 76% → 95% |
 | `test_base_component_coverage.py` | 9 | `base_component.py` | 81% → 92% |
 
-### Component Coverage Summary
+#### Component Coverage Summary
 
 | Component | Before | After | Status |
 |-----------|--------|-------|--------|
@@ -126,14 +126,15 @@ Following the critical bug fix, the test suite was significantly expanded to rea
 | `metrics_panel.py` | 57% | 67% | ⚠️ (Dash integration) |
 | `network_visualizer.py` | 59% | 71% | ⚠️ (Dash integration) |
 
-### Notes
+#### Notes
 
 The Dash UI components (dashboard_manager, metrics_panel, network_visualizer) remain at 67-71% because:
+
 1. Dash callbacks require a running Dash application context
 2. Integration tests would be needed for full coverage
 3. The helper methods and logic are now well-tested
 
-### Verification
+#### Verification, Test Suite Expansion
 
 ```bash
 cd src

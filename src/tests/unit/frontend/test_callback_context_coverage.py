@@ -14,7 +14,7 @@
 """Comprehensive coverage tests for CallbackContextAdapter (target: ~100%)."""
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
@@ -127,12 +127,9 @@ class TestProductionModeTriggererId:
         """If accessing callback_context raises exception, return None."""
         adapter = CallbackContextAdapter()
         adapter.clear_test_trigger()
-        mock_dash = MagicMock()
-        mock_dash.callback_context = MagicMock()
-        type(mock_dash.callback_context).triggered_id = property(
-            lambda self: (_ for _ in ()).throw(RuntimeError("No callback context"))
-        )
-        with patch.dict("sys.modules", {"dash": mock_dash}):
+        # Patch dash.callback_context.triggered_id to raise an exception
+        with patch("dash.callback_context") as mock_ctx:
+            type(mock_ctx).triggered_id = PropertyMock(side_effect=RuntimeError("No callback context"))
             result = adapter.get_triggered_id()
         assert result is None
 
@@ -166,12 +163,9 @@ class TestGetTriggeredPropIds:
         """If dash raises exception, should return empty dict."""
         adapter = CallbackContextAdapter()
         adapter.clear_test_trigger()
-        mock_dash = MagicMock()
-        mock_dash.callback_context = MagicMock()
-        type(mock_dash.callback_context).triggered_prop_ids = property(
-            lambda self: (_ for _ in ()).throw(RuntimeError("No context"))
-        )
-        with patch.dict("sys.modules", {"dash": mock_dash}):
+        # Patch dash.callback_context.triggered_prop_ids to raise an exception
+        with patch("dash.callback_context") as mock_ctx:
+            type(mock_ctx).triggered_prop_ids = PropertyMock(side_effect=RuntimeError("No context"))
             result = adapter.get_triggered_prop_ids()
         assert result == {}
 
@@ -198,12 +192,9 @@ class TestGetInputsList:
         """If dash raises exception, should return empty list."""
         adapter = CallbackContextAdapter()
         adapter.clear_test_trigger()
-        mock_dash = MagicMock()
-        mock_dash.callback_context = MagicMock()
-        type(mock_dash.callback_context).inputs_list = property(
-            lambda self: (_ for _ in ()).throw(RuntimeError("No context"))
-        )
-        with patch.dict("sys.modules", {"dash": mock_dash}):
+        # Patch dash.callback_context.inputs_list to raise an exception
+        with patch("dash.callback_context") as mock_ctx:
+            type(mock_ctx).inputs_list = PropertyMock(side_effect=RuntimeError("No context"))
             result = adapter.get_inputs_list()
         assert result == []
 
