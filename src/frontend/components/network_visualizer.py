@@ -44,6 +44,8 @@ import plotly.graph_objects as go
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
 
+from constants import DashboardConstants
+
 from ..base_component import BaseComponent
 
 # import numpy as np
@@ -567,7 +569,13 @@ class NetworkVisualizer(BaseComponent):
         return fig
 
     def _calculate_layout(
-        self, G: nx.DiGraph, layout_type: str, n_input: int, n_hidden: int, n_output: int
+        self,
+        G: nx.DiGraph,
+        layout_type: str,
+        n_input: int,
+        n_hidden: int,
+        n_output: int,
+        scale: float = DEFAULT_SCALE,
     ) -> Dict[str, Tuple[float, float]]:
         """
         Calculate node positions based on layout algorithm.
@@ -583,101 +591,105 @@ class NetworkVisualizer(BaseComponent):
             Dictionary mapping node IDs to (x, y) positions
         """
         if layout_type == "circular":
-            pos = nx.circular_layout(G, scale=10)
-
-        elif layout_type == "hierarchical":
-            # Hierarchical layout with layers
-            pos = {}
-
-            # Input layer (left)
-            for i in range(n_input):
-                y = (i - n_input / 2) * 1.5
-                pos[f"input_{i}"] = (0, y)
-
-            # Hidden layer (middle) - staggered layout for better edge visibility
-            if n_hidden > 0:
-                # Base x position (midpoint between input and output)
-                base_x = 5.0
-                # Stagger offset (horizontal spread)
-                stagger_offset = 1.2
-
-                # Calculate positions with alternating offsets
-                hidden_x_positions = []
-                for i in range(n_hidden):
-                    # Alternate left/right: even indices go right, odd go left
-                    offset = stagger_offset / 2 if i % 2 == 0 else -stagger_offset / 2
-                    hidden_x_positions.append(base_x + offset)
-
-                # If more than 2 nodes, use a more spread-out stagger pattern
-                if n_hidden > 2:
-                    # Distribute nodes across a wider horizontal range
-                    spread = min(3.0, n_hidden * 0.4)
-                    for i in range(n_hidden):
-                        # Create a wave pattern: first node at center, then alternating outward
-                        if i == 0:
-                            hidden_x_positions[i] = base_x
-                        else:
-                            # Alternate left and right with increasing offset
-                            direction = 1 if i % 2 == 1 else -1
-                            offset_level = (i + 1) // 2
-                            hidden_x_positions[i] = base_x + direction * (
-                                offset_level * spread / max(1, (n_hidden // 2))
-                            )
-
-                # Apply positions
-                for i in range(n_hidden):
-                    y = (i - n_hidden / 2) * 1.5
-                    pos[f"hidden_{i}"] = (hidden_x_positions[i], y)
-
-            # Output layer (right)
-            for i in range(n_output):
-                y = (i - n_output / 2) * 1.5
-                pos[f"output_{i}"] = (10, y)
-
+            return self._layout_type_circular(G=G, scale=scale)
+        elif layout_type == "hierarchical":  # Hierarchical layout with layers
+            return self._layout_type_hierarchical(G=G, n_input=n_input, n_hidden=n_hidden, n_output=n_output)
+        elif layout_type == "spring":  # Spring layout with constraints
+            return self._layout_type_sprint(
+                G=G, k=2, iterations=50, seed=42
+            )  # TODO: Convert these magic numbers into constants
         elif layout_type == "staggered":
-            # Staggered hierarchical layout (same as hierarchical but more explicit)
-            pos = {}
+            return self._layout_type_staggered(G=G, n_input=n_input, n_hidden=n_hidden, n_output=n_output)
+        else:  # Default to hierarchical
+            return self._calculate_layout(
+                G=G, layout_type="hierarchical", n_input=n_input, n_hidden=n_hidden, n_output=n_output
+            )
 
-            # Input layer (left)
-            for i in range(n_input):
-                y = (i - n_input / 2) * 1.5
-                pos[f"input_{i}"] = (0, y)
+    def _layout_type_circular(self, G: nx.DiGraph, scale: float = None):
+        return nx.circular_layout(G, scale=scale)
 
-            # Hidden layer (middle) - staggered layout
-            if n_hidden > 0:
-                base_x = 5.0
-                spread = min(3.0, max(1.5, n_hidden * 0.5))
-
-                for i in range(n_hidden):
-                    y = (i - n_hidden / 2) * 1.5
-                    # Zigzag pattern
-                    if n_hidden == 1:
-                        x = base_x
-                    else:
-                        # Distribute across spread range
-                        position_ratio = i / max(1, n_hidden - 1)
-                        x = base_x - spread / 2 + position_ratio * spread
-                        # Add small offset for zigzag effect
-                        x += 0.3 if i % 2 == 0 else -0.3
-                    pos[f"hidden_{i}"] = (x, y)
-
-            # Output layer (right)
-            for i in range(n_output):
-                y = (i - n_output / 2) * 1.5
-                pos[f"output_{i}"] = (10, y)
-
-        elif layout_type == "spring":
-            # Spring layout with constraints
-            pos = nx.spring_layout(G, k=2, iterations=50, seed=42)
-            # Scale positions
-            for node in pos:
-                pos[node] = (pos[node][0] * 10, pos[node][1] * 10)
-
-        else:
-            # Default to hierarchical
-            pos = self._calculate_layout(G, "hierarchical", n_input, n_hidden, n_output)
-
+    def _layout_type_hierarchical(self, G: nx.DiGraph, n_input: int, n_hidden: int, n_output: int):
+        pos = {}
+        # Input layer (left)
+        for i in range(n_input):
+            y = (i - n_input / 2) * 1.5
+            pos[f"input_{i}"] = (0, y)
+        # Hidden layer (middle) - staggered layout for better edge visibility
+        if n_hidden > 0:
+            self._calculate_hidden_node_position_offsets(n_hidden, pos)
+        # Output layer (right)
+        for i in range(n_output):
+            y = (i - n_output / 2) * 1.5
+            pos[f"output_{i}"] = (10, y)
         return pos
+
+    def _layout_type_sprint(self, G: nx.DiGraph, k: float, iterations: int, seed: int):
+        pos = nx.spring_layout(G, k=2, iterations=50, seed=42)
+        # Scale positions
+        for node in pos:
+            pos[node] = (pos[node][0] * 10, pos[node][1] * 10)
+        return pos
+
+    def _layout_type_staggered(self, G: nx.DiGraph, n_input: int, n_hidden: int, n_output: int):
+        # Staggered hierarchical layout (same as hierarchical but more explicit)
+        pos = {}
+        # Input layer (left)
+        for i in range(n_input):
+            y = (i - n_input / 2) * 1.5
+            pos[f"input_{i}"] = (0, y)
+        # Hidden layer (middle) - staggered layout
+        if n_hidden > 0:
+            base_x = 5.0
+            spread = min(3.0, max(1.5, n_hidden * 0.5))
+            for i in range(n_hidden):
+                y = (i - n_hidden / 2) * 1.5
+                # Zigzag pattern
+                if n_hidden == 1:
+                    x = base_x
+                else:
+                    # Distribute across spread range
+                    position_ratio = i / max(1, n_hidden - 1)
+                    x = base_x - spread / 2 + position_ratio * spread
+                    # Add small offset for zigzag effect
+                    x += 0.3 if i % 2 == 0 else -0.3
+                pos[f"hidden_{i}"] = (x, y)
+        # Output layer (right)
+        for i in range(n_output):
+            y = (i - n_output / 2) * 1.5
+            pos[f"output_{i}"] = (10, y)
+        return pos
+
+    def _calculate_hidden_node_position_offsets(self, n_hidden, pos):
+        # Base x position (midpoint between input and output)
+        base_x = 5.0
+        # Stagger offset (horizontal spread)
+        stagger_offset = 1.2
+
+        # Calculate positions with alternating offsets
+        hidden_x_positions = []
+        for i in range(n_hidden):
+            # Alternate left/right: even indices go right, odd go left
+            offset = stagger_offset / 2 if i % 2 == 0 else -stagger_offset / 2
+            hidden_x_positions.append(base_x + offset)
+
+        # If more than 2 nodes, use a more spread-out stagger pattern
+        if n_hidden > 2:
+            # Distribute nodes across a wider horizontal range
+            spread = min(3.0, n_hidden * 0.4)
+            for i in range(n_hidden):
+                # Create a wave pattern: first node at center, then alternating outward
+                if i == 0:
+                    hidden_x_positions[i] = base_x
+                else:
+                    # Alternate left and right with increasing offset
+                    direction = 1 if i % 2 == 1 else -1
+                    offset_level = (i + 1) // 2
+                    hidden_x_positions[i] = base_x + direction * (offset_level * spread / max(1, (n_hidden // 2)))
+
+        # Apply positions
+        for i in range(n_hidden):
+            y = (i - n_hidden / 2) * 1.5
+            pos[f"hidden_{i}"] = (hidden_x_positions[i], y)
 
     def _create_edge_traces(
         self, G: nx.DiGraph, pos: Dict[str, Tuple[float, float]], show_weights: bool
@@ -825,39 +837,36 @@ class NetworkVisualizer(BaseComponent):
         for node_id in selected_nodes:
             if node_id in pos:
                 x, y = pos[node_id]
-                # Outer glow
-                highlight_traces.append(
-                    go.Scatter(
-                        x=[x],
-                        y=[y],
-                        mode="markers",
-                        marker={
-                            "size": 35,
-                            "color": "rgba(255, 193, 7, 0.5)",  # Yellow glow
-                            "line": {"width": 3, "color": "#ffc107"},
-                        },
-                        name="Selected",
-                        showlegend=False,
-                        hoverinfo="skip",
+                highlight_traces.extend(
+                    (
+                        go.Scatter(
+                            x=[x],
+                            y=[y],
+                            mode="markers",
+                            marker={
+                                "size": 35,
+                                "color": "rgba(255, 193, 7, 0.5)",  # Yellow glow
+                                "line": {"width": 3, "color": "#ffc107"},
+                            },
+                            name="Selected",
+                            showlegend=False,
+                            hoverinfo="skip",
+                        ),
+                        go.Scatter(
+                            x=[x],
+                            y=[y],
+                            mode="markers",
+                            marker={
+                                "size": 28,
+                                "color": "rgba(0, 0, 0, 0)",
+                                "line": {"width": 3, "color": "#ff9800"},
+                            },
+                            name="Selected Ring",
+                            showlegend=False,
+                            hoverinfo="skip",
+                        ),
                     )
                 )
-                # Inner ring
-                highlight_traces.append(
-                    go.Scatter(
-                        x=[x],
-                        y=[y],
-                        mode="markers",
-                        marker={
-                            "size": 28,
-                            "color": "rgba(0, 0, 0, 0)",
-                            "line": {"width": 3, "color": "#ff9800"},
-                        },
-                        name="Selected Ring",
-                        showlegend=False,
-                        hoverinfo="skip",
-                    )
-                )
-
         return highlight_traces
 
     def _create_empty_graph(self, theme: str = "light") -> go.Figure:

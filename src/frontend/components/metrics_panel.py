@@ -718,10 +718,7 @@ class MetricsPanel(BaseComponent):
             state["end_index"] = state.get("end_index") or max_index
 
             if "replay-play" in trigger:
-                if state["mode"] == "playing":
-                    state["mode"] = "paused"
-                else:
-                    state["mode"] = "playing"
+                state["mode"] = "paused" if state["mode"] == "playing" else "playing"
             elif "step-back" in trigger:
                 state["mode"] = "paused"
                 state["current_index"] = max(0, state["current_index"] - 1)
@@ -803,9 +800,7 @@ class MetricsPanel(BaseComponent):
         )
         def update_play_button(state):
             """Update play button icon based on replay state."""
-            if state and state.get("mode") == "playing":
-                return "⏸"
-            return "▶"
+            return "⏸" if state and state.get("mode") == "playing" else "▶"
 
         self.logger.debug(f"Callbacks registered for {self.component_id}")
 
