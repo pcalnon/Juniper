@@ -7,8 +7,8 @@
 #### Top Status Bar
 
 - Fix: The status bar at the top of the screen is not properly displaying/updating some fields.
-  - The "Status" field appears to never be updating.  It is always showing "Stopped" through all stages of the training process.
-  - The "Phase" field is not updating correctly.  It is always showing "Idle" through all stages of the training process.
+  - The "Status" field appears to never be updating. It is always showing "Stopped" through all stages of the training process.
+  - The "Phase" field is not updating correctly. It is always showing "Idle" through all stages of the training process.
   - The "Epoch" and "Hidden Units" fields are displaying and updating properly.
 
 #### Training Controls Section
@@ -27,7 +27,7 @@
 #### Training Metrics Tab
 
 1. Fix: The Candidate Node detailed information section of the Training Metrics tab is not displaying correctly.
-   - This candidate data section should always be visible, but it's only visible Intermittently.
+   - This candidate data section should always be visible, but it's only visible intermittently.
    - This section should be collapsible into its heading.
    - This candidate information area should retain data from previous, completed candidate pools.
      - Previous candidate pool data should be collapsed into its sub-heading.
@@ -62,13 +62,12 @@
          - Training Loss Over Time graph
          - Training Accuracy Over Time graph
        - If the user has not selected a starting point or playback range when the replay button is clicked, the user should be prompted to select one.
-     - The replay button should be disabled when the training process is running.
      - The replay functionality should allow various replay speeds:
        - Step through the training process one iteration at a time.
        - Replay at normal speed.
-       - Fast forward - 1X to play through the entire process at a faster speed.
-       - Fast forward - 2X to play through the entire process at an even faster speed.
+       - Fast forward - 2X to play through the entire process at a faster speed.
        - Fast forward - 4X to play through the entire process at an even faster speed.
+       - Fast forward - 8X to play through the entire process at the fastest speed.
 
 4. Feat: Add Save and Load buttons to the Training Metrics tab.
    - The Save and Load buttons should be visible and properly colored in both "light mode" and "dark mode".
@@ -76,7 +75,7 @@
    - The Save and Load buttons should be disabled when the training process is running.
    - The Save and Load buttons should be enabled when the training process is Paused, Stopped, Completed, or Failed.
    - Save functionality should write the current state of the training process to a file.
-     - The saved file should include but not limited to:
+     - The saved file should include, but not be limited to:
        - Current training metrics data
        - Current model parameters
        - Current training meta-parameters
@@ -136,7 +135,7 @@
        - The midpoint between the left-most and right-most hidden nodes should be the same as the midpoint between the input and output nodes.
 
 5. Feat: Add mouse click events to the network topology tab to allow for selection and interaction with nodes.
-   - Provide visual Feedback when a node is selected.
+   - Provide visual feedback when a node is selected.
    - Allow for interaction with selected nodes:
      - Allow mouse Left Click and Drag to move the node.
      - Allow Control + Left Click and Drag to move the entire network.
@@ -154,7 +153,7 @@
      - The edge highlight should be more muted than the New Node highlight.
      - The edge highlights should remain as long as the node highlight is visible.
      - The edge highlights should be removed when the node highlight is removed.
-   - The visual indicator should continue remain visible after the node is added.
+   - The visual indicator should remain visible after the node is added.
      - If the user selects a different node while the indicator is still active, the indicator should remain on.
      - The visual indicator should remain until the user selects and moves a different node or until a new hidden node is added.
      - The visual indicator should fade out smoothly over 2 seconds.
@@ -164,7 +163,7 @@
 7. Feat: The "Download as an Image File" function should have a unique name suggestion.
    - Provide a default name suggestion based on the current date and time.
 
-8. Feat: Modify the Cascade Correlation Network Architecture display to be an interactive, simulated 3D view of the network topology.
+8. Feat: Modify the CasCor Network Architecture display to be an interactive, simulated 3D view of the network topology.
    - Allow for rotation, zooming, and panning of the network topology in 3D space.
    - Provide visual depth cues to enhance the 3D effect.
    - Allow for selection and interaction with nodes in the 3D view.
@@ -226,4 +225,45 @@
 
 ### Status per Feature
 
-1. Not Started
+| Feature / Fix                                                                 | Status       |
+|-------------------------------------------------------------------------------|--------------|
+| Top Status Bar: Status field not updating                                     | Not Started  |
+| Top Status Bar: Phase field not updating                                      | Not Started  |
+| Top Status Bar: Epoch/Hidden Units fields display/update                      | Done         |
+| Training Controls: Buttons not resetting after being pressed                  | Not Started  |
+| Training Controls: Buttons become un-clickable after first press              | Not Started  |
+| Training Controls: All 5 buttons affected                                     | Not Started  |
+| Training Controls: Meta-parameters not applied after change                   | Not Started  |
+| Training Controls: Manual apply button for meta-parameters                    | Not Started  |
+| Training Controls: Prevent in-progress updates from triggering training       | Not Started  |
+| Training Controls: Up/down arrows and direct entry for meta-parameters        | Done         |
+| Training Metrics Tab: Add new tab and display metrics                         | Not Started  |
+| Training Metrics Tab: Display accuracy, loss, and other metrics               | Not Started  |
+| Training Metrics Tab: Add replay functionality                                | Not Started  |
+| Training Metrics Tab: Add Save/Load buttons                                   | Not Started  |
+| Training Data Tab: Add new tab and display data                               | Not Started  |
+| Training Data Tab: Display input/output samples                               | Not Started  |
+| Training Data Tab: Add data import/export options                             | Not Started  |
+| Model Architecture Tab: Add new tab and display architecture                  | Not Started  |
+| Model Architecture Tab: Display network topology                              | Not Started  |
+| Model Architecture Tab: Fix topology display issues                           | Not Started  |
+| Model Architecture Tab: Node interactions (drag, select, edit)                | Not Started  |
+| Model Architecture Tab: Add node/edge tooltips                                | Not Started  |
+| Model Architecture Tab: Add zoom/pan functionality                            | Not Started  |
+| About Tab for Juniper Cascor backend                                          | Not Started  |
+| Cassandra Integration and Monitoring Tab                                      | Not Started  |
+| Cassandra Tab: Display cluster state                                          | Not Started  |
+| Cassandra Tab: Display usage stats                                            | Not Started  |
+| Cassandra Tab: Display/edit db schema                                         | Not Started  |
+| Cassandra Tab: Manage cluster options                                         | Not Started  |
+| Redis Integration and Monitoring Tab                                          | Not Started  |
+| Redis Tab: Display cluster state                                              | Not Started  |
+| Redis Tab: Display usage stats                                                | Not Started  |
+| Redis Tab: Display/edit db schema                                             | Not Started  |
+| Redis Tab: Manage cluster options                                             | Not Started  |
+| HDF5 Snapshot Functionality Tab                                               | Not Started  |
+| HDF5 Tab: List available snapshots                                            | Not Started  |
+| HDF5 Tab: Show snapshot details (timestamp, size, etc.)                       | Not Started  |
+| HDF5 Tab: Create new snapshot                                                 | Not Started  |
+| HDF5 Tab: Restore from existing snapshot                                      | Not Started  |
+| HDF5 Tab: Show history of snapshot activities                                 | Not Started  |
