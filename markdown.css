@@ -58,28 +58,6 @@ h1 {
 	text-rendering: optimizeLegibility;
 }
 
-/* span[name="float_content"] {
-    margin: 0rem;
-    margin-top: -10rem;
-    margin-bottom: 0rem;
-    padding: 0rem;
-    padding-top: 0rem;
-    padding-bottom: 0rem;
-    height: 0rem;
-    vertical-align: top;
-}
-
-div[name="float_content"] {
-    margin: 0rem;
-    margin-top: 0rem;
-    margin-bottom: 0rem;
-    padding: 0rem;
-    padding-top: 0rem;
-    padding-bottom: 0rem;
-    height: 0rem;
-    vertical-align: top;
-} */
-
 div[name="nofloat"] {
     clear: both;
     float: none;
@@ -87,7 +65,8 @@ div[name="nofloat"] {
 
 img[alt^="Juniper"] {
     display: block;
-    width: 10rem;
+    /* width: 10rem; */
+    width: 200px;
     margin: 0rem;
     margin-top: 0rem;
     margin-bottom: -2rem;
