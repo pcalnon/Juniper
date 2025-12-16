@@ -5,9 +5,9 @@
 # Application:   juniper_canopy
 # Purpose:       Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
 #
-# Script Name:   get_file_todo.bash
-# Script Path:   <Project>/<Sub-Project>/juniper_canopy/util/get_file_todo.bash
-# Conf File:     get_file_todo.conf
+# Script Name:   get_module_filenames.bash
+# Script Path:   <Project>/<Sub-Project>/juniper_canopy/util/get_module_filenames.bash
+# Conf File:     get_module_filenames.conf
 # Conf Path:     <Project>/<Sub-Project>/<Application>/conf/  # TODO: Add parent project dir
 #
 # Author:        Paul Calnon
@@ -20,13 +20,26 @@
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
 #
 # Description:
-#     This script returns the number of TODO comments in each file.
+#     This script collects and displays useful stats about the code base of the Juniper python project
 #
 #####################################################################################################################################################################################################
 # Notes:
 #
 #####################################################################################################################################################################################################
 # References:
+#
+#     SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
+#     CONF_PATH="$(dirname "$(dirname "${SCRIPT_PATH}")")/conf"
+#     CONF_FILENAME="$(basename -s ".bash" "${SCRIPT_PATH}").conf"
+#     CONF_FILE="${SCRIPT_PATH}/${SCRIPT_FILENAME}"
+#
+#     CONF_PATH="$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")/conf"
+#     CONF_FILENAME="$(basename -s ".bash" "$(realpath "${BASH_SOURCE[0]}")").conf"
+#     CONF_FILE="${CONF_PATH}/${CONF_FILENAME}"
+#
+#     CONF_FILE="$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")/conf/$(basename -s ".bash" "$(realpath "${BASH_SOURCE[0]}")").conf"
+#
+#     source "${CONF_FILE}";  SUCCESS="$?"
 #
 #####################################################################################################################################################################################################
 # TODO :
@@ -41,22 +54,44 @@
 # Source script config file
 #####################################################################################################################################################################################################
 # set -eE -o functrace
-
 source "$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")/conf/$(basename -s ".bash" "$(realpath "${BASH_SOURCE[0]}")").conf"; SUCCESS="$?"
 [[ "${SUCCESS}" != "0" ]] && printf "%b%-21s %-28s %-21s %-11s %s%b\n" "\033[1;31m" "($(date +%F_%T))" "$(basename "${SCRIPT_PATH}"):(${LINENO})" "main:" "[CRITICAL]" "Config load Failed: \"${CONF_FILE}\"" "\033[0m" | tee -a "${LOG_FILE}" 2>&1 && set -e && exit 1
 log_debug "Successfully Sourced Current Script: ${SCRIPT_NAME}, Config File: ${CONF_FILE}, Success: ${SUCCESS}"
 
 
-####################################################################################################
-# Define Script Functions
-####################################################################################################
-source ${DATE_FUNCTIONS_SCRIPT}
+#####################################################################################################
+# Define Debug Constants
+#####################################################################################################
+# TRUE="TRUE"
+# FALSE="FALSE"
 
+# DEBUG="${TRUE}"
+# DEBUG="${FALSE}"
+
+
+#####################################################################################################
+# Define Global Configuration File Constants
+####################################################################################################
+
+
+####################################################################################################
+# Run env info functions
+####################################################################################################
+[[ ${DEBUG} == "${TRUE}" ]] && echo "Run env info functions"
+BASE_DIR=$(${GET_PROJECT_SCRIPT} "${BASH_SOURCE}")
+CURRENT_OS=$(${GET_OS_SCRIPT})
+source "${DATE_FUNCTIONS_SCRIPT}"
+
+
+#######################################################################################################################################################################################
+# Define functions for script
+#######################################################################################################################################################################################
+[[ ${DEBUG} == "${TRUE}" ]] && echo "Define functions for script"
 function usage() {
     RET_VAL="$1"
     shift
     MESSAGE="$@"
-    USAGE="\n\tusage: ${FUNCTION_NAME} [${HELP_SHORT}|${HELP_LONG}] [${FILE_SHORT}|${FILE_LONG} <Path to File>] [${SEARCH_SHORT}|${SEARCH_LONG} <Search Term>]\n\n"
+    USAGE="\n\tusage: ${FUNCTION_NAME} [-h|--help] [-f|--full <TRUE|FALSE> (Default: ${FALSE})]\n\n"
     if [[ ${MESSAGE} != "" ]]; then
         echo -ne "${MESSAGE}"
     fi
@@ -68,45 +103,41 @@ function usage() {
 #######################################################################################################################################################################################
 # Process Script's Command Line Argument(s)
 #######################################################################################################################################################################################
-while [[ "${1}" != "" ]]; do
-    case ${1} in
+[[ ${DEBUG} == "${TRUE}" ]] && echo "Process Script's Command Line Argument(s)"
+while [[ "$1" != "" ]]; do
+    [[ ${DEBUG} == "${TRUE}" ]] && echo "Current Param Flag: $1"
+    case $1 in
         ${HELP_SHORT} | ${HELP_LONG})
-            usage 0
+            usage 1
         ;;
-        ${SEARCH_SHORT} | ${SEARCH_LONG})
+        ${OUTPUT_SHORT} | ${OUTPUT_LONG})
             shift
-            PARAM="${1}"
+            PARAM="$1"
+            [[ ${DEBUG} == "${TRUE}" ]] && echo "Current Param Value: ${PARAM}"
             shift
-        if [[ ${PARAM} != "" ]]; then
-                SEARCH_TERM="${PARAM}"
-            fi
-        ;;
-        ${FILE_SHORT} | ${FILE_LONG})
-            shift
-            PARAM="${1}"
-            shift
-        if [[ ( ${PARAM} != "" ) && ( -f ${PARAM} ) ]]; then
-                SEARCH_FILE="${PARAM}"
-            else
-                usage 1 "Error: Received an invalid Search File: \"${PARAM}\"\n"
+            [[ ${DEBUG} == "${TRUE}" ]] && echo "Lowercase: ${PARAM,,*}"
+            [[ ${DEBUG} == "${TRUE}" ]] && echo "Uppercase: ${PARAM^^}"
+            PARAM="${PARAM^^}"
+            if [[ "${PARAM}" == "${TRUE}" || "${PARAM}" == "0" ]]; then
+                FULL_OUTPUT="${TRUE}"
             fi
         ;;
         *)
-            #echo "Invalid Param: \"${1}\""
             usage 1 "Error: Invalid command line params: \"${@}\"\n"
         ;;
     esac
 done
 
 
-#######################################################################################################################################################################################
-# Search for instances of a specific search term in the specified source code file
-#######################################################################################################################################################################################
-RAW_OUTPUT="$(grep "${SEARCH_TERM}" ${SEARCH_FILE})"
-COUNT="$(grep "${SEARCH_TERM}" ${SEARCH_FILE} | wc -l)"
-
-
-#######################################################################################################################################################################################
-# Display Results
-#######################################################################################################################################################################################
-echo "${COUNT}"
+####################################################################################################
+# Get list of project modules
+####################################################################################################
+[[ ${DEBUG} == "${TRUE}" ]] && echo "Get list of project modules"
+for MODULE_PATH in $(find "${SRC_DIR}" \( -name "${MODULE_EXT}" ! -name "${INIT_FILE_NAME}" ! -name "${TEST_FILE_NAME}" \) ); do
+    if [[ ${FULL_OUTPUT} == "${TRUE}" ]]; then
+        echo "${MODULE_PATH}"
+    else
+        FILENAME="${MODULE_PATH//*\/}"
+        echo "${FILENAME}"
+    fi
+done

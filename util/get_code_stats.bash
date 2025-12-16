@@ -20,7 +20,7 @@
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
 #
 # Description:
-#     This file is the sourced conf file for the get_code_stats.bash script. The conf file defines all script constnats.
+#     This file is the sourced conf file for the get_code_stats.bash script. The conf file defines all script constants.
 #
 #####################################################################################################################################################################################################
 # Notes:
@@ -53,9 +53,33 @@
 #####################################################################################################################################################################################################
 # Source script config file
 #####################################################################################################################################################################################################
-set -eE -o functrace
-source "$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")/conf/$(basename -s ".bash" "$(realpath "${BASH_SOURCE[0]}")").conf"; SUCCESS="$?"
+# set -eE -o functrace
+# TODO: revert back to this line after debugging is complete
+# source "$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")/conf/$(basename -s ".bash" "$(realpath "${BASH_SOURCE[0]}")").conf"; SUCCESS="$?"
+
+export GET_CODE_STATS_CONF_SOURCED="${FALSE}"
+export CLOSE_LOGGING_CONF_SOURCED="${FALSE}"
+
+SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
+echo "SCRIPT_PATH: ${SCRIPT_PATH}"
+
+CONF_PATH="$(dirname "$(dirname "${SCRIPT_PATH}")")/conf"
+echo "CONF_PATH: ${CONF_PATH}"
+
+CONF_FILENAME="$(basename -s ".bash" "${SCRIPT_PATH}").conf"
+echo "CONF_FILENAME: ${CONF_FILENAME}"
+
+# CONF_FILE="${SCRIPT_PATH}/${SCRIPT_FILENAME}"
+CONF_FILE="${CONF_PATH}/${CONF_FILENAME}"
+echo "CONF_FILE: ${CONF_FILE}"
+
+source "${CONF_FILE}"
+SUCCESS="$?"
+log_debug "Sourcing Config File returned: ${SUCCESS}"
+log_debug "Completed sourcing Current Script: ${SCRIPT_NAME}, Config File: ${CONF_FILE}, Success: ${SUCCESS}"
+
 [[ "${SUCCESS}" != "0" ]] && printf "%b%-21s %-28s %-21s %-11s %s%b\n" "\033[1;31m" "($(date +%F_%T))" "$(basename "${SCRIPT_PATH}"):(${LINENO})" "main:" "[CRITICAL]" "Config load Failed: \"${CONF_FILE}\"" "\033[0m" | tee -a "${LOG_FILE}" 2>&1 && set -e && exit 1
+
 log_debug "Successfully Sourced Current Script: ${SCRIPT_NAME}, Config File: ${CONF_FILE}, Success: ${SUCCESS}"
 
 #
@@ -76,16 +100,24 @@ log_debug "Successfully Sourced Current Script: ${SCRIPT_NAME}, Config File: ${C
 ####################################################################################################
 # Run env info functions
 ####################################################################################################
+# set -eE -o functrace
+# set -eE
+set -o functrace
 BASE_DIR=$(${GET_PROJECT_SCRIPT} "${BASH_SOURCE}")
+
+echo "Base Dir: ${BASE_DIR}"
+
 # Determine Host OS
 CURRENT_OS=$(${GET_OS_SCRIPT})
 # Define Script Functions
+
+echo "Current OS: ${CURRENT_OS}"
 
 # TODO: This line is Borked:
 #   /home/pcalnon/Development/python/JuniperCanopy/juniper_canopy/conf/get_code_stats.conf:
 #   line 84
 #   /home/pcalnon/Development/python/JuniperCanopy/conf/script_util.cfg: No such file or directory
-source "${SCRIPT_PATH}/conf/script_util.cfg"
+# source "${SCRIPT_PATH}/conf/script_util.cfg"
 
 
 ####################################################################################################
@@ -104,7 +136,7 @@ function round_size() {
 function current_size() {
     CURRENT_SIZE="${1}"
     LABEL="${CURRENT_SIZE: -1}"
-    SIZEF="${CURRENT_SIZE::-1}"
+    SIZEF="${CURRENT_SIZE: -1}"
     for i in "${!SIZE_LABELS[@]}"; do
         if [[ "${SIZE_LABELS[${i}]}" == "${LABEL}" ]]; then
             break

@@ -1,18 +1,52 @@
 #!/usr/bin/env bash
 #####################################################################################################################################################################################################
-# Application: Juniper
-# Script Name: todo_search.bash
-# Script Path: <Project>/util/todo_search.bash
+# Project:       Juniper
+# Sub-Project:   JuniperCanopy
+# Application:   juniper_canopy
+# Purpose:       Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
 #
-# Description: This script files in the source directory of the current project for a specific search term and then displays the number of files that do and do not contain the search term.
+# Script Name:   get_todo_comments.bash
+# Script Path:   <Project>/<Sub-Project>/juniper_canopy/util/get_todo_comments.bash
+# Conf File:     get_todo_comments.conf
+# Conf Path:     <Project>/<Sub-Project>/<Application>/conf/  # TODO: Add parent project dir
 #
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Notes:
+# Author:        Paul Calnon
+# Version:       1.0.0
 #
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Examples:
+# Date:          2025-12-03
+# Last Modified: 2025-12-15
+#
+# License:       MIT License
+# Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
+#
+# Description:
+#     This script collects Descriptions associated with all TODO Comments in the Juniper python project code base
 #
 #####################################################################################################################################################################################################
+# Notes:
+#
+#####################################################################################################################################################################################################
+# References:
+#
+#####################################################################################################################################################################################################
+# TODO :
+#
+#####################################################################################################################################################################################################
+# COMPLETED:
+#
+#####################################################################################################################################################################################################
+
+
+#####################################################################################################################################################################################################
+# Source script config file
+#####################################################################################################################################################################################################
+# set -eE -o functrace
+
+source "$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")/conf/$(basename -s ".bash" "$(realpath "${BASH_SOURCE[0]}")").conf"; SUCCESS="$?"
+[[ "${SUCCESS}" != "0" ]] && printf "%b%-21s %-28s %-21s %-11s %s%b\n" "\033[1;31m" "($(date +%F_%T))" "$(basename "${SCRIPT_PATH}"):(${LINENO})" "main:" "[CRITICAL]" "Config load Failed: \"${CONF_FILE}\"" "\033[0m" | tee -a "${LOG_FILE}" 2>&1 && set -e && exit 1
+log_debug "Successfully Sourced Current Script: ${SCRIPT_NAME}, Config File: ${CONF_FILE}, Success: ${SUCCESS}"
+
+
 
 #####################################################################################################
 # Define Global Configuration File Constants

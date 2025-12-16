@@ -17,10 +17,14 @@
 ####################################################################################################
 # Define Global Configuration File Constants
 ####################################################################################################
-ROOT_PROJ_NAME="juniper"
+ROOT_PROJ_NAME="JuniperCanopy"
+PROJ_NAME="juniper_canopy"
 ROOT_CONF_NAME="conf"
-ROOT_CONF_FILE_NAME="script_util.cfg"
-ROOT_PROJ_DIR="${HOME}/Development/rust/rust_mudgeon/${ROOT_PROJ_NAME}"
+ROOT_CONF_FILE_NAME="script_util.${ROOT_CONF_NAME}"
+DEV_DIR="Development"
+# LANGUAGE_NAME="rust/rust_mudgeon/"
+LANGUAGE_NAME="python"
+ROOT_PROJ_DIR="${HOME}/${DEV_DIR}/${LANGUAGE_NAME}/${ROOT_PROJ_NAME}/${PROJ_NAME}"
 ROOT_CONF_DIR="${ROOT_PROJ_DIR}/${ROOT_CONF_NAME}"
 ROOT_CONF_FILE="${ROOT_CONF_DIR}/${ROOT_CONF_FILE_NAME}"
 source ${ROOT_CONF_FILE}

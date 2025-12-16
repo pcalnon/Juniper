@@ -42,7 +42,16 @@ get_script_path() {
 
 ####################################################################################################
 # Define Global Environment DirectoryConfiguration Constants
-####################################################################################################
+# ROOT_PROJ_NAME="JuniperCanopy"
+# PROJ_NAME="juniper_canopy"
+# DEV_DIR="Development"
+# LANGUAGE_NAME="python"
+# ROOT_PROJ_DIR="${HOME}/${DEV_DIR}/${LANGUAGE_NAME}/${ROOT_PROJ_NAME}/${PROJ_NAME}"
+# ROOT_CONF_DIR="${ROOT_PROJ_DIR}/${ROOT_CONF_NAME}"
+# ROOT_CONF_FILE="${ROOT_CONF_DIR}/${ROOT_CONF_FILE_NAME}"
+# source ${ROOT_CONF_FILE}
+
+
 SCRIPT_NAME="$(basename $BASH_SOURCE)"
 SCRIPT_PATH="$(dirname "$(get_script_path)")"
 SCRIPT_PROJ_PATH="$(dirname "${SCRIPT_PATH}")"
@@ -55,7 +64,7 @@ SCRIPT_ROOT_PATH="$(dirname "${SCRIPT_DEVELOPMENT_PATH}")"
 
 ROOT_PROJ_NAME="${ROOT_PROJ_DIR_NAME}"
 ROOT_CONF_NAME="conf"
-ROOT_CONF_FILE_NAME="script_util.cfg"
+ROOT_CONF_FILE_NAME="script_util.${ROOT_CONF_NAME}"
 
 ROOT_PROJ_DIR="${SCRIPT_PROJ_PATH}"
 ROOT_CONF_DIR="${ROOT_PROJ_DIR}/${ROOT_CONF_NAME}"
