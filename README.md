@@ -1,11 +1,9 @@
+<div align="right" width="150px" height="150px" align="right" valign="top"> <img src="src/assets/Juniper_Logo_150px.png" alt="Juniper" align="right" valign="top" width="150px" /></div>
+<br /> <br /> <br /> <br />
+
 # Juniper: Dynamic Neural Network Research Platform
 
-<div align="right" width="250px"> <img src="src/assets/Juniper_Logo_200px.png" alt="Juniper" align="right" valign="top" width="200px" margin-top="-50px"/>
-</div>
-<div align="left" width="750px" height="430px" valign="top">
 Juniper is an AI/ML research platform for investigating dynamic neural network architectures and novel learning paradigms.  The project emphasizes ground-up implementations from primary literature, enabling a more transparent exploration of fundamental algorithms.
-
-</div>
 
 ## Active Research Components
 

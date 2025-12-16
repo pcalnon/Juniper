@@ -5,7 +5,6 @@
 abbr,acronym,blockquote,code,dir,kbd,listing,plaintext,q,samp,tt,var,xmp { hyphens: none; }
 
 html {
-    /* padding: 2em; */
 	font: normal 18px/1.25 "Source Sans Pro", sans-serif;
 	color: #fff;
 	hyphens: auto;
@@ -43,18 +42,13 @@ link[rel="stylesheet"] {
 h1 {
     display: block;
     font-size: 2.75rem;
-    /* height: 220px; */
 	line-height: 0;
 	margin: 0rem;
     margin-top: 0rem;
     margin-bottom: 0rem;
-    /* margin-bottom: -50px; */
     padding: 0rem;
     padding-top: 0rem;
     padding-bottom: 0rem;
-    /* margin-right: 3.5rem;
-	margin-top: 1.5rem;
-    margin-bottom: 2.5rem; */
 	text-rendering: optimizeLegibility;
 }
 
@@ -65,7 +59,6 @@ div[name="nofloat"] {
 
 img[alt^="Juniper"] {
     display: block;
-    /* width: 10rem; */
     width: 200px;
     margin: 0rem;
     margin-top: 0rem;
@@ -76,29 +69,15 @@ img[alt^="Juniper"] {
 }
 
 img[alt$=">"] {
-    /* display: block;
-    width: 10rem;
-    margin: 0;
-    padding: 0; */
     float: right;
 }
 
 img[alt$="<"] {
-    /* display: block;
-    width: 10rem;
-    margin: 0;
-    padding: 0; */
     float: left;
 }
 
 img[alt$="><"] {
     display: block;
-    /* max-width: 100%; */
-    /* height: auto; */
-    /* width: 10rem; */
-    /* margin: auto; */
-    /* margin: 0;
-    padding: 0; */
     float: none!important;
 }
 
