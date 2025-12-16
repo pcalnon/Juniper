@@ -4,9 +4,9 @@
     },
     "MD033": {
         "allowed_elements": [
-            "link",
-            "image",
-            "div"
+            "img",
+            "div",
+            "span"
         ]
     },
     "MD041": false
