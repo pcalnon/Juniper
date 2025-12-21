@@ -37,7 +37,7 @@ export PYTHON_SCRIPT_PATH="${PYTHON_SCRIPT_DIR}/${PYTHON_SCRIPT_NAME}"
 ####################################################################################################
 export ROOT_PROJ_NAME="Juniper"
 export ROOT_CONF_NAME="conf"
-export ROOT_CONF_FILE_NAME="script_util.cfg"
+export ROOT_CONF_FILE_NAME="common.conf"
 export ROOT_PROJ_DIR="${HOME}/Development/python/${ROOT_PROJ_NAME}"
 export ROOT_CONF_DIR="${ROOT_PROJ_DIR}/${ROOT_CONF_NAME}"
 export ROOT_CONF_FILE="${ROOT_CONF_DIR}/${ROOT_CONF_FILE_NAME}"
@@ -49,7 +49,7 @@ source "${ROOT_CONF_FILE}"
 ####################################################################################################
 export BASE_DIR=$(${GET_PROJECT_SCRIPT} "${BASH_SOURCE}")  # Determine Project Dir
 export CURRENT_OS=$(${GET_OS_SCRIPT})                      # Determine Host OS
-source "${DATE_FUNCTIONS_SCRIPT}"                          # Define Script Functions
+# source "${DATE_FUNCTIONS_SCRIPT}"                          # Define Script Functions
 
 
 ####################################################################################################

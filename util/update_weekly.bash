@@ -19,7 +19,7 @@
 ####################################################################################################
 ROOT_PROJ_NAME="juniper"
 ROOT_CONF_NAME="conf"
-ROOT_CONF_FILE_NAME="script_util.cfg"
+ROOT_CONF_FILE_NAME="common.conf"
 ROOT_PROJ_DIR="${HOME}/Development/rust/rust_mudgeon/${ROOT_PROJ_NAME}"
 ROOT_CONF_DIR="${ROOT_PROJ_DIR}/${ROOT_CONF_NAME}"
 ROOT_CONF_FILE="${ROOT_CONF_DIR}/${ROOT_CONF_FILE_NAME}"
@@ -41,7 +41,7 @@ CURRENT_OS=$(${GET_OS_SCRIPT})
 ####################################################################################################
 # Define Script Functions
 ####################################################################################################
-source ${DATE_FUNCTIONS_SCRIPT}
+# source ${DATE_FUNCTIONS_SCRIPT}
 
 
 ####################################################################################################

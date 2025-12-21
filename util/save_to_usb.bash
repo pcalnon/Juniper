@@ -106,7 +106,7 @@ ROOT_VIZ_PATH="${SCRIPT_PROJ_PATH}/${ROOT_VIZ_DIR_NAME}";           [[ ${DEBUG} 
 ####################################################################################################
 # Define Sourced Config File Constants
 ####################################################################################################
-ROOT_CONF_FILE_NAME="script_util.cfg"
+ROOT_CONF_FILE_NAME="common.conf"
 ROOT_CONF_FILE="${ROOT_CONF_PATH}/${ROOT_CONF_FILE_NAME}";          [[ ${DEBUG} == "${TRUE}" ]] && echo "Root Conf file: ${ROOT_CONF_FILE}"
 source ${ROOT_CONF_FILE}
 
@@ -180,7 +180,7 @@ USB_ARCHIVE_FILE="${USB_ARCHIVE_DIR}/${USB_ARCHIVE_FILE_NAME}";                 
 ####################################################################################################
 # Define Script Functions
 ####################################################################################################
-source ${DATE_FUNCTIONS_SCRIPT}
+# source ${DATE_FUNCTIONS_SCRIPT}
 
 
 ####################################################################################################
