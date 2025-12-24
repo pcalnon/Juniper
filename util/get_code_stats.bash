@@ -66,18 +66,7 @@
 #####################################################################################################################################################################################################
 set -o functrace
 export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="../conf/init.conf"
-
-if [[ "${DEBUG}" == "${TRUE}" ]]; then
-    if [ -f "${INIT_CONF}" ]; then
-        echo "Init Config File Found. Sourcing: \"${INIT_CONF}\""
-        source "${INIT_CONF}"
-    else
-        echo "Init Config File Not Found. Unable to Continue."
-        return 1
-    fi
-else
-    [[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
-fi
+[[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 
 #####################################################################################################################################################################################################
