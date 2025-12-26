@@ -7,11 +7,11 @@
 #
 # Author:        Paul Calnon
 # Version:       1.0.0
-# File Name:     get_module_filenames_fn.conf
+# File Name:     get_module_filenames_functions.conf
 # File Path:     <Project>/<Sub-Project>/<Application>/conf/
 #
 # Date:          2025-12-19
-# Last Modified: 2025-12-19
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -50,7 +50,7 @@ export DEBUG="${FALSE}"
 if [[ "${GET_MODULE_FILENAME_FN_CONF_SOURCED}" != "${TRUE}" ]]; then
     export GET_MODULE_FILENAME_FN_CONF_SOURCED="${TRUE}"
 else
-    log_warning "get_module_filenames_fn.conf already sourced.  Skipping re-source."
+    log_warning "get_module_filenames_functions.conf already sourced.  Skipping re-source."
     [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( TRUE )) || return $(( TRUE ))
 fi
 
@@ -61,7 +61,7 @@ fi
 function usage() {
     RET_VAL="$1"
     shift
-    MESSAGE="$@"
+    MESSAGE="$*"
     USAGE="\n\tusage: ${FUNCTION_NAME} [-h|--help] [-f|--full <TRUE|FALSE> (Default: ${FALSE})]\n\n"
     if [[ ${MESSAGE} != "" ]]; then
         echo -ne "${MESSAGE}"

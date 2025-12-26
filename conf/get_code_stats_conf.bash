@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/conf/
 #
 # Date:          2025-12-03
-# Last Modified: 2025-12-19
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -63,19 +63,22 @@ fi
 #####################################################################################################################################################################################################
 # Define constants for script
 #####################################################################################################################################################################################################
-SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
-SCRIPT_NAME="$(basename "${SCRIPT_PATH}")"
-SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
+# shellcheck disable=SC2155
+export SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
+# shellcheck disable=SC2155
+export SCRIPT_NAME="$(basename "${SCRIPT_PATH}")"
+# shellcheck disable=SC2155
+export SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
 
-BASH_EXT="bash"
-CONF_EXT="conf"
+export BASH_EXT="bash"
+export CONF_EXT="conf"
 
-UTIL_DIR_NAME="util"
-CONF_DIR_NAME="${CONF_EXT}"
+export UTIL_DIR_NAME="util"
+export CONF_DIR_NAME="${CONF_EXT}"
 
-LOGGING_CONF_PREFIX="logging"
-COMMON_CONF_PREFIX="common"
-FUNCTION_CONF_INFIX="_fn"
+export LOGGING_CONF_PREFIX="logging"
+export COMMON_CONF_PREFIX="common"
+export FUNCTION_CONF_INFIX="_fn"
 
 
 #####################################################################################################################################################################################################
@@ -105,40 +108,47 @@ CONF_FUNCTION_FILE="${CONF_DIR}/${CONF_FUNCTION_FILE_NAME}"
 if [[ "${DEBUG}" == "${TRUE}" ]]; then
     log_debug "Running the function config file: ${CONF_FUNCTION_FILE}"
     # "${CONF_FUNCTION_FILE}"; SUCCESS="$?"
+    # shellcheck disable=SC1090
     source "${CONF_FUNCTION_FILE}"; SUCCESS="$?"
 else
     log_debug "Sourcing the function config file: ${CONF_FUNCTION_FILE}"
+    # shellcheck disable=SC1090
     source "${CONF_FUNCTION_FILE}"; SUCCESS="$?"
 fi
 [[ "${SUCCESS}" != "${TRUE}" ]] && log_error "Failed to source the function config file: ${CONF_FUNCTION_FILE}, returned ${SUCCESS}"
 log_debug "Successfully Called the function config file: ${CONF_FUNCTION_FILE}"
 
 
-#####################################################################################################################################################################################################
-# Build and Source the Common Config file path
-#####################################################################################################################################################################################################
-CONF_COMMON_FILE_NAME="${COMMON_CONF_PREFIX}.${CONF_EXT}"
-CONF_COMMON_FILE="${CONF_DIR}/${CONF_COMMON_FILE_NAME}"
+# #####################################################################################################################################################################################################
+# # Build and Source the Common Config file path
+# #####################################################################################################################################################################################################
+# CONF_COMMON_FILE_NAME="${COMMON_CONF_PREFIX}.${CONF_EXT}"
+# CONF_COMMON_FILE="${CONF_DIR}/${CONF_COMMON_FILE_NAME}"
 
-if [[ "${DEBUG}" == "${TRUE}" ]]; then
-    log_debug "Running the common config file: ${CONF_COMMON_FILE}"
-    # "${CONF_COMMON_FILE}"; SUCCESS="$?"
-    source "${CONF_COMMON_FILE}"; SUCCESS="$?"
-else
-    log_debug "Sourcing the common config file: ${CONF_COMMON_FILE}"
-    source "${CONF_COMMON_FILE}"; SUCCESS="$?"
-fi
-[[ "${SUCCESS}" != "0" ]] && log_error "Failed to source the common config file: ${CONF_COMMON_FILE}, returned ${SUCCESS}"
-log_debug "Successfully called the common config file: ${CONF_COMMON_FILE}"
+# if [[ "${DEBUG}" == "${TRUE}" ]]; then
+#     log_debug "Running the common config file: ${CONF_COMMON_FILE}"
+#     # "${CONF_COMMON_FILE}"; SUCCESS="$?"
+#     # shellcheck disable=SC1090
+#     source "${CONF_COMMON_FILE}"; SUCCESS="$?"
+# else
+#     log_debug "Sourcing the common config file: ${CONF_COMMON_FILE}"
+#     # shellcheck disable=SC1090
+#     source "${CONF_COMMON_FILE}"; SUCCESS="$?"
+# fi
+# [[ "${SUCCESS}" != "0" ]] && log_error "Failed to source the common config file: ${CONF_COMMON_FILE}, returned ${SUCCESS}"
+# log_debug "Successfully called the common config file: ${CONF_COMMON_FILE}"
 
 
 #####################################################################################################################################################################################################
 # Define Script-Specific Constants
 #####################################################################################################################################################################################################
+# shellcheck disable=SC2155
 export GET_CODE_STATS_CONF_FILE="$(realpath "${BASH_SOURCE[0]}")"
 log_debug "GET_CODE_STATS_CONF_FILE: ${GET_CODE_STATS_CONF_FILE}"
+# shellcheck disable=SC2155
 export SCRIPT_NAME="$(basename "${GET_CODE_STATS_CONF_FILE}")"
 log_debug "SCRIPT_NAME: ${SCRIPT_NAME}"
+# shellcheck disable=SC2155
 export SCRIPT_PATH="$(dirname "${GET_CODE_STATS_CONF_FILE}")"
 log_debug "SCRIPT_PATH: ${SCRIPT_PATH}"
 export CONF_PATH="${SCRIPT_PATH}"
@@ -229,7 +239,7 @@ log_debug "GIT_LOG_WEEKS: ${GIT_LOG_WEEKS}"
 export SIZE_LABEL_MAG="1024"
 log_debug "SIZE_LABEL_MAG: ${SIZE_LABEL_MAG}"
 export SIZE_LABELS=("B" "K" "M" "G" "T" "P" "E" "Z" "Y")
-log_debug "SIZE_LABELS: ${SIZE_LABELS[@]}"
+log_debug "SIZE_LABELS: ${SIZE_LABELS[* ]}"
 export TABLE_FORMAT="%-28s %8s %9s %7s %9s\n"
 log_debug "TABLE_FORMAT: ${TABLE_FORMAT}"
 export SUMMARY_FORMAT="%-14s %-10s\n"

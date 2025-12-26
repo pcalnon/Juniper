@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/conf/
 #
 # Date:          2025-12-03
-# Last Modified: 2025-12-19
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -41,8 +41,8 @@
 export TRUE="0"
 export FALSE="1"
 
-export DEBUG="${TRUE}"
-# export DEBUG="${FALSE}"
+# export DEBUG="${TRUE}"
+export DEBUG="${FALSE}"
 
 
 #####################################################################################################################################################################################################
@@ -58,19 +58,22 @@ fi
 #####################################################################################################################################################################################################
 # Define constants for script
 #####################################################################################################################################################################################################
-SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
-SCRIPT_NAME="$(basename "${SCRIPT_PATH}")"
-SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
+# shellcheck disable=SC2155
+export SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
+# shellcheck disable=SC2155
+export SCRIPT_NAME="$(basename "${SCRIPT_PATH}")"
+# shellcheck disable=SC2155
+export SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
 
-BASH_EXT="bash"
-CONF_EXT="conf"
+export BASH_EXT="bash"
+export CONF_EXT="conf"
 
-UTIL_DIR_NAME="util"
-CONF_DIR_NAME="${CONF_EXT}"
+export UTIL_DIR_NAME="util"
+export CONF_DIR_NAME="${CONF_EXT}"
 
-LOGGING_CONF_PREFIX="logging"
-COMMON_CONF_PREFIX="common"
-FUNCTION_CONF_INFIX="_fn"
+export LOGGING_CONF_PREFIX="logging"
+export COMMON_CONF_PREFIX="common"
+export FUNCTION_CONF_INFIX="_fn"
 
 
 #####################################################################################################
@@ -91,38 +94,40 @@ export PROJ_DIR="${PROJ_ROOT_DIR}/${PROJ_DIR_NAME}"
 export BASE_DIR=${PROJ_DIR}
 
 
-#####################################################################################################################################################################################################
-# Build and Source the Function config file path
-#####################################################################################################################################################################################################
-CONF_FUNCTION_FILE_NAME="${SCRIPT_NAME%.*}${FUNCTION_CONF_INFIX}.${CONF_EXT}"
-CONF_FUNCTION_FILE="${CONF_DIR}/${CONF_FUNCTION_FILE_NAME}"
+# #####################################################################################################################################################################################################
+# # Build and Source the Function config file path
+# #####################################################################################################################################################################################################
+# CONF_FUNCTION_FILE_NAME="${SCRIPT_NAME%.*}${FUNCTION_CONF_INFIX}.${CONF_EXT}"
+# CONF_FUNCTION_FILE="${CONF_DIR}/${CONF_FUNCTION_FILE_NAME}"
 
-if [[ "${DEBUG}" == "${TRUE}"]]; then
-    log_debug "Running the function config file: ${CONF_FUNCTION_FILE}"
-    "${CONF_FUNCTION_FILE}"; SUCCESS="$?"
-else
-    log_debug "Sourcing the function config file: ${CONF_FUNCTION_FILE}"
-    source "${CONF_FUNCTION_FILE}"; SUCCESS="$?"
-fi
-[[ "${SUCCESS}" != "0" ]] && log_error "Failed to source the function config file: ${CONF_FUNCTION_FILE}, returned ${SUCCESS}"
-log_debug "Sourced the function config file: ${CONF_FUNCTION_FILE}"
+# if [[ "${DEBUG}" == "${TRUE}" ]]; then
+#     log_debug "Running the function config file: ${CONF_FUNCTION_FILE}"
+#     "${CONF_FUNCTION_FILE}"; SUCCESS="$?"
+# else
+#     log_debug "Sourcing the function config file: ${CONF_FUNCTION_FILE}"
+#     # shellcheck disable=SC1090
+#     source "${CONF_FUNCTION_FILE}"; SUCCESS="$?"
+# fi
+# [[ "${SUCCESS}" != "0" ]] && log_error "Failed to source the function config file: ${CONF_FUNCTION_FILE}, returned ${SUCCESS}"
+# log_debug "Sourced the function config file: ${CONF_FUNCTION_FILE}"
 
 
-#####################################################################################################################################################################################################
-# Build and Source the Common Config file path
-#####################################################################################################################################################################################################
-CONF_COMMON_FILE_NAME="${COMMON_CONF_PREFIX}.${CONF_EXT}"
-CONF_COMMON_FILE="${CONF_DIR}/${CONF_COMMON_FILE_NAME}"
+# #####################################################################################################################################################################################################
+# # Build and Source the Common Config file path
+# #####################################################################################################################################################################################################
+# CONF_COMMON_FILE_NAME="${COMMON_CONF_PREFIX}.${CONF_EXT}"
+# CONF_COMMON_FILE="${CONF_DIR}/${CONF_COMMON_FILE_NAME}"
 
-if [[ "${DEBUG}" == "${TRUE}"]]; then
-    log_debug "Running the common config file: ${CONF_COMMON_FILE}"
-    "${CONF_COMMON_FILE}"; SUCCESS="$?"
-else
-    log_debug "Sourcing the common config file: ${CONF_COMMON_FILE}"
-    source "${CONF_COMMON_FILE}"; SUCCESS="$?"
-fi
-[[ "${SUCCESS}" != "0" ]] && log_error "Failed to source the common config file: ${CONF_COMMON_FILE}, returned ${SUCCESS}"
-log_debug "Sourced the common config file: ${CONF_COMMON_FILE}"
+# if [[ "${DEBUG}" == "${TRUE}" ]]; then
+#     log_debug "Running the common config file: ${CONF_COMMON_FILE}"
+#     "${CONF_COMMON_FILE}"; SUCCESS="$?"
+# else
+#     log_debug "Sourcing the common config file: ${CONF_COMMON_FILE}"
+#     # shellcheck disable=SC1090
+#     source "${CONF_COMMON_FILE}"; SUCCESS="$?"
+# fi
+# [[ "${SUCCESS}" != "0" ]] && log_error "Failed to source the common config file: ${CONF_COMMON_FILE}, returned ${SUCCESS}"
+# log_debug "Sourced the common config file: ${CONF_COMMON_FILE}"
 
 
 #####################################################################################################
@@ -132,7 +137,8 @@ export ROOT_CONF_DIR_NAME="conf"
 export ROOT_CONF_DIR="${PROJ_DIR}/${ROOT_CONF_DIR_NAME}"
 export ROOT_CONF_FILE_NAME="script_util.cfg"
 export ROOT_CONF_FILE="${ROOT_CONF_DIR}/${ROOT_CONF_FILE_NAME}"
-source ${ROOT_CONF_FILE}
+# shellcheck disable=SC1090
+# source "${ROOT_CONF_FILE}"
 
 
 #######################################################################################################################################################################################
@@ -177,6 +183,7 @@ export GET_TODO_COMMENTS_SCRIPT="${UTIL_DIR}/${GET_TODO_COMMENTS_SCRIPT_NAME}"
 ##################################################################################
 # Determine Host OS and source Date functions
 ##################################################################################
+# shellcheck disable=SC2155
 export CURRENT_OS=$(${GET_OS_SCRIPT})
 
 [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( TRUE )) || return $(( TRUE ))

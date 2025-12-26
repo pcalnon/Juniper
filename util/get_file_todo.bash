@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-12-03
-# Last Modified: 2025-12-19
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -38,25 +38,10 @@
 # Source script config file
 #####################################################################################################################################################################################################
 set -o functrace
+# shellcheck disable=SC2155
 export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="../conf/init.conf"
+# shellcheck disable=SC2015,SC1090
 [[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
-
-
-####################################################################################################
-# Define Script Functions
-# TODO: Move these to fn config file
-####################################################################################################
-function usage() {
-    RET_VAL="$1"
-    shift
-    MESSAGE="$@"
-    USAGE="\n\tusage: ${FUNCTION_NAME} [${HELP_SHORT}|${HELP_LONG}] [${FILE_SHORT}|${FILE_LONG} <Path to File>] [${SEARCH_SHORT}|${SEARCH_LONG} <Search Term>]\n\n"
-    if [[ ${MESSAGE} != "" ]]; then
-        echo -ne "${MESSAGE}"
-    fi
-    echo -ne "${USAGE}"
-    exit $(( RET_VAL ))
-}
 
 
 #######################################################################################################################################################################################
@@ -64,10 +49,10 @@ function usage() {
 #######################################################################################################################################################################################
 while [[ "${1}" != "" ]]; do
     case ${1} in
-        ${HELP_SHORT} | ${HELP_LONG})
+        "${HELP_SHORT}" | "${HELP_LONG}")
             usage 0
         ;;
-        ${SEARCH_SHORT} | ${SEARCH_LONG})
+        "${SEARCH_SHORT}" | "${SEARCH_LONG}")
             shift
             PARAM="${1}"
             shift
@@ -75,7 +60,7 @@ while [[ "${1}" != "" ]]; do
                 SEARCH_TERM="${PARAM}"
             fi
         ;;
-        ${FILE_SHORT} | ${FILE_LONG})
+        "${FILE_SHORT}" | "${FILE_LONG}")
             shift
             PARAM="${1}"
             shift
@@ -86,7 +71,7 @@ while [[ "${1}" != "" ]]; do
             fi
         ;;
         *)
-            usage 1 "Error: Invalid command line params: \"${@}\"\n"
+            usage 1 "Error: Invalid command line params: \"${*}\"\n"
         ;;
     esac
 done
@@ -95,8 +80,8 @@ done
 #######################################################################################################################################################################################
 # Search for instances of a specific search term in the specified source code file
 #######################################################################################################################################################################################
-RAW_OUTPUT="$(grep "${SEARCH_TERM}" ${SEARCH_FILE})"
-COUNT="$(grep "${SEARCH_TERM}" ${SEARCH_FILE} | wc -l)"
+# RAW_OUTPUT="$(grep "${SEARCH_TERM}" ${SEARCH_FILE})"
+COUNT="$(grep -ic "${SEARCH_TERM}" "${SEARCH_FILE}")"
 
 
 #######################################################################################################################################################################################

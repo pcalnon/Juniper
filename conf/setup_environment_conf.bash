@@ -6,24 +6,25 @@
 # Purpose:       Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
 #
 # Author:        Paul Calnon
-# Version:       1.0.0
-# File Name:     config_fail.conf
+# Version:       0.1.4 (0.7.3)
+# File Name:     setup_environment.conf
 # File Path:     <Project>/<Sub-Project>/<Application>/conf/
 #
-# Date:          2025-12-17
-# Last Modified: 2025-12-19
+# Date:          2025-10-11
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
 #
 # Description:
-#     This file defines a local, log_error function that can be used when the config process fails.
-#     This local, log_error function matches the log message format used when project is properly configured.
+#    This script sets up the development environment for the Juniper Canopy application.
 #
 #####################################################################################################################################################################################################
 # Notes:
+#     Juniper Canopy Environment Setup Script
+#     This script sets up the development environment for the Juniper Canopy application
 #
-#####################################################################################################################################################################################################
+########################################################################################################)#############################################################################################
 # References:
 #
 #####################################################################################################################################################################################################
@@ -36,7 +37,7 @@
 
 
 #####################################################################################################################################################################################################
-# Define Debug Constants
+# Define Script Constants
 #####################################################################################################################################################################################################
 export TRUE="0"
 export FALSE="1"
@@ -46,44 +47,46 @@ export DEBUG="${FALSE}"
 
 
 #####################################################################################################################################################################################################
-# Check if this config file has already been sourced.  Only Source this conf file Once
+# Only Source this conf file Once
 #####################################################################################################################################################################################################
-if [[ "${JUNIPER_LOGGING_CONF_SOURCED}" != "${TRUE}" ]]; then
-    export JUNIPER_LOGGING_CONF_SOURCED="${TRUE}"
+if [[ "${SETUP_ENVIRONMENT_SOURCED}" != "${TRUE}" ]]; then
+    export SETUP_ENVIRONMENT_SOURCED="${TRUE}"
 else
-    log_warning "logging.conf already sourced.  Skipping re-source."
-    [[ "${DEBUG}" == "${TRUE}" ]] && exit "${TRUE}" || return "${TRUE}"
+    log_warning "setup_environment.conf already sourced.  Skipping re-source."
+    [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( TRUE )) || return $(( TRUE ))
 fi
 
 
 #####################################################################################################################################################################################################
-# Define Top Level Script error log Function and required constants, Handle Failed Config file sourcing
+# Define local constants
 #####################################################################################################################################################################################################
-function log_critical() {
-    SUCCESS="$1"; PARENT_PATH_PARAM="$2"; INIT_CONF="$3"; LINENO="$4"; LOG_FILE="$5"; EXIT_STATUS="${6}"; TERM_STATUS="${7}"  # This, log file, is the only param that could be undefined, unless squirrels ate my pants.
-    [[ "${LOG_FILE}" == "" ]] && LOG_FILE="../logs/$(basename "$(dirname "$(dirname "${PARENT_PATH_PARAM}")")")_$(date +%F_%T).log"
+# Configuration
+export PROJECT_NAME="Juniper Canopy"
+export ENV_NAME="JuniperPython"
+export PROJECT_DIR="${HOME}/Development/python/JuniperCanopy/juniper_canopy"
 
-    if [[ "${SUCCESS}" != "${TRUE}" ]]; then
-        printf "%b%-21s %-28s %-21s %-11s %s%b\n" "\033[1;31m" "($(date +%F_%T))" "$(basename "${PARENT_PATH_PARAM}"):(${LINENO})" "main:" "[CRITICAL]" "Config load Failed: \"${INIT_CONF}\"" "\033[0m" | tee -a "${LOG_FILE}" 2>&1
-        [[ "${TERM_STATUS}" == "${TRUE}" ]] && set -e && exit "${EXIT_STATUS}"
-        [[ "${DEBUG}" == "${TRUE}" ]] && exit "${EXIT_STATUS}" || return "${EXIT_STATUS}"
-    fi
-}
+# Colors for output
+export RED='\033[0;31m'
+export GREEN='\033[0;32m'
+export YELLOW='\033[1;33m'
+export BLUE='\033[0;34m'
+export NC='\033[0m' # No Color
 
-function log_fatal() {
-    log_critical "$@" "${FALSE}" "${TRUE}"
-}
+# Define Script Constants
+export BASH_CONFIG=""
 
-function log_error() {
-    log_critical "$@" "${FALSE}" "${FALSE}"
-}
+export LINUX="Linux"
+export MACOS="Darwin"
 
+export COMMENT_REGEX="^[[:space:]]*#.*$"
+export CONDA_CMD="conda"
+export MAMBA_CMD="mamba"
+export CONDA_OFFSET="2"
+export MAMBA_OFFSET="3"
 
-#####################################################################################################################################################################################################
-# Export critical logging and its error logging alias
-#####################################################################################################################################################################################################
-export -f log_critical
-export -f log_error
+# USE_CONDA="${TRUE}"
+export USE_CONDA="${FALSE}"
+export USE_MAMBA="$(((USE_CONDA + 1) % 2))"
 
-
-[[ "${DEBUG}" == "${TRUE}" ]] && exit "${TRUE}" || return "${TRUE}"
+# shellcheck disable=SC2155
+export OS_TYPE="$(uname -s)"

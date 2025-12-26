@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-10-11
-# Last Modified: 2025-12-19
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -56,7 +56,9 @@
 # Source script config file
 #####################################################################################################################################################################################################
 set -o functrace
+# shellcheck disable=SC2155
 export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="../conf/init.conf"
+# shellcheck disable=SC2015,SC1090
 [[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 
@@ -82,13 +84,13 @@ if [[ "${DEMO_MODE}" == "${TRUE}" ]]; then
     log_debug "Launch Demo Mode: ${LAUNCH_DEMO_MODE}"
     ${LAUNCH_DEMO_MODE}
 else
-    if [[ "$(ps aux | grep -v grep | grep "${CASCOR_NAME}" 2>/dev/null)" == "" ]]; then
-        PID="$(ps aux | grep -v grep | grep "bash" | head -1 | awk -F " " '{print $2;}')"
+    if [[ "$(pgrep -f "${CASCOR_NAME}" 2>/dev/null)" == "" ]]; then
+        PID="$(pgrep -f "bash" | head -1 | awk -F " " '{print $2;}')"
         log_info "CasCor Backend is already running with pid: ${PID}"
     else
         log_info "CasCor Backend is not running, launching ${CASCOR_NAME} in Main Mode with real CasCor backend: ${CASCOR_MAIN_FILE}"
         log_debug "nohup ${LANGUAGE_PATH} \"${CASCOR_MAIN_FILE}\" > /dev/null 2>&1 &"
-        nohup ${LANGUAGE_PATH} "${CASCOR_MAIN_FILE}" > /dev/null 2>&1 &
+        nohup "${LANGUAGE_PATH}" "${CASCOR_MAIN_FILE}" > /dev/null 2>&1 &
         PID="$!"
         log_info "CasCor Backend is running with pid: ${PID}"
     fi

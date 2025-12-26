@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-12-03
-# Last Modified: 2025-12-19
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -38,7 +38,9 @@
 # Source script config file
 #####################################################################################################################################################################################################
 set -o functrace
+# shellcheck disable=SC2155
 export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="../conf/init.conf"
+# shellcheck disable=SC1090,SC2015
 [[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 
@@ -91,13 +93,13 @@ fi
 #####################################################################################################################################################################################################
 DONE_COUNT=0
 FOUND_COUNT=0
-for i in $(find ${SRC_DIR}); do
+while read -r i; do
     SOURCE_FILE=$(echo "${i}" | grep "\.${SRC_FILE_SUFFIX}\$")
     if [[ ${SOURCE_FILE} != "" ]]; then
         SOURCE_FILE=$(echo "${SOURCE_FILE}" | grep -v "${INIT_PYTHON_FILE}")
 	if [[ ${SOURCE_FILE} != "" ]]; then
             if [[ -f ${SOURCE_FILE} ]]; then
-                FOUND=$(cat ${SOURCE_FILE} | grep "${SEARCH_TERM}")
+                FOUND=$(cat "${SOURCE_FILE}" | grep "${SEARCH_TERM}")
                 if [[ ${FOUND} != "" ]]; then
                     FOUND_COUNT=$((FOUND_COUNT + 1))
                     if [[ ${DEBUG} == "true" || ${FULL_OUTPUT} == "true" ]]; then
@@ -112,7 +114,7 @@ for i in $(find ${SRC_DIR}); do
             fi
         fi
     fi
-done
+done <<< "$(find "${SRC_DIR}" -type f)"
 
 
 #####################################################################################################################################################################################################

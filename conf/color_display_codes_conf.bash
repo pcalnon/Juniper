@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 #####################################################################################################################################################################################################
 # Project:       Juniper
-# Prototype:     Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
-# File Name:     color_display_codes.bash
+# Sub-Project:   JuniperCanopy
+# Application:   juniper_canopy
+# Purpose:       Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
+#
 # Author:        Paul Calnon
 # Version:       0.1.4 (0.7.3)
+# File Name:     color_display_codes.conf
+# File Path:     <Project>/<Sub-Project>/<Application>/conf/
 #
 # Date:          2025-10-31
-# Last Modified: 2025-12-03
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
-# Copyright:     Copyright (c) 2024-2025 Paul Calnon
+# Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
 #
 # Description:
 #    Warning: This Config File is Sourced.
@@ -52,11 +56,11 @@
 ##############################################################################################################################################################################
 # Define Global Script Constants
 ##############################################################################################################################################################################
-TRUE=0
-FALSE=1
+export TRUE=0
+export FALSE=1
 
-DEBUG="${TRUE}"
-# DEBUG="${FALSE}"
+export DEBUG="${TRUE}"
+# export DEBUG="${FALSE}"
 
 
 ##############################################################################################################################################################################
@@ -111,35 +115,35 @@ export White=37
 ##############################################################################################################################################################################
 # Escape Code Formatting
 ##############################################################################################################################################################################
-Prefix="\033["
-Suffix="m"
-Delimiter=";"
+export Prefix="\033["
+export Suffix="m"
+export Delimiter=";"
 
 
 ##############################################################################################################################################################################
 # Define Color Numbers for Color Logging Messages
 ##############################################################################################################################################################################
-DebugMsgGreyColorNumber=$(( Black+Bright+Foreground ))
-ErrorMsgRedColorNumber=$(( Red+Normal+Foreground ))
-SuccessMsgGreenColorNumber=$(( Green+Normal+Foreground ))
-WarningMsgYellowColorNumber=$(( Yellow+Normal+Foreground ))
-InfoMsgBlueColorNumber=$(( Blue+Normal+Foreground ))
-StatusMsgPurpleColorNumber=$(( Purple+Normal+Foreground ))
+export DebugMsgGreyColorNumber=$(( Black+Bright+Foreground ))
+export ErrorMsgRedColorNumber=$(( Red+Normal+Foreground ))
+export SuccessMsgGreenColorNumber=$(( Green+Normal+Foreground ))
+export WarningMsgYellowColorNumber=$(( Yellow+Normal+Foreground ))
+export InfoMsgBlueColorNumber=$(( Blue+Normal+Foreground ))
+export StatusMsgPurpleColorNumber=$(( Purple+Normal+Foreground ))
 
-StatusMsgFormat=${Normal}
+export StatusMsgFormat=${Normal}
 
 
 ##############################################################################################################################################################################
 # Define color numbers for Color Logging labels
 ##############################################################################################################################################################################
-DebugLabelGreyColorNumber=$(( Black+Bright+Foreground ))
-ErrorLabelRedColorNumber=$(( Red+Bright+Foreground ))
-SuccessLabelGreenColorNumber=$(( Green+Bright+Foreground ))
-WarningLabelYellowColorNumber=$(( Yellow+Bright+Foreground ))
-InfoLabelBlueColorNumber=$(( Blue+Bright+Foreground ))
-StatusLabelPurpleColorNumber=$(( Purple+Bright+Foreground ))
+export DebugLabelGreyColorNumber=$(( Black+Bright+Foreground ))
+export ErrorLabelRedColorNumber=$(( Red+Bright+Foreground ))
+export SuccessLabelGreenColorNumber=$(( Green+Bright+Foreground ))
+export WarningLabelYellowColorNumber=$(( Yellow+Bright+Foreground ))
+export InfoLabelBlueColorNumber=$(( Blue+Bright+Foreground ))
+export StatusLabelPurpleColorNumber=$(( Purple+Bright+Foreground ))
 
-StatusLabelFormat=${Bold}
+export StatusLabelFormat=${Bold}
 
 
 ##############################################################################################################################################################################
@@ -168,32 +172,3 @@ export StatusLabelPurpleDisplayCode="${Prefix}${StatusLabelFormat}${Delimiter}${
 # Define Color Reset Display Code
 ##############################################################################################################################################################################
 export ColorReset="${Prefix}${Color_Off}${Suffix}"
-
-
-##############################################################################################################################################################################
-# Define Color Component Element Lists
-##############################################################################################################################################################################
-ColorList="${Black} ${Red} ${Green} ${Yellow} ${Blue} ${Purple} ${Cyan} ${White}"
-IntensityList="${Normal} ${Bright}"
-LayerList="${Foreground} ${Background}"
-FormatList="${Light} ${Normal} ${Bold}"
-
-
-##############################################################################################################################################################################
-# In Debug Mode, Test Color and format combinations
-##############################################################################################################################################################################
-if [[ "${DEBUG}" == "${TRUE}" ]]; then
-    for Color in ${ColorList}; do
-        for Intensity in ${IntensityList}; do
-            for Layer in ${LayerList}; do
-                for Format in ${FormatList}; do
-                    ColorNumber="$(( Color+Intensity+Layer ))"
-                    DisplayCode="${Prefix}${Format}${Delimiter}${ColorNumber}${Suffix}"
-                    echo "${Prefix}_${Format}_${Delimiter}_${ColorNumber}_${Suffix}"
-                    echo -ne "\n${DisplayCode}[TESTING]${ColorReset} for Color Number: ${ColorNumber} (Color: ${Color}, Intensity: ${Intensity}, Layer: ${Layer}), Format: ${Format}\n"
-                done
-            done
-        done
-    done
-    echo -ne "\n"
-fi

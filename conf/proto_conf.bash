@@ -7,8 +7,8 @@
 #
 # Author:        Paul Calnon
 # Version:       0.1.4 (0.7.3)
-# File Name:     proto.bash
-# File Path:     <Project>/<Sub-Project>/<Application>/util/
+# File Name:     proto.conf
+# File Path:     <Project>/<Sub-Project>/<Application>/conf/
 #
 # Date:          2025-10-11
 # Last Modified: 2025-12-25
@@ -41,46 +41,69 @@
 
 
 #####################################################################################################################################################################################################
-# Initialize script by sourcing the init_conf.bash config file
+# Define Boolean Constants
 #####################################################################################################################################################################################################
-set -o functrace
-# shellcheck disable=SC2155
-export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="conf/init.conf"
-# shellcheck disable=SC2015,SC1091 source=conf/init.conf
-[[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
+export TRUE="1"
+export FALSE="0"
+
+# export DEBUG="${TRUE}"
+export DEBUG="${FALSE}"
+
+
+#####################################################################################################################################################################################################
+# Only Source this conf file Once
+#####################################################################################################################################################################################################
+if [[ "${PROTO_SOURCED}" != "${TRUE}" ]]; then
+    export PROTO_SOURCED="${TRUE}"
+else
+    log_warning "proto.conf already sourced.  Skipping re-source."
+    [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( TRUE )) || return $(( TRUE ))
+fi
 
 
 #####################################################################################################
 # Specify the Python script to run:
 ####################################################################################################
-PARAMS="${*}"
+export SCRIPT="claude_sonnet_3.7_0.py"
+
+
+# shellcheck disable=SC2155
+export PYTHON_SCRIPT_NAME="$(basename "${SCRIPT}")"
+export PYTHON_SCRIPT_DIR="prototypes"
+
+export PYTHON_SCRIPT_PATH="${PYTHON_SCRIPT_DIR}/${PYTHON_SCRIPT_NAME}"
+
+
+#####################################################################################################
+# Define Global Configuration File Constants
+####################################################################################################
+export ROOT_PROJ_NAME="Juniper"
+export ROOT_CONF_NAME="conf"
+export ROOT_CONF_FILE_NAME="common.conf"
+export ROOT_PROJ_DIR="${HOME}/Development/python/${ROOT_PROJ_NAME}"
+export ROOT_CONF_DIR="${ROOT_PROJ_DIR}/${ROOT_CONF_NAME}"
+export ROOT_CONF_FILE="${ROOT_CONF_DIR}/${ROOT_CONF_FILE_NAME}"
 
 
 ####################################################################################################
-# Update the Python Path for the script
+# Configure Script Environment
 ####################################################################################################
-PATH_DEL=":"
-PATH_FOUND="$(echo "${PYTHONPATH}" | grep "${SOURCE_DIR}")"
-if [[ "${PATH_FOUND}" == "" ]]; then
-    [[ ( "${PYTHONPATH}" == "" ) || ( "${PYTHONPATH: -1}" == "${PATH_DEL}" ) ]] && PATH_DEL=""
-fi
-export PYTHONPATH="${PYTHONPATH}${PATH_DEL}${SOURCE_DIR}"
+# shellcheck disable=SC2155
+export BASE_DIR=$(${GET_PROJECT_SCRIPT} "${BASH_SOURCE[0]}")  # Determine Project Dir
+# shellcheck disable=SC2155
+export CURRENT_OS=$(${GET_OS_SCRIPT})                         # Determine Host OS
+# source "${DATE_FUNCTIONS_SCRIPT}"                           # Define Script Functions
 
 
 ####################################################################################################
-# Display Environment Values
+# Define Script Constants
 ####################################################################################################
-echo "Base Dir: ${BASE_DIR}"
-echo "Current OS: ${CURRENT_OS}"
-echo "Python: ${PYTHON} (ver: $(${PYTHON} --version))"
-echo "Python Path: ${PYTHONPATH}"
-echo "Python Script: ${PYTHON_SCRIPT}"
-echo " "
+export DATA_DIR="${BASE_DIR}/${DATA_DIR_NAME}"
+export SOURCE_DIR="${BASE_DIR}/${SOURCE_DIR_NAME}"
+export CONFIG_DIR="${BASE_DIR}/${CONFIG_DIR_NAME}"
+export LOGGING_DIR="${BASE_DIR}/${LOGGING_DIR_NAME}"
+export UTILITY_DIR="${BASE_DIR}/${UTILITY_DIR_NAME}"
 
-
-####################################################################################################
-# Execute Python script
-####################################################################################################
-echo "time ${PYTHON} ${PYTHON_SCRIPT} ${PARAMS}"
-
-time ${PYTHON} "${PYTHON_SCRIPT}" "${PARAMS}"
+# shellcheck disable=SC2155
+export PYTHON="$(which python3)"
+export PYTHON_SCRIPT="${SOURCE_DIR}/${PYTHON_SCRIPT_PATH}"

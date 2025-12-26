@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/conf/
 #
 # Date:          2025-12-18
-# Last Modified: 2025-12-24
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -63,14 +63,18 @@ fi
 #####################################################################################################################################################################################################
 function get_calling_script_info() {
     local SCRIPT_NAME_ID="$1"
-    export CALLING_PATH="$(realpath ${BASH_SOURCE[${SCRIPT_NAME_ID}]})"
-    export CALLING_DIR="$(dirname ${CALLING_PATH})"
+    # shellcheck disable=SC2155
+    export CALLING_PATH="$(realpath "${BASH_SOURCE[${SCRIPT_NAME_ID}]}")"
+    # shellcheck disable=SC2155
+    export CALLING_DIR="$(dirname "${CALLING_PATH}")"
     return $(( TRUE ))
 }
 
 function get_application_info() {
     local CALLING_PATH="$1"
+    # shellcheck disable=SC2155
     export APP_DIR="$(dirname "${CALLING_PATH}")"
+    # shellcheck disable=SC2155
     export APP_NAME="$(basename "${APP_DIR}")"
     return $(( TRUE ))
 }
@@ -78,12 +82,14 @@ function get_application_info() {
 function get_logs_dir() {
     local APP_PATH="$1"
     local LOGGING_DIR_NAME="$2"
+    # shellcheck disable=SC2155
     export LOG_DIR="$(dirname "${APP_PATH}")/${LOGGING_DIR_NAME}"
     [[ ( "${LOG_DIR}" != "" ) || ( ! -d "${LOG_DIR}" ) ]] && mkdir -p "${LOG_DIR}"
     return $(( TRUE ))
 }
 
 function get_unique_log_label() {
+    # shellcheck disable=SC2155
     export UNIQUE_LABEL="_$(date +%F_%T)"
     return $(( TRUE ))
 }
@@ -96,7 +102,7 @@ function get_log_filename() {
     return $(( TRUE ))
 }
 
-function check_filename(){
+function check_log_file(){
     local FILENAME="$1"
     local DIR_NAME="$2"
     local LOG_FILE="${DIR_NAME}/${FILENAME}"
@@ -108,7 +114,7 @@ function get_valid_filename() {
     local LOG_EXT="$2"
     local LOGGING_DIR="$3"
     get_log_filename "${APP_NAME}" "${LOG_EXT}"
-    if ! check_filename "${LOG_FILENAME}" "${LOGGING_DIR}"; then
+    if ! check_log_file "${LOG_FILENAME}" "${LOGGING_DIR}"; then
         UNIQUE_LABEL="" && get_unique_log_label
         get_log_filename "${LOG_FILENAME%.*}" "${LOG_FILENAME##*.}" "${UNIQUE_LABEL}"
     fi
@@ -126,7 +132,7 @@ function get_log_file() {
 
     [[ ( "${LOG_DIR}" == "" ) || ( ! -d "${LOG_DIR}" ) ]] && log_fatal "LOG_DIR constant is empty or invalid. Unable to create and validate log file"
     [[ ${LOG_FILE} == "" ]] && log_fatal "LOG_FILE constant is empty, Unable to create and validate log file"
-    [[ ! -f "${LOG_FILE}" ]] && touch ${LOG_FILE}
+    [[ ! -f "${LOG_FILE}" ]] && touch "${LOG_FILE}"
     [[ ! -f "${LOG_FILE}" ]] && return $(( FALSE )) || return $(( TRUE ))
 }
 
@@ -140,37 +146,13 @@ function get_log_env_info() {
     return $(( SUCCESS ))
 }
 
-# function get_log_header_info() {
-#     SCRIPT_NAME_ID="$1"
-#     LINE_NO_ID="$2"
-#     FUNC_NAME_ID="$3"
-#     CALLING_PATH="$(realpath ${BASH_SOURCE[${SCRIPT_NAME_ID}]})"
-#     CALLING_SCRIPT="$(basename "${CALLING_PATH}")"
-#     CALLING_LINE="${BASH_LINENO[${LINE_NO_ID}]}"
-#     CALLING_FUNC="${FUNCNAME[${FUNC_NAME_ID}]}"
-# }
-
-# function get_init_script_info() {
-#     CURRENT_SCRIPT_ID="$1"
-#     CURRENT_FUNC_ID="$2"
-#     CURRENT_PATH="$(realpath "${BASH_SOURCE[${CURRENT_SCRIPT_ID}]}")"
-#     CURRENT_SCRIPT="$(basename "${CURRENT_PATH}")"
-#     CURRENT_DIR="$(dirname "${CURRENT_PATH}")"
-#     CURRENT_LINE="${LINENO}"
-#     CURRENT_FUNC="${FUNCNAME[${CURRENT_FUNC_ID}]}"
-# }
-#    #get_log_header_info "${SCRIPT_NAME_ID}" "${LINE_NO_ID}" "${FUNC_NAME_ID}"
-#    #get_init_script_info "${SCRIPT_NAME_ID}" "${FUNC_NAME_ID}"
-# export -f get_log_header_info
-# export -f get_init_script_info
-
 function init_logging_env() {
-    get_log_env_info "${LOG_EXT}" "${LOGS_DIR}" "${SCRIPT_NAME_ID}"; SUCCESS="$?"
+    get_log_env_info "${LOG_EXT}" "${LOG_DIR}" "${SCRIPT_NAME_ID}"; SUCCESS="$?"
     return $(( SUCCESS ))
 }
 
 function is_defined() {
-    declare -F $1 &> /dev/null
+    declare -F "$1" &> /dev/null
 }
 
 
@@ -200,7 +182,7 @@ function logger() {
     local LOG_LABEL="${4}"
     local LOG_MESSAGE="${5}"
     local LOG_COLOR="${6}"
-    printf "%b%-21s %-28s %-21s %-11s %s%b\n" ${LOG_COLOR} "($(date +%F_%T))" "${LOG_PARENT}:($LOG_LINE):" "${LOG_FUNC}:" "${LOG_LABEL}" "${LOG_MESSAGE}" ${RESET} | tee -a "${LOG_FILE}" 2>&1
+    printf "%b%-21s %-28s %-21s %-11s %s%b\n" "${LOG_COLOR}" "($(date +%F_%T))" "${LOG_PARENT}:($LOG_LINE):" "${LOG_FUNC}:" "${LOG_LABEL}" "${LOG_MESSAGE}" "${RESET}" | tee -a "${LOG_FILE}" 2>&1
     return $(( TRUE ))
 }
 
@@ -226,198 +208,132 @@ function evaluate_log_level() {
 # Define custom level logging functions
 #########################################################################################}
 function log_trace() {
-
-    MESSAGE="$1"
-    [[ "${2}" != "" ]] && EXIT_STATUS="$2" || EXIT_STATUS="${EXIT_TRACE}"
-    [[ "${3}" != "" ]] && TERM_STATUS="$3" || TERM_STATUS="${TERM_TRACE}"
-    get_logging_env
-    printf "%b%-21s %-28s %-21s %-11s %s%b\n" "${COLOR_TRACE}" "($(date +%F_%T))" "${CALLING_SCRIPT}:${CALLING_LINE})" "${CALLING_FUNC}:" "[TRACE]" "${MESSAGE}" "${RESET}" | tee -a "${LOG_FILE}" 2>&1
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); } || return $(( EXIT_STATUS ))
-
-
     local MESSAGE="$1"
     [[ "$2" == "" ]] && EXIT_STATUS="${EXIT_TRACE}" || EXIT_STATUS="$2"
     [[ "$3" == "" ]] && TERM_STATUS="${TERM_TRACE}" || TERM_STATUS="$3"
     evaluate_log_level "${TRACE_NUM}" "${LOG_NUMBERS[${LOG_LEVEL}]}" || return $(( EXIT_STATUS ))
-    local CALLING_SCRIPT="$(basename "$(realpath ${BASH_SOURCE[${SCRIPT_NAME_ID}]})")"
+    # shellcheck disable=SC2155
+    local CALLING_SCRIPT="$(basename "$(realpath "${BASH_SOURCE[${SCRIPT_NAME_ID}]}")")"
     local CALLING_LINE="${BASH_LINENO[${LINE_NO_ID}]}"
     local CALLING_FUNC="${FUNCNAME[${FUNC_NAME_ID}]}"
+    # shellcheck disable=SC2153
     local COLOR_CODE="${LOG_COLORS[${TRACE_LEVEL}]}"
+    # shellcheck disable=SC2153
     local LOG_LABEL="${LOG_LABELS[${LOG_LEVEL}]}"
     logger "${CALLING_SCRIPT}" "${CALLING_LINE}" "${CALLING_FUNC}" "${LOG_LABEL}" "${MESSAGE}" "${COLOR_CODE}"
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && set -e && exit $(( EXIT_STATUS ))
+    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); }
     [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( EXIT_STATUS )) || return $(( EXIT_STATUS ))
 }
 
 function log_verbose() {
-
-    MESSAGE="$1"
-    [[ "${2}" != "" ]] && EXIT_STATUS="$2" || EXIT_STATUS="${EXIT_VERBOSE}"
-    [[ "${3}" != "" ]] && TERM_STATUS="$3" || TERM_STATUS="${TERM_VERBOSE}"
-    get_logging_env
-    printf "%b%-21s %-28s %-21s %-11s %s%b\n" "${COLOR_VERBOSE}" "($(date +%F_%T))" "${CALLING_SCRIPT}:${CALLING_LINE})" "${CALLING_FUNC}:" "[VERBOSE]" "${MESSAGE}" "${RESET}" | tee -a "${LOG_FILE}" 2>&1
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); } || return $(( EXIT_STATUS ))
-
-
     local MESSAGE="$1"
     [[ "$2" == "" ]] && EXIT_STATUS="${EXIT_VERBOSE}" || EXIT_STATUS="$2"
     [[ "$3" == "" ]] && TERM_STATUS="${TERM_VERBOSE}" || TERM_STATUS="$3"
     evaluate_log_level "${VERBOSE_NUM}" "${LOG_NUMBERS[${LOG_LEVEL}]}" || return $(( EXIT_STATUS ))
-    local CALLING_SCRIPT="$(basename "$(realpath ${BASH_SOURCE[${SCRIPT_NAME_ID}]})")"
+    # shellcheck disable=SC2155
+    local CALLING_SCRIPT="$(basename "$(realpath "${BASH_SOURCE[${SCRIPT_NAME_ID}]}")")"
     local CALLING_LINE="${BASH_LINENO[${LINE_NO_ID}]}"
     local CALLING_FUNC="${FUNCNAME[${FUNC_NAME_ID}]}"
     local COLOR_CODE="${LOG_COLORS[${VERBOSE_LEVEL}]}"
     local LOG_LABEL="${LOG_LABELS[${LOG_LEVEL}]}"
     logger "${CALLING_SCRIPT}" "${CALLING_LINE}" "${CALLING_FUNC}" "${LOG_LABEL}" "${MESSAGE}" "${COLOR_CODE}"
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && set -e && exit $(( EXIT_STATUS ))
+    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); }
     [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( EXIT_STATUS )) || return $(( EXIT_STATUS ))
 }
 
 function log_debug() {
-
-    MESSAGE="$1"
-    [[ "${2}" != "" ]] && EXIT_STATUS="$2" || EXIT_STATUS="${EXIT_DEBUG}"
-    [[ "${3}" != "" ]] && TERM_STATUS="$3" || TERM_STATUS="${TERM_DEBUG}"
-    get_logging_env
-    printf "%b%-21s %-28s %-21s %-11s %s%b\n" "${COLOR_DEBUG}" "($(date +%F_%T))" "${CALLING_SCRIPT}:${CALLING_LINE})" "${CALLING_FUNC}:" "[DEBUG]" "${MESSAGE}" "${RESET}" | tee -a "${LOG_FILE}" 2>&1
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); } || return $(( EXIT_STATUS ))
-
-
-
     local MESSAGE="$1"
     [[ "$2" == "" ]] && EXIT_STATUS="${EXIT_DEBUG}" || EXIT_STATUS="$2"
     [[ "$3" == "" ]] && TERM_STATUS="${TERM_DEBUG}" || TERM_STATUS="$3"
     evaluate_log_level "${DEBUG_NUM}" "${LOG_NUMBERS[${LOG_LEVEL}]}" || return $(( EXIT_STATUS ))
-    local CALLING_SCRIPT="$(basename "$(realpath ${BASH_SOURCE[${SCRIPT_NAME_ID}]})")"
+    # shellcheck disable=SC2155
+    local CALLING_SCRIPT="$(basename "$(realpath "${BASH_SOURCE[${SCRIPT_NAME_ID}]}")")"
     local CALLING_LINE="${BASH_LINENO[${LINE_NO_ID}]}"
     local CALLING_FUNC="${FUNCNAME[${FUNC_NAME_ID}]}"
     local COLOR_CODE="${LOG_COLORS[${DEBUG_LEVEL}]}"
     local LOG_LABEL="${LOG_LABELS[${LOG_LEVEL}]}"
     logger "${CALLING_SCRIPT}" "${CALLING_LINE}" "${CALLING_FUNC}" "${LOG_LABEL}" "${MESSAGE}" "${COLOR_CODE}"
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && set -e && exit $(( EXIT_STATUS ))
+    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); }
     [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( EXIT_STATUS )) || return $(( EXIT_STATUS ))
 }
 
 function log_info() {
-
-    MESSAGE="$1"
-    [[ "${2}" != "" ]] && EXIT_STATUS="$2" || EXIT_STATUS="${EXIT_INFO}"
-    [[ "${3}" != "" ]] && TERM_STATUS="$3" || TERM_STATUS="${TERM_INFO}"
-    get_logging_env
-    printf "%b%-21s %-28s %-21s %-11s %s%b\n" "${COLOR_INFO}" "($(date +%F_%T))" "${CALLING_SCRIPT}:${CALLING_LINE})" "${CALLING_FUNC}:" "[INFO]" "${MESSAGE}" "${RESET}" | tee -a "${LOG_FILE}" 2>&1
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); } || return $(( EXIT_STATUS ))
-
-
     local MESSAGE="$1"
     [[ "$2" == "" ]] && EXIT_STATUS="${EXIT_INFO}" || EXIT_STATUS="$2"
     [[ "$3" == "" ]] && TERM_STATUS="${TERM_INFO}" || TERM_STATUS="$3"
     evaluate_log_level "${INFO_NUM}" "${LOG_NUMBERS[${LOG_LEVEL}]}" || return $(( EXIT_STATUS ))
-    local CALLING_SCRIPT="$(basename "$(realpath ${BASH_SOURCE[${SCRIPT_NAME_ID}]})")"
+    # shellcheck disable=SC2155
+    local CALLING_SCRIPT="$(basename "$(realpath "${BASH_SOURCE[${SCRIPT_NAME_ID}]}")")"
     local CALLING_LINE="${BASH_LINENO[${LINE_NO_ID}]}"
     local CALLING_FUNC="${FUNCNAME[${FUNC_NAME_ID}]}"
     local COLOR_CODE="${LOG_COLORS[${INFO_LEVEL}]}"
     local LOG_LABEL="${LOG_LABELS[${INFO_LEVEL}]}"
     logger "${CALLING_SCRIPT}" "${CALLING_LINE}" "${CALLING_FUNC}" "${LOG_LABEL}" "${MESSAGE}" "${COLOR_CODE}"
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && set -e && exit $(( EXIT_STATUS ))
+    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); }
     [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( EXIT_STATUS )) || return $(( EXIT_STATUS ))
 }
 
 function log_warning() {
-
-    MESSAGE="$1"
-    [[ "${2}" != "" ]] && EXIT_STATUS="$2" || EXIT_STATUS="${EXIT_WARNING}"
-    [[ "${3}" != "" ]] && TERM_STATUS="$3" || TERM_STATUS="${TERM_WARNING}"
-    get_logging_env
-    printf "%b%-21s %-28s %-21s %-11s %s%b\n" "${COLOR_WARNING}" "($(date +%F_%T))" "${CALLING_SCRIPT}:${CALLING_LINE})" "${CALLING_FUNC}:" "[WARNING]" "${MESSAGE}" "${RESET}" | tee -a "${LOG_FILE}" 2>&1
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); } || return $(( EXIT_STATUS ))
-
-
-
     local MESSAGE="$1"
     [[ "$2" == "" ]] && EXIT_STATUS="${EXIT_WARNING}" || EXIT_STATUS="$2"
     [[ "$3" == "" ]] && TERM_STATUS="${TERM_WARNING}" || TERM_STATUS="$3"
     evaluate_log_level "${WARNING_NUM}" "${LOG_NUMBERS[${LOG_LEVEL}]}" || return $(( EXIT_STATUS ))
-    local CALLING_SCRIPT="$(basename "$(realpath ${BASH_SOURCE[${SCRIPT_NAME_ID}]})")"
+    # shellcheck disable=SC2155
+    local CALLING_SCRIPT="$(basename "$(realpath "${BASH_SOURCE[${SCRIPT_NAME_ID}]}")")"
     local CALLING_LINE="${BASH_LINENO[${LINE_NO_ID}]}"
     local CALLING_FUNC="${FUNCNAME[${FUNC_NAME_ID}]}"
     local COLOR_CODE="${LOG_COLORS[${WARNING_LEVEL}]}"
     local LOG_LABEL="${LOG_LABELS[${WARNING_LEVEL}]}"
     logger "${CALLING_SCRIPT}" "${CALLING_LINE}" "${CALLING_FUNC}" "${LOG_LABEL}" "${MESSAGE}" "${COLOR_CODE}"
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && set -e && exit $(( EXIT_STATUS ))
+    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); }
     [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( EXIT_STATUS )) || return $(( EXIT_STATUS ))
 }
 
 function log_error() {
-
-    MESSAGE="$1"
-    [[ "${2}" != "" ]] && EXIT_STATUS="$2" || EXIT_STATUS="${EXIT_ERROR}"
-    [[ "${3}" != "" ]] && TERM_STATUS="$3" || TERM_STATUS="${TERM_ERROR}"
-    get_logging_env
-    printf "%b%-21s %-28s %-21s %-11s %s%b\n" "${COLOR_ERROR}" "($(date +%F_%T))" "${CALLING_SCRIPT}:${CALLING_LINE})" "${CALLING_FUNC}:" "[ERROR]" "${MESSAGE}" "${RESET}" | tee -a "${LOG_FILE}" 2>&1
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); } || return $(( EXIT_STATUS ))
-
-
-
     local MESSAGE="$1"
     [[ "$2" == "" ]] && EXIT_STATUS="${EXIT_ERROR}" || EXIT_STATUS="$2"
     [[ "$3" == "" ]] && TERM_STATUS="${TERM_ERROR}" || TERM_STATUS="$3"
     evaluate_log_level "${ERROR_NUM}" "${LOG_NUMBERS[${LOG_LEVEL}]}" || return $(( EXIT_STATUS ))
-    local CALLING_SCRIPT="$(basename "$(realpath ${BASH_SOURCE[${SCRIPT_NAME_ID}]})")"
+    # shellcheck disable=SC2155
+    local CALLING_SCRIPT="$(basename "$(realpath "${BASH_SOURCE[${SCRIPT_NAME_ID}]}")")"
     local CALLING_LINE="${BASH_LINENO[${LINE_NO_ID}]}"
     local CALLING_FUNC="${FUNCNAME[${FUNC_NAME_ID}]}"
     local COLOR_CODE="${LOG_COLORS[${ERROR_LEVEL}]}"
     local LOG_LABEL="${LOG_LABELS[${ERROR_LEVEL}]}"
     logger "${CALLING_SCRIPT}" "${CALLING_LINE}" "${CALLING_FUNC}" "${LOG_LABEL}" "${MESSAGE}" "${COLOR_CODE}"
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && set -e && exit $(( EXIT_STATUS ))
+    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); }
     [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( EXIT_STATUS )) || return $(( EXIT_STATUS ))
 }
 
 function log_critical() {
-
-    MESSAGE="$1"
-    [[ "${2}" != "" ]] && EXIT_STATUS="$2" || EXIT_STATUS="${EXIT_CRITICAL}"
-    [[ "${3}" != "" ]] && TERM_STATUS="$3" || TERM_STATUS="${TERM_CRITICAL}"
-    get_logging_env
-    printf "%b%-21s %-28s %-21s %-11s %s%b\n" "${COLOR_CRITICAL}" "($(date +%F_%T))" "${CALLING_SCRIPT}:${CALLING_LINE})" "${CALLING_FUNC}:" "[CRITICAL]" "${MESSAGE}" "${RESET}" | tee -a "${LOG_FILE}" 2>&1
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); } || return $(( EXIT_STATUS ))
-
-
-
     local MESSAGE="$1"
     [[ "$2" == "" ]] && EXIT_STATUS="${EXIT_CRITICAL}" || EXIT_STATUS="$2"
     [[ "$3" == "" ]] && TERM_STATUS="${TERM_CRITICAL}" || TERM_STATUS="$3"
     evaluate_log_level "${CRITICAL_NUM}" "${LOG_NUMBERS[${LOG_LEVEL}]}" || return $(( EXIT_STATUS ))
-    local CALLING_SCRIPT="$(basename "$(realpath ${BASH_SOURCE[${SCRIPT_NAME_ID}]})")"
+    # shellcheck disable=SC2155
+    local CALLING_SCRIPT="$(basename "$(realpath "${BASH_SOURCE[${SCRIPT_NAME_ID}]}")")"
     local CALLING_LINE="${BASH_LINENO[${LINE_NO_ID}]}"
     local CALLING_FUNC="${FUNCNAME[${FUNC_NAME_ID}]}"
     local COLOR_CODE="${LOG_COLORS[${CRITICAL_LEVEL}]}"
     local LOG_LABEL="${LOG_LABELS[${CRITICAL_LEVEL}]}"
     logger "${CALLING_SCRIPT}" "${CALLING_LINE}" "${CALLING_FUNC}" "${LOG_LABEL}" "${MESSAGE}" "${COLOR_CODE}"
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && set -e && exit $(( EXIT_STATUS ))
+    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); }
     [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( EXIT_STATUS )) || return $(( EXIT_STATUS ))
 }
 
 function log_fatal() {
-
-    MESSAGE="$1"
-    [[ "${2}" != "" ]] && EXIT_STATUS="$2" || EXIT_STATUS="${EXIT_FATAL}"
-    [[ "${3}" != "" ]] && TERM_STATUS="$3" || TERM_STATUS="${TERM_FATAL}"
-    get_logging_env
-    printf "%b%-21s %-28s %-21s %-11s %s%b\n" "${COLOR_FATAL}" "($(date +%F_%T))" "${CALLING_SCRIPT}:${CALLING_LINE})" "${CALLING_FUNC}:" "[FATAL]" "${MESSAGE}" "${RESET}" | tee -a "${LOG_FILE}" 2>&1
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); } || return $(( EXIT_STATUS ))
-
-
     local MESSAGE="$1"
     [[ "$2" == "" ]] && EXIT_STATUS="${EXIT_FATAL}" || EXIT_STATUS="$2"
     [[ "$3" == "" ]] && TERM_STATUS="${TERM_FATAL}" || TERM_STATUS="$3"
     evaluate_log_level "${FATAL_NUM}" "${LOG_NUMBERS[${LOG_LEVEL}]}" || return $(( EXIT_STATUS ))
-    local CALLING_SCRIPT="$(basename "$(realpath ${BASH_SOURCE[${SCRIPT_NAME_ID}]})")"
+    # shellcheck disable=SC2155
+    local CALLING_SCRIPT="$(basename "$(realpath "${BASH_SOURCE[${SCRIPT_NAME_ID}]}")")"
     local CALLING_LINE="${BASH_LINENO[${LINE_NO_ID}]}"
     local CALLING_FUNC="${FUNCNAME[${FUNC_NAME_ID}]}"
     local COLOR_CODE="${LOG_COLORS[${FATAL_LEVEL}]}"
     local LOG_LABEL="${LOG_LABELS[${FATAL_LEVEL}]}"
     logger "${CALLING_SCRIPT}" "${CALLING_LINE}" "${CALLING_FUNC}" "${LOG_LABEL}" "${MESSAGE}" "${COLOR_CODE}"
-    [[ "${TERM_STATUS}" == "${TRUE}" ]] && set -e && exit $(( EXIT_STATUS ))
+    [[ "${TERM_STATUS}" == "${TRUE}" ]] && { set -e; exit $(( EXIT_STATUS )); }
     [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( EXIT_STATUS )) || return $(( EXIT_STATUS ))
 }
 

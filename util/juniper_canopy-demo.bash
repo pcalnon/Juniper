@@ -5,16 +5,13 @@
 # Application:   juniper_canopy
 # Purpose:       Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
 #
-# Script Name:   juniper_canopy-demo.bash
-# Script Path:   <Project>/<Sub-Project>/juniper_canopy/util/
-# Conf File:     juniper_canopy-demo.conf
-# Conf Path:     <Project>/<Sub-Project>/<Application>/conf/
-#
 # Author:        Paul Calnon
 # Version:       1.0.0
+# File Name:     juniper_canopy-demo.bash
+# File Path:     <Project>/<Sub-Project>/juniper_canopy/util/
 #
 # Date:          2025-10-22
-# Last Modified: 2025-12-18
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -39,25 +36,22 @@
 # COMPLETED:
 #
 #####################################################################################################################################################################################################
-set -eE -o functrace
 
 
 #####################################################################################################################################################################################################
 # Source script config file
 #####################################################################################################################################################################################################
+set -o functrace
+
+# shellcheck disable=SC2155
 export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")"
-source "../conf/init.conf"; SUCCESS="$?"
+# shellcheck disable=SC1091
+source "conf/init.conf"; SUCCESS="$?"
 
 # Verify configuration succeeded
-[[ "${SUCCESS}" != "0" ]] && { source "../conf/config_fail.conf"; log_error "${SUCCESS}" "${PARENT_PATH_PARAM}" "../conf/init.conf" "${LINENO}" "${LOG_FILE}"; set -e && exit 1; }
+# shellcheck disable=SC1091
+[[ "${SUCCESS}" != "0" ]] && { source "conf/config_fail.conf"; log_error "${SUCCESS}" "${PARENT_PATH_PARAM}" "../conf/init.conf" "${LINENO}" "${LOG_FILE}"; set -e && exit 1; }
 log_debug "Successfully Configured Current Script: $(basename "${PARENT_PATH_PARAM}"), by Sourcing the Init Config File: ${INIT_CONF}, Returned: \"${SUCCESS}\""
-
-# export PARENT_SCRIPT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")"
-# export INIT_CONF="../conf/init.conf"
-# source "${INIT_CONF}"; SUCCESS="$?"
-
-# [[ "${SUCCESS}" != "0" ]] && printf "%b%-21s %-28s %-21s %-11s %s%b\n" "\033[1;31m" "($(date +%F_%T))" "$(basename "${PARENT_SCRIPT_PATH_PARAM}"):(${LINENO})" "main:" "[CRITICAL]" "Config load Failed: \"${INIT_CONF}\"" "\033[0m" | tee -a "${LOG_FILE}" 2>&1 && set -e && exit 1
-# log_debug "Successfully Sourced Current Script: $(basename "${PARENT_SCRIPT_PATH_PARAM}"), Init Config File: ${INIT_CONF}, Success: ${SUCCESS}"
 
 
 #####################################################################################################################################################################################################
@@ -65,7 +59,9 @@ log_debug "Successfully Configured Current Script: $(basename "${PARENT_PATH_PAR
 #####################################################################################################################################################################################################
 # source "${DATE_FUNCTIONS_SCRIPT}"
 log_debug "Run env info functions"
-BASE_DIR=$(${GET_PROJECT_SCRIPT} "${BASH_SOURCE}")
+# shellcheck disable=SC2034
+BASE_DIR=$(${GET_PROJECT_SCRIPT} "${BASH_SOURCE[0]}")
+# shellcheck disable=SC2034
 CURRENT_OS=$(${GET_OS_SCRIPT})
 
 

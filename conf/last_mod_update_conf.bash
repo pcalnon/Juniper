@@ -6,9 +6,9 @@
 # Purpose:       Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
 #
 # Author:        Paul Calnon
-# Version:       1.0.0
-# File Name:     main.conf
-# File Path:     <Project>/<Sub-Project>/<Application>/conf/
+# Version:       0.1.4 (0.7.3)
+# File Name:     last_mod_update_conf
+# File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-12-03
 # Last Modified: 2025-12-25
@@ -17,7 +17,7 @@
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
 #
 # Description:
-#     This script launches the juniper_canopy application.
+#     This script returns the ages of the current git branches.  Help to identify orphaned branches, etc.
 #
 #####################################################################################################################################################################################################
 # Notes:
@@ -26,8 +26,7 @@
 # References:
 #
 #####################################################################################################################################################################################################
-# TODO :
-#     1. Add parent project dir
+# TODO:
 #
 #####################################################################################################################################################################################################
 # COMPLETED:
@@ -48,41 +47,23 @@ export DEBUG="${FALSE}"
 #####################################################################################################################################################################################################
 # Only Source this conf file Once
 #####################################################################################################################################################################################################
-if [[ "${MAIN_CONF_SOURCED}" != "${TRUE}" ]]; then
-    export MAIN_CONF_SOURCED="${TRUE}"
+if [[ "${LAST_MOD_UPDATE_SOURCED}" != "${TRUE}" ]]; then
+    export LAST_MOD_UPDATE_SOURCED="${TRUE}"
 else
-    log_warning "main.conf already sourced.  Skipping re-source."
+    log_warning "last_mod_update.conf already sourced.  Skipping re-source."
     [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( TRUE )) || return $(( TRUE ))
 fi
 
-#####################################################################################################################################################################################################
-# Define constants for script
-#####################################################################################################################################################################################################
-SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
-SCRIPT_NAME="$(basename "${SCRIPT_PATH}")"
-SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
-
-BASH_EXT="bash"
-CONF_EXT="conf"
-
-UTIL_DIR_NAME="util"
-CONF_DIR_NAME="${CONF_EXT}"
-
-LOGGING_CONF_PREFIX="logging"
-COMMON_CONF_PREFIX="common"
-FUNCTION_CONF_INFIX="_fn"
-
 
 #####################################################################################################################################################################################################
-# Define Environment Constants
+# TODO: Move these to config file
 #####################################################################################################################################################################################################
-PROJECT_NAME="Juniper"
+export TARGET_FILE="${FILENAME}"
+# shellcheck disable=SC2155
+export BASENAME="$(basename "${TARGET_FILE}")"
 
-WORKING_DIR="${HOME}/Development/python/${PROJECT_NAME}"
-
-SOURCE_DIR="${WORKING_DIR}/src"
-PYTHON_FILE_NAME="main.py"
-PYTHON_FILE="${SOURCE_DIR}/${PYTHON_FILE_NAME}"
-
-
-[[ "${DEBUG}" == "${TRUE}" ]] && exit $(( TRUE )) || return $(( TRUE ))
+DIRNAME="$(dirname "${TARGET_FILE}")"
+if [[ "${DIRNAME}" == "" ]]; then
+    DIRNAME="."
+fi
+export DIRNAME

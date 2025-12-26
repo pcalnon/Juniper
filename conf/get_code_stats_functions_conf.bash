@@ -7,11 +7,11 @@
 #
 # Author:        Paul Calnon
 # Version:       1.0.0
-# Script Name:   get_code_stats_fn.conf
+# Script Name:   get_code_stats_functions.conf
 # Script Path:   <Project>/<Sub-Project>/<Application>/conf/
 #
 # Date:          2025-12-17
-# Last Modified: 2025-12-19
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -52,10 +52,10 @@ export DEBUG="${FALSE}"
 #####################################################################################################################################################################################################
 # Check if this config file has already been sourced
 #####################################################################################################################################################################################################
-if [[ "${GET_CODE_STATS_FN_CONF_SOURCED}" != "${TRUE}" ]]; then
-    export GET_CODE_STATS_FN_CONF_SOURCED="${TRUE}"
+if [[ "${GET_CODE_STATS_FUNCTIONS_SOURCED}" != "${TRUE}" ]]; then
+    export GET_CODE_STATS_FUNCTIONS_SOURCED="${TRUE}"
 else
-    log_warning "get_code_stats_fn.conf already sourced.  Skipping re-source."
+    log_warning "get_code_stats_functions.conf already sourced.  Skipping re-source."
     [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( TRUE )) || return $(( TRUE ))
 fi
 
@@ -84,19 +84,19 @@ function current_size() {
             SIZEF="$(echo "${SIZEF} * ${SIZE_LABEL_MAG}" | bc -l)"
 	fi
     done
-    SIZE="$(round_size ${SIZEF})"
+    SIZE="$(round_size "${SIZEF}")"
     echo "${SIZE}"
 }
 
 function readable_size() {
     CURRENT_SIZE="${1}"
     LABEL_INDEX=0
-    BYTES_LABEL=""
+    export BYTES_LABEL=""
     while (( $(echo "${CURRENT_SIZE} >= ${SIZE_LABEL_MAG}" | bc -l) )); do
         CURRENT_SIZE="$(echo "${CURRENT_SIZE} / ${SIZE_LABEL_MAG}" | bc -l)"
         LABEL_INDEX=$(( LABEL_INDEX + 1 ))
     done
-    SIZE="$(round_size ${CURRENT_SIZE})"
+    SIZE="$(round_size "${CURRENT_SIZE}")"
     if (( LABEL_INDEX > 0 )); then
         BYTE_LABEL="${SIZE_LABELS[0]}"
     fi

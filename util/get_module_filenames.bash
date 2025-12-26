@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-12-03
-# Last Modified: 2025-12-19
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -51,7 +51,9 @@
 # Source script config file
 #####################################################################################################################################################################################################
 set -o functrace
+# shellcheck disable=SC2155
 export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="../conf/init.conf"
+# shellcheck disable=SC2015,SC1090
 [[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 
@@ -62,10 +64,10 @@ log_debug "Process Script's Command Line Argument(s)"
 while [[ "$1" != "" ]]; do
     log_debug "Current Param Flag: $1"
     case $1 in
-        ${HELP_SHORT} | ${HELP_LONG})
+        "${HELP_SHORT}" | "${HELP_LONG}")
             usage 1
         ;;
-        ${OUTPUT_SHORT} | ${OUTPUT_LONG})
+        "${OUTPUT_SHORT}" | "${OUTPUT_LONG}")
             shift; PARAM="$1"
             log_debug "Current Param Value: ${PARAM}"
             log_debug "Lowercase: ${PARAM,,*}"
@@ -76,7 +78,7 @@ while [[ "$1" != "" ]]; do
             fi
         ;;
         *)
-            usage 1 "Error: Invalid command line params: \"${@}\"\n"
+            usage 1 "Error: Invalid command line params: \"${*}\"\n"
         ;;
     esac
 done
@@ -86,14 +88,14 @@ done
 # Get list of project modules
 ####################################################################################################
 log_debug "Get list of project modules"
-for MODULE_PATH in $(find "${SRC_DIR}" \( -name "${MODULE_EXT}" ! -name "${INIT_FILE_NAME}" ! -name "${TEST_FILE_NAME}" \) ); do
+while read -r MODULE_PATH; do
     if [[ ${FULL_OUTPUT} == "${TRUE}" ]]; then
         echo "${MODULE_PATH}"
     else
         FILENAME="${MODULE_PATH//*\/}"
         echo "${FILENAME}"
     fi
-done
+done<<< "$(find "${SRC_DIR}" \( -name "${MODULE_EXT}" ! -name "${INIT_FILE_NAME}" ! -name "${TEST_FILE_NAME}" \) )"
 echo "get_module_filenames.bash -26"
 
 [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( TRUE )) || return $(( TRUE ))

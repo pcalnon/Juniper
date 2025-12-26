@@ -1,29 +1,61 @@
 #!/usr/bin/env bash
 #####################################################################################################################################################################################################
 # Project:       Juniper
-# Prototype:     Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
-# File Name:     test_demo_endpoints.bash
+# Sub-Project:   JuniperCanopy
+# Application:   juniper_canopy
+# Purpose:       Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
+#
 # Author:        Paul Calnon
-# Version:       1.0.0
+# Version:       0.1.4 (0.7.3)
+# File Name:     test_demo_endpoints.bash
+# File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-11-16
-# Last Modified: 2025-12-03
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
-# Copyright:     Copyright (c) 2024-2025 Paul Calnon
+# Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
 #
 # Description:
 #    Manual test script to verify all demo mode endpoints are accessible.
 #    Run this while demo mode server is running.
 #
 #####################################################################################################################################################################################################
+# Notes:
+#
+########################################################################################################)#############################################################################################
+# References:
+#
+#####################################################################################################################################################################################################
+# TODO :
+#
+#####################################################################################################################################################################################################
+# COMPLETED:
+#
+#####################################################################################################################################################################################################
 
+
+#####################################################################################################################################################################################################
+# Source script config file
+#####################################################################################################################################################################################################
+set -o functrace
+# shellcheck disable=SC2155
+export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")"
+# shellcheck disable=SC1091
+source "conf/init.conf"; SUCCESS="$?"
+
+# shellcheck disable=SC1091
+[[ "${SUCCESS}" != "0" ]] && { source "conf/config_fail.conf"; log_error "${SUCCESS}" "${PARENT_PATH_PARAM}" "conf/init.conf" "${LINENO}" "${LOG_FILE}"; }
+log_debug "Successfully Configured Current Script: $(basename "${PARENT_PATH_PARAM}"), by Sourcing the Init Config File: ${INIT_CONF}, Returned: \"${SUCCESS}\""
+
+
+#####################################################################################################################################################################################################
 # Colors
-# TODO: integrate next version of bash colored logging
-export GREEN='\033[0;32m'
-export RED='\033[0;31m'
-export YELLOW='\033[1;33m'
-export NC='\033[0m'
+#####################################################################################################################################################################################################
+# export GREEN='\033[0;32m'
+# export RED='\033[0;31m'
+# export YELLOW='\033[1;33m'
+# export NC='\033[0m'
 
 echo "Testing Demo Mode Endpoints..."
 echo "==============================="

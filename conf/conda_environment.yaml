@@ -1,21 +1,55 @@
-#######################################################################################
-# project: Juniper
-# prototype: juniper_canopy
-# author: Paul Calnon
-# created-on: 2025-12-06
-# created-by: conda 25.11.0
-# platform: linux-64
-# python: 3.14
-#######################################################################################
-# This file may be used to create the Juniper Canopy environment
-#     with conda and miniforge3 using:
-# create env: conda create --name <env> --file <file>
-#     e.g., $ conda create --name JuniperCanopy --file juniper_canopy/conf/conda_environment.yaml
-# Update env: conda env update --name <env> --file <file>
-#     e.g., $ conda env update --name JuniperCanopy --file juniper_canopy/conf/conda_environment.yaml
-# Generate deps: conda list --explicit > <file>
-#     e.g., $ conda list -e >> juniper_canopy/conf/conda_environment.yaml
-#######################################################################################
+#####################################################################################################################################################################################################
+# Project:       Juniper
+# Sub-Project:   JuniperCanopy
+# Application:   juniper_canopy
+# Purpose:       Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
+#
+# Author:        Paul Calnon
+# Version:       1.0.0
+# Script Name:   conda_environment.yaml
+# Script Path:   <Project>/<Sub-Project>/<Application>/conf/
+#
+# Date:          2025-12-06
+# Last Modified: 2025-12-25
+#
+# License:       MIT License
+# Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
+#
+# Description:
+#     This script pulls together a report on the source files in the current Application.
+#
+#####################################################################################################################################################################################################
+# Notes:
+#     created-by: conda 25.11.0
+#     platform: linux-64
+#     python: 3.14
+#
+#     Longest File(s):  (1999 lines) --  NeuralNetwork.py
+#     Methods File(s):  (76 methods) --  EvolveState.py
+#     Largest File(s):  (108 KB)     --  NeuralNetwork.py
+#     Roughest File(s): (24 TODOs)   --  DNA.py
+#
+#####################################################################################################################################################################################################
+# References:
+#
+#     This file may be used to create the Juniper Canopy environment
+#         with conda and miniforge3 using:
+#     create env: conda create --name <env> --file <file>
+#         e.g., $ conda create --name JuniperCanopy --file juniper_canopy/conf/conda_environment.yaml
+#     Update env: conda env update --name <env> --file <file>
+#         e.g., $ conda env update --name JuniperCanopy --file juniper_canopy/conf/conda_environment.yaml
+#     Generate deps: conda list --explicit > <file>
+#         e.g., $ conda list -e >> juniper_canopy/conf/conda_environment.yaml
+#
+#####################################################################################################################################################################################################
+# TODO :
+#     1. Add parent project dir
+#
+#####################################################################################################################################################################################################
+# COMPLETED:
+#
+#####################################################################################################################################################################################################
+
 name: JuniperCanopy
 channels:
   - conda-forge

@@ -1,22 +1,28 @@
 #!/usr/bin/env bash
 #####################################################################################################################################################################################################
 # Project:       Juniper
-# Prototype:     juniper_canopy, juniper_cascor
-# File Name:     common.conf
+# Sub-Project:   JuniperCanopy
+# Application:   juniper_canopy
+# Purpose:       Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
+#
 # Author:        Paul Calnon
 # Version:       0.1.4 (0.7.3)
+# File Name:     init.conf
+# File Path:     <Project>/<Sub-Project>/<Application>/conf/
 #
-# Date:          2025-11-05
-# Last Modified: 2025-12-03
+# Date:          2025-11-10
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
-# Copyright:     Copyright (c) 2024-2025 Paul Calnon
+# Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
 #
 # Description:
-#    This is the common config file for the Juniper Project and Juniper Project Prototypes
+#    This Script serves as the initialization config file for the Juniper Project's juniper_canopy prototype
+#    Warning:  This Script / Config file is sourced by the try.bash script
 #
 #####################################################################################################################################################################################################
 # Notes:
+#     Warning:  This Config file is sourced by the all Juniper Canopy util scripts including the try.bash and get_code_stats.bash scripts
 #
 #####################################################################################################################################################################################################
 # References:
@@ -31,7 +37,7 @@
 
 
 #####################################################################################################################################################################################################
-# Define Script Constants
+# Define Top Level Constants for Script
 #####################################################################################################################################################################################################
 export TRUE="0"
 export FALSE="1"
@@ -41,75 +47,82 @@ export DEBUG="${FALSE}"
 
 
 #####################################################################################################################################################################################################
-# Define Common Script Constants
+# Define Bash Source indices for calling script info
 #####################################################################################################################################################################################################
-export CONFIG_FILE_NAME="$(basename "$(realpath "${0}")")"
-
-echo "Config File Name: ${CONFIG_FILE_NAME}"
-
-
-#####################################################################################################################################################################################################
-# Define Common Script Constants
-#####################################################################################################################################################################################################
-log_info "Config File: \"${CONFIG_FILE_NAME}\""
-
-export PROJECT_NAME_DEFAULT="Juniper"  && log_debug "Project Name Default: \"${PROJECT_NAME_DEFAULT}\""
-export PROTOTYPE_DIR_NAME="prototypes" && log_debug "Prototype Dir Name: \"${PROTOTYPE_DIR_NAME}\""
-export SOURCE_DIR_NAME="src"           && log_debug "Source Dir Name: \"${SOURCE_DIR_NAME}\""
-export CONFIG_DIR_NAME="conf"          && log_debug "Config Dir Name: \"${CONFIG_DIR_NAME}\""
-export UTIL_DIR_NAME="util"            && log_debug "Util Dir Name: \"${UTIL_DIR_NAME}\""
-export CONFIG_EXT="conf"               && log_debug "Config Ext: \"${CONFIG_EXT}\""
+export SCRIPT_NAME_ID="1"
+export LINE_NO_ID="0"
+export FUNC_NAME_ID="1"
 
 
 #####################################################################################################################################################################################################
-# Parse and Validate Input Parameters
+# Get Project Constants
 #####################################################################################################################################################################################################
-export SCRIPT_NAME="$(       [[ "${1}" == "" ]] && echo "$(basename "$(realpath "$0")")"    || echo "${1}" )" && shift && log_debug "Input Param Script Name: \"${SCRIPT_NAME}\""
-export PROTOTYPE_NAME="$(    [[ "${1}" == "" ]] && echo "${PROJECT_NAME_DEFAULT,,}"         || echo "${1}" )" && shift && log_debug "Input Param Prototype Name: \"${PROTOTYPE_NAME}\""
-export PROJECT_NAME="$(      [[ "${1}" == "" ]] && echo "${PROJECT_NAME_DEFAULT,,}"         || echo "${1}" )" && shift && log_debug "Input Param Project Name: \"${PROJECT_NAME}\""
-export CONFIG_FILE_INPUT="$( [[ "${1}" == "" ]] && echo "${PROTOTYPE_NAME,,}.${CONFIG_EXT}" || echo "${1}" )" && shift && log_debug "Input Param Config File Input: \"${CONFIG_FILE_INPUT}\""
-
+export CONF_EXT="conf"
+export LOGS_EXT="log"
+export COMMON_FILE_ROOT="common"
 
 #####################################################################################################################################################################################################
-# Determine Current Directory
+# Define Project Environment Constants
 #####################################################################################################################################################################################################
-export CURRENT_DIR="$(dirname "$(realpath "$0")")"                                           && log_debug "Current Directory: \"${CURRENT_DIR}\""
-export PROJECT_DIR_ROOT="$(echo "${CURRENT_DIR}" | awk -F "${PROJECT_NAME}" '{print $1;}' )" && log_debug "Project Directory Root: \"${PROJECT_DIR_ROOT}\""
-export PROJECT_DIR="${PROJECT_DIR_ROOT:0:-1}/${PROJECT_NAME}"                                && log_debug "Project Directory: \"${PROJECT_DIR}\""
-
-
-#####################################################################################################################################################################################################
-# Build Prototype specific config file path
-#####################################################################################################################################################################################################
-export CONFIG_DIR_ROOT="${PROJECT_DIR}"                                && log_debug "Config Dir Root: \"${CONFIG_DIR_ROOT}\""
-export CONFIG_PARENT_DIR="${CONFIG_DIR_ROOT}/${CONFIG_DIR_NAME}"       && log_debug "Config Dir Parent Dir: \"${CONFIG_PARENT_DIR}\""
-
-export CONFIG_DIR="$( [[ "${PROTOTYPE_NAME}" != "${PROJECT_NAME,,}" ]] && echo "${CONFIG_PARENT_DIR}/${PROTOTYPE_DIR_NAME}/${PROTOTYPE_NAME}" || echo "${CONFIG_PARENT_DIR}" )" && log_debug "Config Dir: ${CONFIG_DIR}"
-
-export CONFIG_FILE="${CONFIG_DIR}/${CONFIG_FILE_INPUT}"                && log_debug "Config File: \"${CONFIG_FILE}\""
+# shellcheck disable=SC2155
+export CURRENT_PATH="$(realpath "${BASH_SOURCE[0]}")"
+# shellcheck disable=SC2155
+export UTIL_DIR="$(dirname "${CURRENT_PATH}")"
+# shellcheck disable=SC2155
+export PROJ_DIR="$(dirname "${UTIL_DIR}")"
+# shellcheck disable=SC2155
+export APP_NAME="$(basename "${PROJ_DIR}")"
 
 
 #####################################################################################################################################################################################################
-# Determine Calling Script Directory
+# Define Minimal Logging env Constants needed to configure log_fatal function.
 #####################################################################################################################################################################################################
-export CALLING_SCRIPT_DIR_ROOT="$( [[ "${PROJECT_NAME,,}" != "${PROTOTYPE_NAME}" ]] && echo "${PROJECT_DIR}/${SOURCE_DIR_NAME}/${PROTOTYPE_DIR_NAME}/${PROTOTYPE_NAME}" || echo "${PROJECT_DIR}")" && log_debug "Calling Script Dir Root: \"${CALLING_SCRIPT_DIR_ROOT}\""
-export CALLING_SCRIPT_DIR_PATH="${CALLING_SCRIPT_DIR_ROOT}/${UTIL_DIR_NAME}" && log_debug "Calling Script Dir Path: \"${CALLING_SCRIPT_DIR_PATH}\""
-export CALLING_SCRIPT_PATH="${CALLING_SCRIPT_DIR_PATH}/${SCRIPT_NAME}"       && log_debug "Calling Script Path: \"${CALLING_SCRIPT_PATH}\""
+export LOGS_DIR_NAME="${LOGS_EXT}s"
+export LOGS_DIR="${PROJ_DIR}/${LOGS_DIR_NAME}"
+export LOG_FILE_NAME="${APP_NAME}.${LOGS_EXT}"
+export LOG_FILE="${LOGS_DIR}/${LOG_FILE_NAME}"
 
 
 #####################################################################################################################################################################################################
-# Source the Prototype specific config file
+# Define Minimal Logging env Constants needed to configure log_fatal function.
 #####################################################################################################################################################################################################
-log_info "Calling the Prototype specific config file: \"${CONFIG_FILE}\""
-if [[ "${DEBUG}" == "${TRUE}" ]]; then
-    TESTING_SCRIPT_NAME="test_prototype_conf.bash" && log_debug "Testing Script Name: ${TESTING_SCRIPT_NAME}"
-    TESTING_SCRIPT="${CONFIG_DIR}/${TESTING_SCRIPT_NAME}" && log_debug "Testing Script: ${TESTING_SCRIPT}"
-    log_info "Launching the Prototype specific config file, by Running the Test Script: \"${TESTING_SCRIPT}\""
-    ${TESTING_SCRIPT} "${SCRIPT_NAME}" "${CALLING_SCRIPT_PATH}"
-    log_info "Completed Running the Prototype specific config file"
-else
-    log_info "Sourcing the Prototype specific config file"
-    source ${CONFIG_FILE} "${SCRIPT_NAME}" "${CALLING_SCRIPT_PATH}"
-    log_info "Completed Sourcing the Prototype specific config file"
-fi
-log_info "Completed Calling the Prototype-Specific config file."
+# shellcheck disable=SC2155
+export CALLING_SCRIPT_PATH="$(realpath "${BASH_SOURCE[${SCRIPT_NAME_ID}]}")"
+# shellcheck disable=SC2155
+export CALLING_SCRIPT="$(basename "${CALLING_SCRIPT_PATH}")"
+export CALLING_LINE="${BASH_LINENO[${LINE_NO_ID}]}"
+export CALLING_FUNC="${FUNCNAME[FUNC_NAME_ID]}"
+
+
+#####################################################################################################################################################################################################
+# Define Fatal Error logging
+#####################################################################################################################################################################################################
+function log_fatal() {
+    MESSAGE="$1"
+    RESET="\033[0m" && COLOR_FATAL="\033[1;97;41m"
+    printf "%b%-21s %-28s %-21s %-11s %s%b\n" "${COLOR_FATAL}" "($(date +%F_%T))" "${CALLING_SCRIPT}:${CALLING_LINE})" "${CALLING_FUNC}:" "[FATAL]" "${MESSAGE}" "${RESET}" | tee -a "${LOG_FILE}" 2>&1
+    set -e; exit $(( FALSE ))
+}
+export -f log_fatal  # Critical Error Logging is defined from this point
+
+
+#####################################################################################################################################################################################################
+# Define Project Enviornment, Common Config file, Relative Path Constants
+#####################################################################################################################################################################################################
+export CONF_DIR_NAME="${CONF_EXT}"
+export CONF_DIR="${PROJ_DIR}/${CONF_DIR_NAME}"
+export COMMON_FILE_NAME="${COMMON_FILE_ROOT}.${CONF_EXT}"
+export COMMON_FILE="${CONF_DIR}/${COMMON_FILE_NAME}"
+
+export PARENT_PID="${PPID}"
+
+
+#####################################################################################################################################################################################################
+# Source and Validate the Common Config File
+#####################################################################################################################################################################################################
+[[ ! -f "${COMMON_FILE}" ]] && log_fatal "Common config file not found: ${COMMON_FILE}"
+# shellcheck disable=SC1090
+[[ "${DEBUG}" == "${TRUE}" ]] && { bash "${COMMON_FILE}"; SUCCESS="$?"; } || { source "${COMMON_FILE}"; SUCCESS="$?"; }
+[[ "${SUCCESS}" != "${TRUE}" ]] && log_fatal "Failed to source common config file: ${COMMON_FILE}"
+
+[[ "${DEBUG}" == "${TRUE}" ]] && exit $(( TRUE )) || return $(( TRUE ))

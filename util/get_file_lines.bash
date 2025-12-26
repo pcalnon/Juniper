@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-12-03
-# Last Modified: 2025-12-19
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -38,7 +38,9 @@
 # Source script config file
 #####################################################################################################################################################################################################
 set -o functrace
+# shellcheck disable=SC2155
 export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="../conf/init.conf"
+# shellcheck disable=SC1090,SC2015
 [[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 
@@ -50,13 +52,16 @@ TOTAL_LINES=0
 TOTAL_TODOS=0
 
 for i in $(${GET_FILENAMES_SCRIPT_NAME}); do
-  TOTAL_FILES=$(( TOTAL_FILES + 1 ))
-  CURRENT_LINES="$(cat ${i} | wc -l)"
-  TOTAL_LINES=$(( TOTAL_LINES + CURRENT_LINES ))
-  CURRENT_TODOS="$(${TODO_SEARCH_SCRIPT} ${i})"
-  TOTAL_TODOS=$(( TOTAL_TODOS + CURRENT_TODOS ))
-  CURRENT_SIZE="$(du -sh ${i})"
-  echo "File: ${i}\tLines: ${CURRENT_LINES}\tTODOs: ${CURRENT_TODOS}"
+  export TOTAL_FILES=$(( TOTAL_FILES + 1 ))
+  # shellcheck disable=SC2155
+  export CURRENT_LINES="$(cat "${i}" | wc -l)"
+  export TOTAL_LINES=$(( TOTAL_LINES + CURRENT_LINES ))
+  # shellcheck disable=SC2155
+  export CURRENT_TODOS="$(${TODO_SEARCH_SCRIPT} "${i}")"
+  export TOTAL_TODOS=$(( TOTAL_TODOS + CURRENT_TODOS ))
+  # shellcheck disable=SC2155
+  export CURRENT_SIZE="$(du -sh "${i}")"
+  echo -ne "File: ${i}\tLines: ${CURRENT_LINES}\tTODOs: ${CURRENT_TODOS}"
 done
 
 

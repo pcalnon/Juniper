@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/conf/
 #
 # Date:          2025-12-22
-# Last Modified: 2025-12-23
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -61,6 +61,7 @@ fi
 #####################################################################################################################################################################################################
 function validate_parent_script() {
     log_debug "Inside function: validate_parent_script \"$1\" \"$2\""
+    # shellcheck disable=SC2015
     [[ "$1" != "" ]] && PARENT_SCRIPT="$1" || { PARENT_SCRIPT=""; return $(( TRUE )); }
     [[ "$2" != "" ]] && INVALID_VALUE="$2" || INVALID_VALUE="${BASH_EXT}"
     log_debug "Validating Parent Script Call Info: ${PARENT_SCRIPT}, Ignoring: ${INVALID_VALUE}"

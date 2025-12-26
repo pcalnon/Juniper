@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/conf/
 #
 # Date:          2025-11-21
-# Last Modified: 2025-12-19
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -57,11 +57,11 @@
 #####################################################################################################################################################################################################
 # Define General Logging Constants
 #####################################################################################################################################################################################################
-TRUE="0"
-FALSE="1"
+export TRUE="0"
+export FALSE="1"
 
 # DEBUG="${TRUE}"
-DEBUG="${FALSE}"
+export DEBUG="${FALSE}"
 
 
 #####################################################################################################################################################################################################
@@ -187,6 +187,8 @@ LOG_FUNCTIONS_FILE_NAME="${LOG_FUNCTIONS_FILE_PREFIX}.${CONF_EXT}"
 export LOG_FUNCTIONS_FILE="${CONF_DIR}/${LOG_FUNCTIONS_FILE_NAME}"
 
 [[ ( ${LOG_FUNCTIONS_FILE} == "" ) || ( ! -f "${LOG_FUNCTIONS_FILE}" ) ]] && log_fatal "Logging Functions Conf file not found: ${LOG_FUNCTIONS_FILE}"
+# shellcheck disable=SC1090
+# shellcheck disable=SC2015
 [[ "${DEBUG}" == "${TRUE}" ]] && { bash "${LOG_FUNCTIONS_FILE}"; SUCCESS="$?"; } || { source "${LOG_FUNCTIONS_FILE}"; SUCCESS="$?"; }
 [[ "${SUCCESS}" != "${TRUE}" ]] && log_fatal "Failed to source Logging Functions file: \"${LOG_FUNCTIONS_FILE}\", (returned: ${SUCCESS})"
 
@@ -219,6 +221,7 @@ LOG_COLORS_FILE_NAME="${LOG_COLORS_FILE_PREFIX}.${CONF_EXT}"
 export LOG_COLORS_FILE="${CONF_DIR}/${LOG_COLORS_FILE_NAME}"
 
 [[ ( "${LOG_COLORS_FILE}" == "" ) || ( ! -f "${LOG_COLORS_FILE}" ) ]] && { [[ "${EXIT_ON_NO_LOG_COLORS}" == "${TRUE}" ]] && log_fatal "Log Colors Conf file not found: ${LOG_COLORS_FILE}, (Exit on No Log Colors: ${TRUE})"; }
+# shellcheck disable=SC1090
 [[ "${DEBUG}" == "${TRUE}" ]] && { bash "${LOG_COLORS_FILE}"; SUCCESS="$?"; } || { source "${LOG_COLORS_FILE}"; SUCCESS="$?"; }
 [[ ( "${SUCCESS}" != "${TRUE}" ) && ( "${EXIT_ON_NO_LOG_COLORS}" == "${TRUE}" ) ]] && log_fatal "Failed to source the Log Colors Conf file: ${LOG_COLORS_FILE}, (Exit on No Log Colors: ${TRUE})"
 log_debug "Completed sourcing Log Colors Conf file: \"${LOG_COLORS_FILE}\", (returned \"${SUCCESS}\")"

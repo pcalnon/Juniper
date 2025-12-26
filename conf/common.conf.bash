@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/conf/
 #
 # Date:          2025-09-16
-# Last Modified: 2025-12-19
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -91,7 +91,9 @@ export FUNCTIONS_FILE_ROOT="functions"
 #####################################################################################################################################################################################################
 # Define Parent's Calling Script Info Constants
 #####################################################################################################################################################################################################
+# shellcheck disable=SC2155
 export CALLING_SCRIPT_PATH="$(realpath "${BASH_SOURCE[${SCRIPT_NAME_ID}]}")"
+# shellcheck disable=SC2155
 export CALLING_SCRIPT="$(basename "${CALLING_SCRIPT_PATH}")"
 export CALLING_LINE="${BASH_LINENO[${LINE_NO_ID}]}"
 export CALLING_FUNC="${FUNCNAME[FUNC_NAME_ID]}"
@@ -100,7 +102,9 @@ export CALLING_FUNC="${FUNCNAME[FUNC_NAME_ID]}"
 #####################################################################################################################################################################################################
 # Define constants for the common config file's functions config file
 #####################################################################################################################################################################################################
+# shellcheck disable=SC2155
 export CURRENT_NAME="$(basename "${CURRENT_PATH}")"
+# shellcheck disable=SC2155
 export CURRENT_DIR="$(dirname "${CURRENT_PATH}")"
 
 export COMMON_FUNCTIONS_FILENAME="${LOGGING_NAME}_${FUNCTIONS_FILE_ROOT}.${CONF_EXT}"
@@ -110,6 +114,7 @@ export COMMON_FUNCTIONS_FILE="${CONF_DIR}/${COMMON_FUNCTIONS_FILENAME}"
 #####################################################################################################################################################################################################
 # Parse and Validate the Parent Path Param
 #####################################################################################################################################################################################################
+# shellcheck disable=SC2155
 export PARENT_PATH_PARAM="$(realpath "${PARENT_PATH_PARAM}")"
 [[ ("${PARENT_PATH_PARAM}" == "") || ( ! -f "${PARENT_PATH_PARAM}" ) ]] && log_critical "Parent Path Param: ${PARENT_PATH_PARAM} is not a valid file. Unable to Continue."
 
@@ -125,7 +130,14 @@ export LOGGING_CONF_FILE="${CONF_DIR}/${LOGGING_CONF_FILENAME}"
 # Validate and Source the logging conf file
 #####################################################################################################################################################################################################
 [[ ( "${LOGGING_CONF_FILE}" == "" ) || ( ! -f "${LOGGING_CONF_FILE}" ) ]] && log_fatal "Logging Config File: ${LOGGING_CONF_FILE} is not a valid file. Unable to Continue."
-[[ "${DEBUG}" == "${TRUE}" ]] && { bash "${LOGGING_CONF_FILE}"; SUCCESS="$?"; } || { source "${LOGGING_CONF_FILE}"; SUCCESS="$?"; }
+if [[ "${DEBUG}" == "${TRUE}" ]]; then
+    bash "${LOGGING_CONF_FILE}"
+    SUCCESS="$?"
+else
+    # shellcheck disable=SC1090
+    source "${LOGGING_CONF_FILE}"
+    SUCCESS="$?"
+fi
 [[ "${SUCCESS}" != "${TRUE}" ]] && log_fatal "Failed to source the logging config file: ${LOGGING_CONF_FILE}"
 log_info "Completed Calling the logging config file: ${LOGGING_CONF_FILE}"  # Standard Logging is enabled from this point
 
@@ -205,7 +217,7 @@ export ESTIMATED_FINAL_WEEK="2042-06-10"
 # Define Global Directory Name Constants
 #####################################################################################################################################################################################################
 export BIN_DIR_NAME="bin"
-export CONFIG_DIR_NAME="conf"
+export CONF_DIR_NAME="conf"
 export CUDA_DIR_NAME="cuda"
 export DATA_DIR_NAME="data"
 export DEBUG_DIR_NAME="debug"
@@ -260,7 +272,7 @@ export OUTPUT_DIR_NAME="${DOCUMENT_DIR_NAME}"
 #####################################################################################################################################################################################################
 # Top Level Directories
 export BIN_DIR="${PROJ_DIR}/${BIN_DIR_NAME}"
-export CONFIG_DIR="${PROJ_DIR}/${CONFIG_DIR_NAME}"
+export CONF_DIR="${PROJ_DIR}/${CONF_DIR_NAME}"
 export CUDA_DIR="${PROJ_DIR}/${CUDA_DIR_NAME}"
 export DATA_DIR="${PROJ_DIR}/${DATA_DIR_NAME}"
 export DOCUMENT_DIR="${PROJ_DIR}/${DOCUMENT_DIR_NAME}"
@@ -417,7 +429,8 @@ export COMMON_FUNCTIONS_CONF_FILE="${CONF_DIR}/${COMMON_FUNCTIONS_CONF_FILENAME}
 # Validate and Source the common.conf file's common_functions.conf file
 #####################################################################################################################################################################################################
 [[ ( "${COMMON_FUNCTIONS_CONF_FILE}" == "" ) || ( ! -f "${COMMON_FUNCTIONS_CONF_FILE}" ) ]] && log_fatal "Common Functions Config File: ${COMMON_FUNCTIONS_CONF_FILE} is not a valid file. Unable to Continue."
-[[ "${DEBUG}" == "${TRUE}" ]] && { bash "${COMMON_FUNCTIONS_CONF_FILE}"; SUCCESS="$?"; } || { source "${COMMON_FUNCTIONS_CONF_FILE}"; SUCCESS="$?" }
+# shellcheck disable=SC1091,SC1090,SC2015
+[[ "${DEBUG}" == "${TRUE}" ]] && { bash "${COMMON_FUNCTIONS_CONF_FILE}"; SUCCESS="$?"; } || { source "${COMMON_FUNCTIONS_CONF_FILE}"; SUCCESS="$?"; }
 [[ "${SUCCESS}" != "${TRUE}" ]] && log_fatal "Failed to source the common functions config file: ${COMMON_FUNCTIONS_CONF_FILE}"
 log_info "Completed Calling the common functions config file: ${COMMON_FUNCTIONS_CONF_FILE}"
 
@@ -425,9 +438,11 @@ log_info "Completed Calling the common functions config file: ${COMMON_FUNCTIONS
 #####################################################################################################################################################################################################
 # Retrieve and Validate parent script info and constants
 #####################################################################################################################################################################################################
-export PARENT_CMD="$( tr -d '\0' < /proc/${PARENT_PID}/cmdline )"
+# shellcheck disable=SC2155,SC2153
+export PARENT_CMD="$( tr -d '\0' < /proc/"${PARENT_PID}"/cmdline )"
 log_trace "PARENT_CMD: ${PARENT_CMD}"
-export PARENT_CALL="$(ps -o args= ${PARENT_PID})"
+# shellcheck disable=SC2155
+export PARENT_CALL="$(ps -o args="${PARENT_PID}")"
 log_trace "PARENT_CALL: ${PARENT_CALL}"
 export PARENT_PARAM="${PARENT_PATH_PARAM}"
 log_trace "PARENT_PARAM: ${PARENT_PARAM}"
@@ -471,6 +486,7 @@ if [[ "${DEBUG}" == "${TRUE}" ]]; then
     bash "${PRIMARY_CONF_FILE}"; SUCCESS="$?"
 else
     log_debug "Sourcing Calling Script's Primary config file: \"${PRIMARY_CONF_FILE}\""
+    # shellcheck source=/dev/null
     source "${PRIMARY_CONF_FILE}"; SUCCESS="$?"
 fi
 [[ "${SUCCESS}" != "${TRUE}" ]] && log_critical "Failed to source Primary config file: \"${PRIMARY_CONF_FILE}\""

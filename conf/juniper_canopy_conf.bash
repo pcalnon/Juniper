@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 #####################################################################################################################################################################################################
 # Project:       Juniper
-# Prototype:     Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
-# File Name:     juniper_canopy.conf
+# Sub-Project:   JuniperCanopy
+# Application:   juniper_canopy
+# Purpose:       Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
+#
 # Author:        Paul Calnon
 # Version:       0.1.4 (0.7.3)
+# File Name:     juniper_canopy.conf
+# File Path:     <Project>/<Sub-Project>/<Application>/conf/
 #
 # Date:          2025-11-04
-# Last Modified: 2025-12-03
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
-# Copyright:     Copyright (c) 2024-2025 Paul Calnon
+# Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
 #
 # Description:
 #    This Script serves as the config file for the Juniper Project's juniper_canopy prototype
@@ -50,6 +54,7 @@ export DEBUG="${FALSE}"
 #####################################################################################################################################################################################################
 # Define Juniper Canopy config script Name
 #####################################################################################################################################################################################################
+# shellcheck disable=SC2155
 export SCRIPT_NAME="$(basename "$(realpath "$0")")"
 
 
@@ -98,7 +103,7 @@ function set_language_path() {
 
 function contains() {
     local ITEM="$1" && shift
-    for ELEMENT in ${@}; do
+    for ELEMENT in "${@}"; do
         if [[ "${ELEMENT}" == "${ITEM}" ]]; then
             return 0
         fi
@@ -109,7 +114,7 @@ function contains() {
 function get_index() {
     local ITEM="$1" && shift
     local INDEX=0
-    for ELEMENT in ${@}; do
+    for ELEMENT in "${@}"; do
         if [[ "${ELEMENT}" == "${ITEM}" ]]; then
             echo "${INDEX}"
             return 0
@@ -136,14 +141,21 @@ export CONFIG_FILE_EXT=".conf"         && log_debug "Config File Ext: \"${CONFIG
 #####################################################################################################################################################################################################
 # Parse and Validate Input Parameters
 #####################################################################################################################################################################################################
+# shellcheck disable=SC2155
 export CALLING_SCRIPT_NAME="$( [[ "$1" == "" ]] && echo "${SCRIPT_NAME}" || echo "$1" )" && shift && log_info "Input Param, Calling script name: ${CALLING_SCRIPT_NAME}"
 
 if [[ "$1" == "" ]]; then
     log_info "Input Param, Empty Calling script path: \"${1}\""
-    CALLING_SCRIPT_DIR="$(dirname "$(realpath "$0")")"
-    CALLING_SCRIPT_FILE_NAME="$(basename "$(realpath "$0")")"
-    CALLING_SCRIPT_PROJECT_NAME="$(basename -s "${CONFIG_FILE_EXT}" "$(realpath "$0")")"
-    PROJECT_ROOT_DIR="$( echo "${CALLING_SCRIPT_DIR}" | awk -F "${PROJECT_NAME}" '{print $1 "'${PROJECT_NAME}'";}')"
+    # shellcheck disable=SC2155
+    # shellcheck disable=SC2155
+    export CALLING_SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+    # shellcheck disable=SC2155
+    export CALLING_SCRIPT_FILE_NAME="$(basename "$(realpath "$0")")"
+    # shellcheck disable=SC2155
+    export CALLING_SCRIPT_PROJECT_NAME="$(basename -s "${CONFIG_FILE_EXT}" "$(realpath "$0")")"
+    # shellcheck disable=SC2155
+    export PROJECT_ROOT_DIR="$( echo "${CALLING_SCRIPT_DIR}" | awk -F "${PROJECT_NAME}" '{print $1 "'${PROJECT_NAME}'";}')"
+    # shellcheck disable=SC2155
     export CALLING_SCRIPT_PATH="$( [[ "${PROJECT_NAME,,}" != "${CALLING_SCRIPT_PROJECT_NAME}" ]] && echo "${PROJECT_ROOT_DIR}/${SOURCE_DIR_NAME}/${PROTOTYPE_DIR_NAME}/${CALLING_SCRIPT_PROJECT_NAME}/${UTIL_DIR_NAME}" || echo "${PROJECT_ROOT_DIR}/${UTIL_DIR_NAME}" )"
 else
     export CALLING_SCRIPT_PATH="$1" && log_info "Input Param, Calling script path: \"${1}\""
@@ -167,7 +179,9 @@ export CONDA_ENV_NAME="JuniperPython" && log_debug "Conda Env Name: \"${CONDA_EN
 CONDA_ACTIVE_ENV_LABEL="active environment" && log_debug "Conda Active Env Label: \"${CONDA_ACTIVE_ENV_LABEL}\""
 CONDA_ACTIVE_ENV_LINE=$(conda info | grep "${CONDA_ACTIVE_ENV_LABEL}") && log_debug "Conda Active Env Line: \"${CONDA_ACTIVE_ENV_LINE}\""
 export CONDA_ACTIVE_ENV_RAW="${CONDA_ACTIVE_ENV_LINE#*:}" && log_debug "Conda Active Environment Raw: ${CONDA_ACTIVE_ENV_RAW}"
-export CONDA_ACTIVE_ENV="$(echo "${CONDA_ACTIVE_ENV_RAW}" | sed 's/^[[:space:]]*//g')" && log_debug "Conda Active Environment: ${CONDA_ACTIVE_ENV}"
+# export CONDA_ACTIVE_ENV="$(echo "${CONDA_ACTIVE_ENV_RAW}" | sed 's/^[[:space:]]*//g')" && log_debug "Conda Active Environment: ${CONDA_ACTIVE_ENV}"
+# shellcheck disable=SC2155
+export CONDA_ACTIVE_ENV="${CONDA_ACTIVE_ENV_RAW//^[[:space:]]*//}" && log_debug "Conda Active Environment: ${CONDA_ACTIVE_ENV}"
 
 export MACOS="Darwin"                 && log_debug "MacOS: \"${MACOS}\""
 export LINUX="Linux"                  && log_debug "Linux: \"${LINUX}\""
@@ -191,12 +205,12 @@ export NODE_LANGUAGE_NAME="node"             && PROJECT_SUPPORTED_LANGUAGE_NAMES
 export CPP_LANGUAGE_NAME="c++"               && PROJECT_SUPPORTED_LANGUAGE_NAMES+=("${CPP_LANGUAGE_NAME}")        && log_debug "C++ Language Name: \"${CPP_LANGUAGE_NAME}\""
 export C_LANGUAGE_NAME="c"                   && PROJECT_SUPPORTED_LANGUAGE_NAMES+=("${C_LANGUAGE_NAME}")          && log_debug "C Language Name: \"${C_LANGUAGE_NAME}\""
 export R_LANGUAGE_NAME="R"                   && PROJECT_SUPPORTED_LANGUAGE_NAMES+=("${R_LANGUAGE_NAME}")          && log_debug "R Language Name: \"${R_LANGUAGE_NAME}\""
-log_debug "All Project Languages: \"${PROJECT_SUPPORTED_LANGUAGE_NAMES[@]}\""
+log_debug "All Project Languages: \"${PROJECT_SUPPORTED_LANGUAGE_NAMES[*]}\""
 
 export LANGUAGE_LOCAL_PATH="miniforge3/envs/${CONDA_ENV_NAME}/bin" && log_debug "Language Local Path: \"${LANGUAGE_LOCAL_PATH}\""
 
 # # NOTE: The Languages list is ordered by Primacy:  The first language listed should be the primary language for this prototype
-export PROJECT_LANGUAGE_NAMES=("${PYTHON_LANGUAGE_NAME}" "${JAVASCRIPT_LANGUAGE_NAME}" "${RUST_LANGUAGE_NAME}") && log_debug "Project Language Names: \"${PROJECT_LANGUAGE_NAMES[@]}\""
+export PROJECT_LANGUAGE_NAMES=("${PYTHON_LANGUAGE_NAME}" "${JAVASCRIPT_LANGUAGE_NAME}" "${RUST_LANGUAGE_NAME}") && log_debug "Project Language Names: \"${PROJECT_LANGUAGE_NAMES[*]}\""
 
 
 #####################################################################################################################################################################################################
@@ -225,8 +239,8 @@ export C_VERSION_MAJOR="1"            && LANGUAGE_MAJOR_VERSIONS+=("${C_VERSION_
 export C_VERSION_MINOR="17"           && LANGUAGE_MINOR_VERSIONS+=("${C_VERSION_MINOR}")          && log_debug "C Version Minor: ${C_VERSION_MINOR}"
 export R_VERSION_MAJOR="4"            && LANGUAGE_MAJOR_VERSIONS+=("${R_VERSION_MAJOR}")          && log_debug "R Version Major: ${R_VERSION_MAJOR}"
 export R_VERSION_MINOR="1"            && LANGUAGE_MINOR_VERSIONS+=("${R_VERSION_MINOR}")          && log_debug "R Version Minor: ${R_VERSION_MINOR}"
-log_debug "Language Major Versions: ${LANGUAGE_MAJOR_VERSIONS[@]}"
-log_debug "Language Minor Versions: ${LANGUAGE_MINOR_VERSIONS[@]}"
+log_debug "Language Major Versions: ${LANGUAGE_MAJOR_VERSIONS[*]}"
+log_debug "Language Minor Versions: ${LANGUAGE_MINOR_VERSIONS[*]}"
 
 
 #####################################################################################################################################################################################################
@@ -244,7 +258,7 @@ export NODE_VERSION="${NODE_VERSION_MAJOR}${NODE_VERSION_MINOR}"                
 export CPP_VERSION="${CPP_VERSION_MAJOR}${CPP_VERSION_MINOR}"                      && LANGUAGE_VERSIONS+=("${CPP_VERSION}")        && log_debug "C++ Version: ${CPP_VERSION}"
 export C_VERSION="${C_VERSION_MAJOR}${C_VERSION_MINOR}"                            && LANGUAGE_VERSIONS+=("${C_VERSION}")          && log_debug "C Version: ${C_VERSION}"
 export R_VERSION="${R_VERSION_MAJOR}${R_VERSION_MINOR}"                            && LANGUAGE_VERSIONS+=("${R_VERSION}")          && log_debug "R Version: ${R_VERSION}"
-log_debug "Language Versions: ${LANGUAGE_VERSIONS[@]}"
+log_debug "Language Versions: ${LANGUAGE_VERSIONS[*]}"
 
 
 #####################################################################################################################################################################################################
@@ -262,19 +276,19 @@ export NODE_LANGUAGE="${NODE_LANGUAGE_NAME}${NODE_VERSION}"                   &&
 export CPP_LANGUAGE="${CPP_LANGUAGE_NAME}${CPP_VERSION}"                      && PROJECT_SUPPORTED_LANGUAGES+=("${CPP_LANGUAGE}")        && log_debug "C++ Language: \"${CPP_LANGUAGE}\""
 export C_LANGUAGE="${C_LANGUAGE_NAME}${C_VERSION}"                            && PROJECT_SUPPORTED_LANGUAGES+=("${C_LANGUAGE}")          && log_debug "C Language: \"${C_LANGUAGE}\""
 export R_LANGUAGE="${R_LANGUAGE_NAME}${R_VERSION}"                            && PROJECT_SUPPORTED_LANGUAGES+=("${R_LANGUAGE}")          && log_debug "R Language: \"${R_LANGUAGE}\""
-log_debug "Project Supported Languages: ${PROJECT_SUPPORTED_LANGUAGES[@]}"
+log_debug "Project Supported Languages: ${PROJECT_SUPPORTED_LANGUAGES[*]}"
 
-export PROJECT_LANGUAGES=("${PYTHON_LANGUAGE} ${JAVASCRIPT_LANGUAGE} ${RUST_LANGUAGE} ${NODE_LANGUAGE}")                                 && log_debug "Project Languages: ${PROJECT_LANGUAGES[@]}"
+export PROJECT_LANGUAGES=("${PYTHON_LANGUAGE} ${JAVASCRIPT_LANGUAGE} ${RUST_LANGUAGE} ${NODE_LANGUAGE}")                                 && log_debug "Project Languages: ${PROJECT_LANGUAGES[*]}"
 
 
 #####################################################################################################################################################################################################
 # Identify Current Environment
 #####################################################################################################################################################################################################
 if [[ "$(uname -s | grep -i "${MACOS}" 2>/dev/null)" == "${MACOS}" ]]; then
-    log_debug "Check for MacOS Returned: ${?}, Current OS: $(uname -s)"
+    log_debug "Check for MacOS Returned: ${TRUE}, Current OS: $(uname -s)"
     LANGUAGE_PATH_ROOT="/usr/local"
 elif [[ "$(uname -s | grep -i "${LINUX}" 2>/dev/null)" == "${LINUX}" ]]; then
-    log_debug "Check for Linux Returned: ${?}, Current OS: $(uname -s)"
+    log_debug "Check for Linux Returned: ${TRUE}, Current OS: $(uname -s)"
     LANGUAGE_PATH_ROOT="/opt"
 else
     log_error "Error: Unknown OS Type: $(uname -s), Exiting..."
@@ -284,23 +298,33 @@ fi
 #####################################################################################################################################################################################################
 # Define Top Level Constants for Script Environment Directories
 #####################################################################################################################################################################################################
+# shellcheck disable=SC2155
 export SCRIPT_ABS_PATH="${CALLING_SCRIPT_PATH}/${CALLING_SCRIPT_NAME}" && log_debug "Script Abs Path: ${SCRIPT_ABS_PATH}"
+# shellcheck disable=SC2155
 export SCRIPT_DIR_PATH="${CALLING_SCRIPT_PATH}"                        && log_debug "Script Dir Path: ${SCRIPT_DIR_PATH}"
+# shellcheck disable=SC2155
 export SCRIPT_DIR_PARENT="$(dirname "${SCRIPT_DIR_PATH}")"             && log_debug "Script Dir Parent: ${SCRIPT_DIR_PARENT}"
+# shellcheck disable=SC2155
 export SCRIPT_DIR_ROOT="$(dirname "${SCRIPT_DIR_PARENT}")"             && log_info "Script Dir Root: ${SCRIPT_DIR_ROOT}"
 
+# shellcheck disable=SC2155
 export PROTOTYPE_DIR_NAME="$(basename "${SCRIPT_DIR_ROOT}")"           && log_info "Prototype Dir Name: ${PROTOTYPE_DIR_NAME}"
 
+# shellcheck disable=SC2155
 export PROJECT_DIR_ROOT="$(PROJECT_DIR_ROOT_LOCAL="$(echo "${SCRIPT_DIR_PARENT}" | awk -F "${PROJECT_NAME}" '{print $1;}')" && echo "${PROJECT_DIR_ROOT_LOCAL:0:-1}")" && log_debug "Project Dir Root: ${PROJECT_DIR_ROOT}"
+# shellcheck disable=SC2155
 export HOME_DIR="$( LOCAL_HOME_DIR="$(echo "${PROJECT_DIR_ROOT}" | awk -F "${DEV_DIR_NAME}" '{print $1;}')" && echo "${LOCAL_HOME_DIR:0:-1}" )"                        && log_debug "Home Dir: ${HOME_DIR}"
+# shellcheck disable=SC2155
 export SCRIPT_REL_PATH="$( PATH_LOCAL="$(echo "${SCRIPT_DIR_PARENT}" | awk -F "${PROJECT_NAME}" '{print $2;}')" && { [[ "${PATH_LOCAL:0:1}" == "${PATH_DELIMITER}" ]] && echo "${PATH_LOCAL:1}" || echo "${PATH_LOCAL}"; } )" && log_debug "Script Rel Path: ${SCRIPT_REL_PATH}"
 
 
 #####################################################################################################################################################################################################
 # Define Top Level Constants for Script Environment Files
 #####################################################################################################################################################################################################
+# shellcheck disable=SC2155
 export PROJECT_LANGUAGE="$(basename "${PROJECT_DIR_ROOT}")" && log_debug "Project Language: ${PROJECT_LANGUAGE}"
 log_debug "CURRENT_DIR_PREFIX=\"\$( echo \"${SCRIPT_REL_PATH}\" | awk -F \"${PATH_DELIMITER}\" '{print \$2 '\"${PATH_DELIMITER}\"' \$3 '\"${PATH_DELIMITER}\"'}' )\""
+# shellcheck disable=SC2155
 export CURRENT_DIR_PREFIX="$( PATH_LOCAL="$( echo "${SCRIPT_REL_PATH}" | awk -F "${PROTOTYPE_DIR_NAME}" '{print $2;}')" && { [[ "${PATH_LOCAL:0:1}" == "${PATH_DELIMITER}" ]] && echo "${PATH_LOCAL:1}" || echo "${PATH_LOCAL}"; } )" && log_debug "Current Dir Prefix: \"${CURRENT_DIR_PREFIX}\""
 
 
@@ -326,9 +350,13 @@ fi
 #####################################################################################################################################################################################################
 # Define Constants for the Current Project's Internal Directory paths
 #####################################################################################################################################################################################################
+# shellcheck disable=SC2155
 export PROTOTYPE_PARENT_PATH="$(dirname "${SCRIPT_DIR_PARENT}")"            && log_debug "Prototype Parent Path: ${PROTOTYPE_PARENT_PATH}"
+# shellcheck disable=SC2155
 export UTIL_DIR="${PROJECT_PATH}${PATH_DELIMITER}${UTIL_DIR_NAME}"     && log_debug "Util Dir: ${UTIL_DIR}"
+# shellcheck disable=SC2155
 export SOURCE_DIR="${PROJECT_PATH}${PATH_DELIMITER}${SOURCE_DIR_NAME}" && log_debug "Source Dir: ${SOURCE_DIR}"
+# shellcheck disable=SC2155
 export CONFIG_DIR="${PROJECT_PATH}${PATH_DELIMITER}${CONFIG_DIR_NAME}" && log_debug "Config Dir: ${CONFIG_DIR}"
 
 
@@ -344,7 +372,9 @@ export MAIN_FILE="${SOURCE_DIR}${PATH_DELIMITER}${MAIN_FILE_NAME}"            &&
 # Source Script Specific and Secondary Config files
 #####################################################################################################################################################################################################
 log_debug "Sourcing Output Color Config: ${COLOR_CONFIG}"
-[[ "${DEBUG}" == "${FALSE}" ]] && source "${COLOR_CONFIG}" || "${COLOR_CONFIG}"
+# shellcheck disable=SC1090
+# shellcheck disable=SC2015
+[[ "${DEBUG}" == "${FALSE}" ]] && source "${COLOR_CONFIG}" || bash "${COLOR_CONFIG}"
 
 
 #####################################################################################################################################################################################################
@@ -362,10 +392,13 @@ export CASCOR_MAIN_FILE="${CASCOR_SOURCE_PATH}/${MAIN_FILE_NAME}" && log_debug "
 #####################################################################################################################################################################################################
 export LANGUAGE_DIR_PATH="${LANGUAGE_PATH_ROOT}/${LANGUAGE_LOCAL_PATH}" && log_debug "Language Dir Path: ${LANGUAGE_DIR_PATH}"
 
-export CURRENT_LANGUAGES="$( [[ "${PIN_LANGUAGE_VERSIONS}" == "${TRUE}" ]] && echo "${PROJECT_LANGUAGES[@]}" || echo "${PROJECT_LANGUAGE_NAMES[@]}" )" && log_debug "Current Languages: ${CURRENT_LANGUAGES[@]}"
-export CURRENT_SUPPORTED_LANGUAGES="$( [[ "${PIN_LANGUAGE_VERSIONS}" == "${TRUE}" ]] && echo "${PROJECT_SUPPORTED_LANGUAGES[@]}" || echo "${PROJECT_SUPPORTED_LANGUAGE_NAMES[@]}" )" && log_debug "Current Supported Languages: ${CURRENT_SUPPORTED_LANGUAGES[@]}"
+# shellcheck disable=SC2155
+# shellcheck disable=SC2155
+export CURRENT_LANGUAGES="$( [[ "${PIN_LANGUAGE_VERSIONS}" == "${TRUE}" ]] && echo "${PROJECT_LANGUAGES[@]}" || echo "${PROJECT_LANGUAGE_NAMES[@]}" )" && log_debug "Current Languages: ${CURRENT_LANGUAGES[*]}"
+# shellcheck disable=SC2155
+export CURRENT_SUPPORTED_LANGUAGES="$( [[ "${PIN_LANGUAGE_VERSIONS}" == "${TRUE}" ]] && echo "${PROJECT_SUPPORTED_LANGUAGES[@]}" || echo "${PROJECT_SUPPORTED_LANGUAGE_NAMES[@]}" )" && log_debug "Current Supported Languages: ${CURRENT_SUPPORTED_LANGUAGES[*]}"
 
-for LANGUAGE in ${CURRENT_LANGUAGES[@]}; do
+for LANGUAGE in "${CURRENT_LANGUAGES[@]}"; do
     log_debug "Current Language: ${LANGUAGE}"
     CURRENT_INDEX="$(get_index "${LANGUAGE}" "${CURRENT_SUPPORTED_LANGUAGES[@]}")" && log_debug "Current Index: ${CURRENT_INDEX}"
     # Note:  Unlike standard shell scripts, the double paren returns 1 for true and 0 for false

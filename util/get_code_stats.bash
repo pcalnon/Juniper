@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-02-05
-# Last Modified: 2025-12-19
+# Last Modified: 2025-12-25
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -54,18 +54,15 @@
 # COMPLETED:
 #
 #####################################################################################################################################################################################################
-# TRUE="0"
-# FALSE="1"
-
-# # DEBUG="${TRUE}"
-# DEBUG="${FALSE}"
 
 
 #####################################################################################################################################################################################################
 # Source script config file
 #####################################################################################################################################################################################################
 set -o functrace
+# shellcheck disable=SC2155
 export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="$(realpath "../conf/init.conf")"
+# shellcheck disable=SC1090,SC2015
 [[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 
@@ -77,7 +74,9 @@ log_debug "Print Column Labels and Header data for Project source files"
 # Print heading data
 log_debug "Print heading data"
 echo -ne "\nDisplay Stats for the ${PROJ_NAME} Project\n\n"
+# shellcheck disable=SC2059
 printf "${TABLE_FORMAT}" "Filename" "Lines" "Methods" "TODOs" "Size"
+# shellcheck disable=SC2059
 printf "${TABLE_FORMAT}" "----------------------------" "------" "--------" "------" "------"
 
 
@@ -109,7 +108,7 @@ BIG_FILE=""
 # Evaluate each source file in project
 #####################################################################################################################################################################################################
 log_debug "Evaluate each source file in project"
-for i in $(${GET_FILENAMES_SCRIPT} ${FILENAMES_SCRIPT_PARAMS}); do
+for i in $(${GET_FILENAMES_SCRIPT} "${FILENAMES_SCRIPT_PARAMS}"); do
     echo "Call to Sourcefile Script: ${i}"
     # Get current filename and absolute path
     log_debug "Get current filename and absolute path"
@@ -127,7 +126,7 @@ for i in $(${GET_FILENAMES_SCRIPT} ${FILENAMES_SCRIPT_PARAMS}); do
     # Perform Line count calculations
     #################################################################################################################################################################################################
     log_debug "Perform Line count calculations"
-    CURRENT_LINES="$(cat ${FILE_PATH} | wc -l)"
+    CURRENT_LINES="$(cat "${FILE_PATH}" | wc -l)"
     log_verbose "Current Lines: ${CURRENT_LINES}"
     # TODO: consider switching to [[ ]] since output of bc is a bool?
     if (( $(echo "${CURRENT_LINES} > ${MOST_LINES}" | bc -l) )); then
@@ -150,7 +149,7 @@ for i in $(${GET_FILENAMES_SCRIPT} ${FILENAMES_SCRIPT_PARAMS}); do
     # Perform Method Count calculation
     #################################################################################################################################################################################################
     log_debug "Perform Method Count calculation"
-    CURRENT_METHODS=$(grep ${FIND_METHOD_PARAMS} ${FIND_METHOD_REGEX} ${FILE_PATH} | wc -l)
+    CURRENT_METHODS=$(grep -c "${FIND_METHOD_PARAMS}" "${FIND_METHOD_REGEX}" "${FILE_PATH}")
     log_verbose "Current Methods: ${CURRENT_METHODS}"
     if (( $(echo "${CURRENT_METHODS} > ${MOST_METHODS}" | bc -l) )); then
         MOST_METHODS="$(echo "${CURRENT_METHODS}" | xargs)"
@@ -169,7 +168,7 @@ for i in $(${GET_FILENAMES_SCRIPT} ${FILENAMES_SCRIPT_PARAMS}); do
     # Perform TODO count calculations
     #################################################################################################################################################################################################
     log_debug "Perform TODO count calculations"
-    CURRENT_TODOS="$(echo "$(${GET_FILE_TODO_SCRIPT} ${TODO_SEARCH_SCRIPT_PARAMS} ${FILE_PATH})" | xargs)"
+    CURRENT_TODOS="$(${GET_FILE_TODO_SCRIPT} "${TODO_SEARCH_SCRIPT_PARAMS}" "${FILE_PATH}" | xargs)"
     log_verbose "Current TODOS: ${CURRENT_TODOS}"
     if (( $(echo "${CURRENT_TODOS} > ${MOST_TODOS}" | bc -l) )); then
         MOST_TODOS="$(echo "${CURRENT_TODOS}" | xargs)"
@@ -189,9 +188,9 @@ for i in $(${GET_FILENAMES_SCRIPT} ${FILENAMES_SCRIPT_PARAMS}); do
     # Perform size calculations
     #################################################################################################################################################################################################
     log_debug "Perform size calculations"
-    CURRENT_SIZE="$(echo "$(du -sh ${FILE_PATH} | cut -d $'\t' -f-1)" | xargs)"
+    CURRENT_SIZE="$(du -sh "${FILE_PATH}" | cut -d $'\t' -f-1 | xargs)"
     log_verbose "Current Size: ${CURRENT_SIZE}"
-    BYTE_SIZE="$(current_size ${CURRENT_SIZE})"
+    BYTE_SIZE="$(current_size "${CURRENT_SIZE}")"
     log_verbose "Byte Size: ${BYTE_SIZE}"
     if (( $(echo "${BYTE_SIZE} > ${MOST_SIZE}" | bc -l) )); then
         MOST_SIZE="$(echo "${BYTE_SIZE}" | xargs)"
@@ -204,7 +203,7 @@ for i in $(${GET_FILENAMES_SCRIPT} ${FILENAMES_SCRIPT_PARAMS}); do
     fi
     TOTAL_SIZE="$(echo "$(( TOTAL_SIZE + BYTE_SIZE ))" | xargs)"
     log_debug "Total Size: ${TOTAL_SIZE}"
-    OUTPUT_SIZE="$(readable_size $(echo "${BYTE_SIZE}" | xargs))"
+    OUTPUT_SIZE="$(readable_size "$(echo "${BYTE_SIZE}" | xargs)")"
     log_debug "Output Size: ${OUTPUT_SIZE}"
 
 
@@ -212,13 +211,14 @@ for i in $(${GET_FILENAMES_SCRIPT} ${FILENAMES_SCRIPT_PARAMS}); do
     # Print Stats for current File
     #################################################################################################################################################################################################
     log_debug "Print Stats for current File"
+    # shellcheck disable=SC2059
     printf "${TABLE_FORMAT}" "${FILE_NAME}" "${CURRENT_LINES}" "${CURRENT_METHODS}" "${CURRENT_TODOS}" "${OUTPUT_SIZE}"
 
 done
 
-READABLE_SIZE="$(readable_size $(echo "${TOTAL_SIZE}" | xargs))"
+READABLE_SIZE="$(readable_size "$(echo "${TOTAL_SIZE}" | xargs)")"
 log_debug "Readable Size: ${READABLE_SIZE}"
-BIG_FILE_SIZE="$(readable_size $(echo "${MOST_SIZE}" | xargs))"
+BIG_FILE_SIZE="$(readable_size "$(echo "${MOST_SIZE}" | xargs)")"
 log_debug "Big File Size: ${BIG_FILE_SIZE}"
 
 
@@ -229,10 +229,15 @@ log_debug "Print Project Summary data"
 
 # Print summary data
 echo -ne "\n\nProject ${PROJ_NAME} Summary:\n\n"
+# shellcheck disable=SC2059
 printf "${SUMMARY_FORMAT}" "Total Files:" "${TOTAL_FILES}"
+# shellcheck disable=SC2059
 printf "${SUMMARY_FORMAT}" "Total Methods:" "${TOTAL_METHODS}"
+# shellcheck disable=SC2059
 printf "${SUMMARY_FORMAT}" "Total Lines:" "${TOTAL_LINES}"
+# shellcheck disable=SC2059
 printf "${SUMMARY_FORMAT}" "Total TODOs:" "${TOTAL_TODOS}"
+# shellcheck disable=SC2059
 printf "${SUMMARY_FORMAT}" "Total Size:" "${READABLE_SIZE}"
 
 
@@ -241,9 +246,13 @@ printf "${SUMMARY_FORMAT}" "Total Size:" "${READABLE_SIZE}"
 #####################################################################################################################################################################################################
 log_debug "Print Project File Summary data"
 echo -ne "\n\nProject ${PROJ_NAME} File Summary:\n\n"
+# shellcheck disable=SC2059
 printf "${FILE_SUMMARY_FORMAT}" "Longest File(s):" "(${MOST_LINES} lines)" "--" "${LONG_FILE}"
+# shellcheck disable=SC2059
 printf "${FILE_SUMMARY_FORMAT}" "Methods File(s):" "(${MOST_METHODS} methods)" "--" "${METHOD_FILE}"
+# shellcheck disable=SC2059
 printf "${FILE_SUMMARY_FORMAT}" "Largest File(s):" "(${BIG_FILE_SIZE})" "--" "${BIG_FILE}"
+# shellcheck disable=SC2059
 printf "${FILE_SUMMARY_FORMAT}" "Roughest File(s):" "(${MOST_TODOS} TODOs)" "--" "${ROUGH_FILE}"
 
 
@@ -252,7 +261,7 @@ printf "${FILE_SUMMARY_FORMAT}" "Roughest File(s):" "(${MOST_TODOS} TODOs)" "--"
 #####################################################################################################################################################################################################
 log_debug "Display Project Git log info"
 echo -ne "\n\nProject ${PROJ_NAME} Git Log Summary\n\n"
-${GIT_LOG_WEEKS_SCRIPT} ${GIT_LOG_WEEKS}
+${GIT_LOG_WEEKS_SCRIPT} "${GIT_LOG_WEEKS}"
 echo -ne "\n"
 
 exit 2  # TODO: Why is this returning a non-zero value?
