@@ -26,31 +26,32 @@
 ####################################################################################################
 # Define Global Configuration File Constants
 ####################################################################################################
-HOME_DIR="${HOME}"
+# Use script's own path to find conf directory (works from any directory)
+SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
+PROJ_DIR="$(dirname "${SCRIPT_DIR}")"
 
-PROJ_NAME="Juniper"
-#PROJ_NAME="dynamic_nn"
+ROOT_CONF_DIR="${PROJ_DIR}/conf"
+ROOT_CONF_FILE="${ROOT_CONF_DIR}/common.conf"
 
-#PROJ_LANG_DIR_NAME="rust/rust_mudgeon"
-PROJ_LANG_DIR_NAME="python"
-
-DEV_DIR_NAME="Development"
-DEV_DIR="${HOME_DIR}/${DEV_DIR_NAME}"
-
-PROJ_ROOT_DIR="${DEV_DIR}/${PROJ_LANG_DIR_NAME}"
-PROJ_DIR="${PROJ_ROOT_DIR}/${PROJ_NAME}"
-
-ROOT_CONF_DIR_NAME="conf"
-ROOT_CONF_DIR="${PROJ_DIR}/${ROOT_CONF_DIR_NAME}"
-ROOT_CONF_FILE_NAME="common.conf"
-ROOT_CONF_FILE="${ROOT_CONF_DIR}/${ROOT_CONF_FILE_NAME}"
-source ${ROOT_CONF_FILE}
+# Source common.conf using init.conf pattern for consistency
+export PARENT_PATH_PARAM="${SCRIPT_PATH}"
+INIT_CONF="${ROOT_CONF_DIR}/init.conf"
+if [[ -f "${INIT_CONF}" ]]; then
+    # shellcheck disable=SC1090
+    source "${INIT_CONF}"
+else
+    # Fallback to direct common.conf source
+    # shellcheck disable=SC1090
+    source "${ROOT_CONF_FILE}"
+fi
 
 
 ##################################################################################
 # Determine Project Dir
 ##################################################################################
-BASE_DIR=$(${GET_PROJECT_SCRIPT} "${BASH_SOURCE}")
+# shellcheck disable=SC2034
+BASE_DIR="${PROJ_DIR}"
 
 
 ##################################################################################
@@ -62,7 +63,8 @@ CURRENT_OS=$(${GET_OS_SCRIPT})
 ####################################################################################################
 # Define Script Functions
 ####################################################################################################
-source ${DATE_FUNCTIONS_SCRIPT}
+# shellcheck disable=SC1090
+source "${DATE_FUNCTIONS_SCRIPT}"
 
 
 ####################################################################################################
@@ -113,7 +115,7 @@ CURRENT_WEEK="${WEEK_NUMBER}"
 while [[ ${CURRENT_START} > ${START_DATE} ]]; do
     CURRENT_START=$(date_update "${CURRENT_OS}" "${CURRENT_END}" "${START_INTERVAL_NUM}" "${INTERVAL_TYPE}")
     #echo "Current Start: ${CURRENT_START}"
-    if [[ ${CURRENT_WEEK} != ${WEEK_NUMBER} ]]; then
+    if [[ "${CURRENT_WEEK}" != "${WEEK_NUMBER}" ]]; then
         echo -ne "\n"
     fi
     echo -ne "Week: ${CURRENT_WEEK} (${CURRENT_START} - ${CURRENT_END})\n"

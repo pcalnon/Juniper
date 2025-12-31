@@ -38,10 +38,49 @@
 # Source script config file
 #####################################################################################################################################################################################################
 set -o functrace
-# shellcheck disable=SC2155
-export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="../conf/init.conf"
-# shellcheck disable=SC2015,SC1090
-[[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
+
+# Use script's own path to find init.conf (works from any directory)
+SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
+
+export PARENT_PATH_PARAM="${SCRIPT_PATH}"
+INIT_CONF="$(realpath "${SCRIPT_DIR}/../conf/init.conf")"
+
+# shellcheck disable=SC1090
+if [[ -f "${INIT_CONF}" ]]; then
+    source "${INIT_CONF}"
+else
+    echo "Init Config File Not Found at ${INIT_CONF}. Unable to Continue."
+    exit 1
+fi
+
+
+#######################################################################################################################################################################################
+# Define usage function for help and error messages
+#######################################################################################################################################################################################
+function usage() {
+    local exit_code="${1:-0}"
+    local msg="${2:-}"
+
+    [[ -n "${msg}" ]] && printf '%s\n' "${msg}" >&2
+
+    cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Count TODO comments in a specified file.
+
+Options:
+  -s, --search TERM    Search term to count (default: TODO)
+  -f, --file PATH      File to search in (required)
+  -h, --help           Show this help and exit
+
+Examples:
+  $(basename "$0") --search TODO --file src/main.py
+  $(basename "$0") -s FIXME -f src/utils.py
+EOF
+
+    exit "${exit_code}"
+}
 
 
 #######################################################################################################################################################################################
@@ -55,16 +94,14 @@ while [[ "${1}" != "" ]]; do
         "${SEARCH_SHORT}" | "${SEARCH_LONG}")
             shift
             PARAM="${1}"
-            shift
-        if [[ ${PARAM} != "" ]]; then
+            if [[ ${PARAM} != "" ]]; then
                 SEARCH_TERM="${PARAM}"
             fi
         ;;
         "${FILE_SHORT}" | "${FILE_LONG}")
             shift
             PARAM="${1}"
-            shift
-        if [[ ( ${PARAM} != "" ) && ( -f ${PARAM} ) ]]; then
+            if [[ ( ${PARAM} != "" ) && ( -f ${PARAM} ) ]]; then
                 SEARCH_FILE="${PARAM}"
             else
                 usage 1 "Error: Received an invalid Search File: \"${PARAM}\"\n"
@@ -74,6 +111,7 @@ while [[ "${1}" != "" ]]; do
             usage 1 "Error: Invalid command line params: \"${*}\"\n"
         ;;
     esac
+    shift
 done
 
 
@@ -89,4 +127,4 @@ COUNT="$(grep -ic "${SEARCH_TERM}" "${SEARCH_FILE}")"
 #######################################################################################################################################################################################
 echo "${COUNT}"
 
-[[ "${DEBUG}" == "${TRUE}" ]] && exit $(( TRUE )) || return $(( TRUE ))
+exit 0
