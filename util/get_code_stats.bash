@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-02-05
-# Last Modified: 2025-12-25
+# Last Modified: 2026-01-01
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -61,17 +61,16 @@
 #####################################################################################################################################################################################################
 set -o functrace
 
-# FIX: Use script-based resolution for init.conf path to work from any directory
 # shellcheck disable=SC2155
 SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
 export PARENT_PATH_PARAM="${SCRIPT_PATH}"
 INIT_CONF="$(realpath "${SCRIPT_DIR}/../conf/init.conf")"
-echo "get_code_stats.bash: SCRIPT_PATH: ${SCRIPT_PATH}"
-echo "get_code_stats.bash: INIT_CONF: ${INIT_CONF}"
+# echo "get_code_stats.bash: SCRIPT_PATH: ${SCRIPT_PATH}"
+# echo "get_code_stats.bash: INIT_CONF: ${INIT_CONF}"
 # shellcheck disable=SC2015,SC1091 source=conf/init.conf
 [[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found at ${INIT_CONF}. Unable to Continue."; exit 1; }
-echo "get_code_stats.bash: Successfully Completed Sourcing Init Config File: ${INIT_CONF}"
+# echo "get_code_stats.bash: Successfully Completed Sourcing Init Config File: ${INIT_CONF}"
 
 # # export TRUE="0"
 # # export FALSE="1"
