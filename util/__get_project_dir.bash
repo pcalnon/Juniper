@@ -27,7 +27,8 @@ LANGUAGE_NAME="python"
 ROOT_PROJ_DIR="${HOME}/${DEV_DIR}/${LANGUAGE_NAME}/${ROOT_PROJ_NAME}/${PROJ_NAME}"
 ROOT_CONF_DIR="${ROOT_PROJ_DIR}/${ROOT_CONF_NAME}"
 ROOT_CONF_FILE="${ROOT_CONF_DIR}/${ROOT_CONF_FILE_NAME}"
-source ${ROOT_CONF_FILE}
+# shellcheck disable=SC1090
+source "${ROOT_CONF_FILE}"
 
 
 ##################################################################################
@@ -49,6 +50,6 @@ done
 
 SCRIPT_PATH="$(readlink -f "${SCRIPT_PATH}")"
 SCRIPT_DIR="$(cd -P "$(dirname -- "${SCRIPT_PATH}")" > /dev/null 2>&1 && pwd)"
-PROJECT_DIR="$(dirname -- ${SCRIPT_DIR})"
+PROJECT_DIR="$(dirname -- "${SCRIPT_DIR}")"
 BASE_DIR="${PROJECT_DIR}"
 echo "${BASE_DIR}"
