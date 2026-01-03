@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-12-03
-# Last Modified: 2025-12-25
+# Last Modified: 2026-01-02
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -38,21 +38,10 @@
 # Source script config file
 #####################################################################################################################################################################################################
 set -o functrace
-
-# Use script's own path to find init.conf (works from any directory)
-SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
-SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
-
-export PARENT_PATH_PARAM="${SCRIPT_PATH}"
-INIT_CONF="$(realpath "${SCRIPT_DIR}/../conf/init.conf")"
-
-# shellcheck disable=SC1090
-if [[ -f "${INIT_CONF}" ]]; then
-    source "${INIT_CONF}"
-else
-    echo "Init Config File Not Found at ${INIT_CONF}. Unable to Continue."
-    exit 1
-fi
+# shellcheck disable=SC2155
+export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="$(dirname "$(dirname "${PARENT_PATH_PARAM}")")/conf/init.conf"
+# shellcheck disable=SC2015,SC1090
+[[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 
 #######################################################################################################################################################################################
@@ -70,13 +59,13 @@ Usage: $(basename "$0") [OPTIONS]
 Count TODO comments in a specified file.
 
 Options:
-  -s, --search TERM    Search term to count (default: TODO)
-  -f, --file PATH      File to search in (required)
-  -h, --help           Show this help and exit
+    -s, --search TERM    Search term to count (default: TODO)
+    -f, --file PATH      File to search in (required)
+    -h, --help           Show this help and exit
 
 Examples:
-  $(basename "$0") --search TODO --file src/main.py
-  $(basename "$0") -s FIXME -f src/utils.py
+    $(basename "$0") --search TODO --file src/main.py
+    $(basename "$0") -s FIXME -f src/utils.py
 EOF
 
     exit "${exit_code}"
@@ -87,28 +76,28 @@ EOF
 # Process Script's Command Line Argument(s)
 #######################################################################################################################################################################################
 while [[ "${1}" != "" ]]; do
-    case ${1} in
+    case "${1}" in
         "${HELP_SHORT}" | "${HELP_LONG}")
             usage 0
         ;;
         "${SEARCH_SHORT}" | "${SEARCH_LONG}")
             shift
             PARAM="${1}"
-            if [[ ${PARAM} != "" ]]; then
+            if [[ "${PARAM}" != "" ]]; then
                 SEARCH_TERM="${PARAM}"
             fi
         ;;
         "${FILE_SHORT}" | "${FILE_LONG}")
             shift
             PARAM="${1}"
-            if [[ ( ${PARAM} != "" ) && ( -f ${PARAM} ) ]]; then
+            if [[ ( "${PARAM}" != "" ) && ( -f "${PARAM}" ) ]]; then
                 SEARCH_FILE="${PARAM}"
             else
-                usage 1 "Error: Received an invalid Search File: \"${PARAM}\"\n"
+                usage "${FALSE}" "Error: Received an invalid Search File: \"${PARAM}\"\n"
             fi
         ;;
         *)
-            usage 1 "Error: Invalid command line params: \"${*}\"\n"
+            usage "${FALSE}" "Error: Invalid command line params: \"${*}\"\n"
         ;;
     esac
     shift
@@ -116,15 +105,11 @@ done
 
 
 #######################################################################################################################################################################################
-# Search for instances of a specific search term in the specified source code file
+# Display instances of a specific search term in the specified source code file
 #######################################################################################################################################################################################
-# RAW_OUTPUT="$(grep "${SEARCH_TERM}" ${SEARCH_FILE})"
+log_trace "Display instances of a specific search term in the specified source code file"
+[[ ( "${SEARCH_TERM}" == "" ) || ( "${SEARCH_FILE}" == "" ) || ! -f "${SEARCH_FILE}" ]] && usage "${FALSE}" "Error: Missing required parameters. Search Term: \"${SEARCH_TERM}\", Search File: \"${SEARCH_FILE}\"\n"
 COUNT="$(grep -ic "${SEARCH_TERM}" "${SEARCH_FILE}")"
-
-
-#######################################################################################################################################################################################
-# Display Results
-#######################################################################################################################################################################################
 echo "${COUNT}"
 
-exit 0
+exit $(( TRUE ))

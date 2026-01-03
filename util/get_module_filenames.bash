@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-12-03
-# Last Modified: 2025-12-25
+# Last Modified: 2026-01-02
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -51,21 +51,10 @@
 # Source script config file
 #####################################################################################################################################################################################################
 set -o functrace
-
-# Use script's own path to find init.conf (works from any directory)
-SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
-SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
-
-export PARENT_PATH_PARAM="${SCRIPT_PATH}"
-INIT_CONF="$(realpath "${SCRIPT_DIR}/../conf/init.conf")"
-
-# shellcheck disable=SC1090
-if [[ -f "${INIT_CONF}" ]]; then
-    source "${INIT_CONF}"
-else
-    echo "Init Config File Not Found at ${INIT_CONF}. Unable to Continue."
-    exit 1
-fi
+# shellcheck disable=SC2155
+export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="$(dirname "$(dirname "${PARENT_PATH_PARAM}")")/conf/init.conf"
+# shellcheck disable=SC2015,SC1090
+[[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 
 #######################################################################################################################################################################################
@@ -83,12 +72,12 @@ Usage: $(basename "$0") [OPTIONS]
 Get module filenames from the source directory.
 
 Options:
-  -f, --full [true|false]   Print full paths instead of just filenames
-  -h, --help                Show this help and exit
+    -f, --full [true|false]   Print full paths instead of just filenames
+    -h, --help                Show this help and exit
 
 Examples:
-  $(basename "$0")              # List module filenames only
-  $(basename "$0") --full 0     # List full paths
+    $(basename "$0")              # List module filenames only
+    $(basename "$0") --full 0     # List full paths
 EOF
 
     exit "${exit_code}"
@@ -103,7 +92,7 @@ while [[ "$1" != "" ]]; do
     log_debug "Current Param Flag: $1"
     case $1 in
         "${HELP_SHORT}" | "${HELP_LONG}")
-            usage 0
+            usage "${TRUE}"
         ;;
         "${OUTPUT_SHORT}" | "${OUTPUT_LONG}")
             shift
@@ -117,7 +106,7 @@ while [[ "$1" != "" ]]; do
             fi
         ;;
         *)
-            usage 1 "Error: Invalid command line params: \"${*}\"\n"
+            usage "${FALSE}" "Error: Invalid command line params: \"${*}\"\n"
         ;;
     esac
     shift
@@ -129,7 +118,7 @@ done
 ####################################################################################################
 log_debug "Get list of project modules"
 while read -r MODULE_PATH; do
-    if [[ ${FULL_OUTPUT} == "${TRUE}" ]]; then
+    if [[ "${FULL_OUTPUT}" == "${TRUE}" ]]; then
         echo "${MODULE_PATH}"
     else
         FILENAME="${MODULE_PATH//*\/}"
@@ -137,4 +126,4 @@ while read -r MODULE_PATH; do
     fi
 done<<< "$(find "${SRC_DIR}" \( -name "${MODULE_EXT}" ! -name "${INIT_FILE_NAME}" ! -name "${TEST_FILE_NAME}" \) )"
 
-exit 0
+exit $(( TRUE ))

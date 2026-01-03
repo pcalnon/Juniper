@@ -1,20 +1,5 @@
 #!/usr/bin/env bash
 #####################################################################################################################################################################################################
-# Application: Juniper
-# Script Name: get_duplicate_methods.bash
-# Script Path: <Project>/util/get_duplicate_methods.bash
-#
-# Description: This script finds duplicate method definitions in the specified group of files
-#
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Notes:
-#
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Examples:
-#
-#####################################################################################################################################################################################################
-
-#####################################################################################################################################################################################################
 # Project:       Juniper
 # Sub-Project:   JuniperCanopy
 # Application:   juniper_canopy
@@ -26,20 +11,13 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-10-11
-# Last Modified: 2025-12-25
+# Last Modified: 2026-01-02
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
 #
 # Description:
-# Description:
-#     This script performs the following actions for the current Project:
-#
-#         1.  Applies the cargo linter to the source files
-#         2.  Builds the current project with the debug target
-#         3.  Sets the expected Environment Variables for the Application
-#         4.  Adds the expected command line arguments
-#         5.  Executes the project's binary
+#     This script finds duplicate method definitions in the specified group of files
 #
 #####################################################################################################################################################################################################
 # Notes:
@@ -61,10 +39,8 @@
 #####################################################################################################################################################################################################
 set -o functrace
 # shellcheck disable=SC2155
-export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="conf/init.conf"
-# shellcheck disable=SC2015
-# shellcheck source=conf/init.conf
-# shellcheck disable=SC1091
+export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="$(dirname "$(dirname "${PARENT_PATH_PARAM}")")/conf/init.conf"
+# shellcheck disable=SC2015,SC1090
 [[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 

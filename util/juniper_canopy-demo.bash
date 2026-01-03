@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/juniper_canopy/util/
 #
 # Date:          2025-10-22
-# Last Modified: 2025-12-25
+# Last Modified: 2026-01-02
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -39,44 +39,17 @@
 
 
 #####################################################################################################################################################################################################
-# Source script config file
+# Initialize script by sourcing the init_conf.bash config file
 #####################################################################################################################################################################################################
 set -o functrace
-
 # shellcheck disable=SC2155
-export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")"
-# shellcheck disable=SC1091
-source "conf/init.conf"; SUCCESS="$?"
-
-# Verify configuration succeeded
-# shellcheck disable=SC1091
-[[ "${SUCCESS}" != "0" ]] && { source "conf/config_fail.conf"; log_error "${SUCCESS}" "${PARENT_PATH_PARAM}" "../conf/init.conf" "${LINENO}" "${LOG_FILE}"; set -e && exit 1; }
-log_debug "Successfully Configured Current Script: $(basename "${PARENT_PATH_PARAM}"), by Sourcing the Init Config File: ${INIT_CONF}, Returned: \"${SUCCESS}\""
-
-
-# #####################################################################################################################################################################################################
-# # Run env info functions
-# #####################################################################################################################################################################################################
-# # source "${DATE_FUNCTIONS_SCRIPT}"
-# log_debug "Run env info functions"
-# # shellcheck disable=SC2034
-# BASE_DIR=$(${GET_PROJECT_SCRIPT} "${BASH_SOURCE[0]}")
-# # shellcheck disable=SC2034
-# CURRENT_OS=$(${GET_OS_SCRIPT})
-
-
-# #####################################################################################################################################################################################################
-# # Colors for output
-# #####################################################################################################################################################################################################
-# RED='\033[0;31m'
-# GREEN='\033[0;32m'
-# YELLOW='\033[1;33m'
-# BLUE='\033[0;34m'
-# NC='\033[0m' # No Color
+export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="$(dirname "$(dirname "${PARENT_PATH_PARAM}")")/conf/init.conf"
+# shellcheck disable=SC2015,SC1090
+[[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 
 #####################################################################################################################################################################################################
-# Banner
+# Display Banner
 #####################################################################################################################################################################################################
 echo -e "${BLUE}"
 echo "╔════════════════════════════════════════════════════════════╗"
@@ -137,12 +110,12 @@ fi
 #####################################################################################################################################################################################################
 # Check if demo_mode.py exists
 #####################################################################################################################################################################################################
-cd src
+cd src || exit 1
 
 if [ ! -f "demo_mode.py" ]; then
     echo -e "${RED}✗ demo_mode.py not found in src/${NC}"
     echo "  Please ensure all files are in place"
-    exit 1
+    exit $(( FALSE ))
 fi
 
 echo -e "${GREEN}✓ All files present${NC}"

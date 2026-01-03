@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-10-11
-# Last Modified: 2025-12-25
+# Last Modified: 2026-01-02
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -37,12 +37,12 @@
 
 
 #####################################################################################################################################################################################################
-# Initialize script by sourcing the init_conf.bash config file
+# Source script config file
 #####################################################################################################################################################################################################
 set -o functrace
 # shellcheck disable=SC2155
-export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="conf/init.conf"
-# shellcheck disable=SC2015,SC1091 source=conf/init.conf
+export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="$(dirname "$(dirname "${PARENT_PATH_PARAM}")")/conf/init.conf"
+# shellcheck disable=SC2015,SC1090
 [[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 
@@ -58,46 +58,49 @@ function command_exists() {
 #####################################################################################################################################################################################################
 # Define Command and Offset based on package manager choice
 #####################################################################################################################################################################################################
-if [[ ${USE_CONDA} == "${TRUE}" ]]; then
+log_trace "Define Command and Offset based on package manager choice"
+if [[ "${USE_CONDA}" == "${TRUE}" ]]; then
 	CMD="${CONDA_CMD}"
 	OFFSET="${CONDA_OFFSET}"
-elif [[ ${USE_MAMBA} == "${TRUE}" ]]; then
+elif [[ "${USE_MAMBA}" == "${TRUE}" ]]; then
 	CMD="${MAMBA_CMD}"
 	OFFSET="${MAMBA_OFFSET}"
 else
-	echo "Borked"
-	exit 1
+    log_fatal "No package manager selected. Unable to continue."
 fi
 
-[[ ${DEBUG} == "${TRUE}" ]] && print_status "DEBUG: OS Type: ${OS_TYPE}"
-if [[ ${OS_TYPE} == "${LINUX}" ]]; then
+log_debug "OS Type: ${OS_TYPE}"
+if [[ "${OS_TYPE}" == "${LINUX}" ]]; then
 	BASH_CONFIG="/home/pcalnon/.bashrc"
-	[[ ${DEBUG} == "${TRUE}" ]] && print_status "DEBUG: Bash Linux config file: ${BASH_CONFIG}"
-elif [[ ${OS_TYPE} == "${MACOS}" ]]; then
+    log_debug "Bash Linux config file: ${BASH_CONFIG}"
+elif [[ "${OS_TYPE}" == "${MACOS}" ]]; then
 	BASH_CONFIG="/Users/pcalnon/.bash_profile"
-	[[ ${DEBUG} == "${TRUE}" ]] && print_status "DEBUG: Bash MacOS config file: ${BASH_CONFIG}"
+    log_debug "Bash MacOS config file: ${BASH_CONFIG}"
 else
-	print_error "Unsupported OS: ${OS_TYPE}"
-	exit 1
+    log_fatal "Unsupported OS: ${OS_TYPE}"
 fi
-[[ ${DEBUG} == "${TRUE}" ]] && print_status "DEBUG: Bash config file: ${BASH_CONFIG}"
 
-print_status "Starting ${PROJECT_NAME} environment setup..."
+log_debug "Bash config file: ${BASH_CONFIG}"
+log_info "Starting ${PROJECT_NAME} environment setup..."
 
 
 #####################################################################################################################################################################################################
 # Check if conda is installed
 #####################################################################################################################################################################################################
+log_trace "Check if conda is installed"
 RESULT="$(command_exists conda)"
-[[ ${DEBUG} == "${TRUE}" ]] && print_status "DEBUG: Conda check result: ${RESULT}"
-if [[ ${RESULT} == "" ]]; then
-	print_error "Conda is not installed or not in PATH"
-	print_status "Please install Miniconda or Anaconda and try again"
-	exit 1
+log_debug "Conda check result: ${RESULT}"
+if [[ "${RESULT}" == "" ]]; then
+	log_info "Please install Miniconda or Anaconda and try again"
+	log_fatal "Conda is not installed or not in PATH"
 fi
-[[ ${DEBUG} == "${TRUE}" ]] && print_status "DEBUG: Conda is installed"
+log_debug "Verified Conda is installed"
+
 CONDA_VERSION="$(conda --version)"
-print_success "Conda found: ${CONDA_VERSION}"
+log_info "Conda found: ${CONDA_VERSION}"
+
+
+# TODO: Done above here
 
 
 #####################################################################################################################################################################################################

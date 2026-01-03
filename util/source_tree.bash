@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-10-11
-# Last Modified: 2025-12-25
+# Last Modified: 2026-01-02
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -39,32 +39,28 @@
 #####################################################################################################################################################################################################
 set -o functrace
 # shellcheck disable=SC2155
-export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")"
-# shellcheck disable=SC1091
-source "conf/init.conf"; SUCCESS="$?"
-
-# shellcheck disable=SC1091
-[[ "${SUCCESS}" != "0" ]] && { source "conf/config_fail.conf"; log_error "${SUCCESS}" "${PARENT_PATH_PARAM}" "conf/init.conf" "${LINENO}" "${LOG_FILE}"; }
-log_debug "Successfully Configured Current Script: $(basename "${PARENT_PATH_PARAM}"), by Sourcing the Init Config File: ${INIT_CONF}, Returned: \"${SUCCESS}\""
+export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="$(dirname "$(dirname "${PARENT_PATH_PARAM}")")/conf/init.conf"
+# shellcheck disable=SC2015,SC1090
+[[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 
 ##################################################################################
 # Define Script Constants
 ##################################################################################
 if [[ "${*}" == "" ]]; then
-  echo "Warning: No Input Parameters Provided"
-  #DIR_LIST="./conf ./data ./src ./util"
+  log_warning "No Input Parameters Provided"
   DIR_LIST="${CONFIG_DIR_NAME} ${DATA_DIR_NAME} ${DOCUMENT_DIR_NAME} ${SOURCE_DIR_NAME} ${UTILITY_DIR_NAME}"
 else
   DIR_LIST="${*}"
 fi
-echo "Dir list: ${DIR_LIST}"
+log_info "Dir list: ${DIR_LIST}"
 
 
 ##################################################################################
 # Validate subdirectory list
 ##################################################################################
-cd "${BASE_DIR}" || exit 1
+cd "${BASE_DIR}" || exit $(( FALSE ))
+
 WORKING_LIST=""
 for DIR in ${DIR_LIST}; do
     if [[ -d ${DIR} ]]; then
@@ -77,3 +73,5 @@ done
 # Print directory listing as Tree structure
 ##################################################################################
 tree "${WORKING_LIST}"
+
+exit $(( TRUE ))

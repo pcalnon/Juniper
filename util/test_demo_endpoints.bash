@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-11-16
-# Last Modified: 2025-12-25
+# Last Modified: 2026-01-02
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -40,37 +40,30 @@
 #####################################################################################################################################################################################################
 set -o functrace
 # shellcheck disable=SC2155
-export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")"
-# shellcheck disable=SC1091
-source "conf/init.conf"; SUCCESS="$?"
-
-# shellcheck disable=SC1091
-[[ "${SUCCESS}" != "0" ]] && { source "conf/config_fail.conf"; log_error "${SUCCESS}" "${PARENT_PATH_PARAM}" "conf/init.conf" "${LINENO}" "${LOG_FILE}"; }
-log_debug "Successfully Configured Current Script: $(basename "${PARENT_PATH_PARAM}"), by Sourcing the Init Config File: ${INIT_CONF}, Returned: \"${SUCCESS}\""
+export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="$(dirname "$(dirname "${PARENT_PATH_PARAM}")")/conf/init.conf"
+# shellcheck disable=SC2015,SC1090
+[[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 
 #####################################################################################################################################################################################################
-# Colors
+# Display Headers
 #####################################################################################################################################################################################################
-# export GREEN='\033[0;32m'
-# export RED='\033[0;31m'
-# export YELLOW='\033[1;33m'
-# export NC='\033[0m'
-
 echo "Testing Demo Mode Endpoints..."
 echo "==============================="
 echo ""
 
+
+#####################################################################################################################################################################################################
+# Define script functions
+#####################################################################################################################################################################################################
 # Test function
 test_endpoint() {
 	local name=$1
 	local url=$2
 	local expected_code=$3
-
 	echo -n "Testing $name... "
 	response=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null)
-
-	if [[ ${response} == "${expected_code}" ]]; then
+	if [[ "${response}" == "${expected_code}" ]]; then
 		echo -e "${GREEN}✓ PASS${NC} (HTTP $response)"
 		return 0
 	else
@@ -79,6 +72,10 @@ test_endpoint() {
 	fi
 }
 
+
+#####################################################################################################################################################################################################
+# Compile Pass and Fail stats
+#####################################################################################################################################################################################################
 # Counter for results
 passed=0
 failed=0
@@ -139,15 +136,19 @@ else
 	((failed++))
 fi
 
+
+#####################################################################################################################################################################################################
+# Display Footers
+#####################################################################################################################################################################################################
 echo ""
 echo "==============================="
 echo -e "Results: ${GREEN}${passed} passed${NC}, ${RED}${failed} failed${NC}"
 echo ""
 
-if [[ ${failed} == 0 ]]; then
+if [[ "${failed}" == "${TRUE}" ]]; then
 	echo -e "${GREEN}✓ All endpoints accessible!${NC}"
-	exit 0
+	exit $(( TRUE ))
 else
 	echo -e "${RED}✗ Some endpoints failed${NC}"
-	exit 1
+	exit  $(( FALSE ))
 fi
