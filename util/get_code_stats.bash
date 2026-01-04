@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-02-05
-# Last Modified: 2026-01-01
+# Last Modified: 2026-01-03
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -80,30 +80,6 @@ printf "${TABLE_FORMAT}" "----------------------------" "------" "--------" "---
 
 
 #####################################################################################################################################################################################################
-# Search project source files and retrieve stats
-#####################################################################################################################################################################################################
-log_debug "Search project source files and retrieve stats"
-# Initialize project summary counters
-log_debug "Initialize project summary counters"
-# TODO: Move these to config file.
-TOTAL_FILES=0
-TOTAL_LINES=0
-TOTAL_METHODS=0
-TOTAL_TODOS=0
-TOTAL_SIZE=0
-
-MOST_LINES=0
-MOST_METHODS=0
-MOST_TODOS=0
-MOST_SIZE=0
-
-LONG_FILE=""
-METHOD_FILE=""
-ROUGH_FILE=""
-BIG_FILE=""
-
-
-#####################################################################################################################################################################################################
 # Evaluate each source file in project
 #####################################################################################################################################################################################################
 log_debug "Evaluate each source file in project"
@@ -168,10 +144,10 @@ while read -r i; do
 
     #################################################################################################################################################################################################
     # Perform TODO count calculations
+    #     NOTE: Inline grep for performance - avoid subprocess overhead of calling get_file_todo.bash
+    #     NOTE: Use tr to strip any newlines/whitespace and ensure we get a clean integer
     #################################################################################################################################################################################################
     log_debug "Perform TODO count calculations"
-    # Inline grep for performance - avoid subprocess overhead of calling get_file_todo.bash
-    # Use tr to strip any newlines/whitespace and ensure we get a clean integer
     CURRENT_TODOS="$(grep -ic "${SEARCH_TERM_DEFAULT}" "${FILE_PATH}" 2>/dev/null | tr -d '[:space:]')"
     [[ -z "${CURRENT_TODOS}" ]] && CURRENT_TODOS="0"
     log_verbose "Current TODOS: ${CURRENT_TODOS}"
@@ -228,6 +204,11 @@ while read -r i; do
 
 done <<< "$(find "${SRC_DIR}" \( -name "*.py" ! -name "*__init__*" ! -name "*test_*.py" \) -type f 2>/dev/null)"
 
+
+#####################################################################################################################################################################################################
+# Parse file sizes
+#####################################################################################################################################################################################################
+log_trace "Parsing file sizes"
 READABLE_SIZE="$(readable_size "$(echo "${TOTAL_SIZE}" | xargs)")"
 log_debug "Readable Size: ${READABLE_SIZE}"
 BIG_FILE_SIZE="$(readable_size "$(echo "${MOST_SIZE}" | xargs)")"
@@ -238,7 +219,6 @@ log_debug "Big File Size: ${BIG_FILE_SIZE}"
 # Print Project Summary data
 #####################################################################################################################################################################################################
 log_debug "Print Project Summary data"
-
 # Print summary data
 echo -ne "\n\nProject ${PROJ_NAME} Summary:\n\n"
 # shellcheck disable=SC2059

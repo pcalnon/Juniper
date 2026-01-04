@@ -11,13 +11,13 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-10-11
-# Last Modified: 2026-01-02
+# Last Modified: 2026-01-03
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
 #
 # Description:
-#    This script performs initial environment setup and launches the Frontend Application to display the current
+#    This script performs initial environment setup and launches the Frontend Application to provide an interactive display of the
 #    Cascade Correlation Neural Network prototype including training, state, and architecture for monitoring and diagnostics.
 #
 #####################################################################################################################################################################################################
@@ -65,7 +65,10 @@ export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="$(dirna
 #####################################################################################################################################################################################################
 # Launch the Main python script for the Project
 #####################################################################################################################################################################################################
-python3 --version
+log_trace "Launch the Main python script for the Project"
+# python3 --version
+log_verbose "Active Python Version: $(python3 --version)"
 python3 "${PYTHON_FILE}"
+log_trace "Completed launching the Main python script for the Project"
 
 exit $(( TRUE ))

@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-08-01
-# Last Modified: 2025-12-25
+# Last Modified: 2026-01-03
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -27,6 +27,8 @@
 #
 #####################################################################################################################################################################################################
 # TODO :
+#     Move function def to fn config file
+#     Add logic to source fn config file to primary config file
 #
 #####################################################################################################################################################################################################
 # COMPLETED:
@@ -35,12 +37,12 @@
 
 
 #####################################################################################################################################################################################################
-# Source Script Config File
+# Source script config file
 #####################################################################################################################################################################################################
 set -o functrace
 # shellcheck disable=SC2155
-export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="conf/init.conf"
-# shellcheck disable=SC2015,SC1091 source=conf/init.conf
+export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="$(dirname "$(dirname "${PARENT_PATH_PARAM}")")/conf/init.conf"
+# shellcheck disable=SC2015,SC1090
 [[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 
@@ -63,7 +65,8 @@ function get_script_path() {
 #####################################################################################################################################################################################################
 # Get the path and return it
 #####################################################################################################################################################################################################
+log_trace "Get the path and return it"
 SCRIPT_PATH="$(get_script_path)"
-echo "${SCRIPT_PATH}"
+log_verbose "SCRIPT_PATH: ${SCRIPT_PATH}"
 
-[[ "${DEBUG}" == "${TRUE}" ]] && exit $(( TRUE )) || return $(( TRUE ))
+return $(( TRUE ))

@@ -11,18 +11,19 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 
 # Date:          2025-10-31
-# Last Modified: 2025-12-25
+# Last Modified: 2026-01-03
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
 #
 # Description:
-#    Warning: This Config File is Sourced.
-#
 #    This config file defines all constants related to Color and Formatting of printing.
 #
 #####################################################################################################################################################################################################
 # Notes:
+#
+#    Warning: This Config File is Sourced.
+#
 #    This script is sourced by a similarly named wrapper script: run_all_tests.bash
 #    This script uses a .bash extension so vim doesn't complain about Conditionals in a Config File.
 #    When Debug Mode is set to True, This config file can run a full display of all colors and formatting options.
@@ -88,8 +89,10 @@ if [[ "${DEBUG}" == "${TRUE}" ]]; then
                     ColorNumber="$(( Color+Intensity+Layer ))"
                     # shellcheck disable=SC2154
                     DisplayCode="${Prefix}${Format}${Delimiter}${ColorNumber}${Suffix}"
+                    log_debug "${Prefix}_${Format}_${Delimiter}_${ColorNumber}_${Suffix}"
                     echo "${Prefix}_${Format}_${Delimiter}_${ColorNumber}_${Suffix}"
                     # shellcheck disable=SC2154
+                    log_debug "\n${DisplayCode}[TESTING]${ColorReset} for Color Number: ${ColorNumber} (Color: ${Color}, Intensity: ${Intensity}, Layer: ${Layer}), Format: ${Format}"
                     echo -ne "\n${DisplayCode}[TESTING]${ColorReset} for Color Number: ${ColorNumber} (Color: ${Color}, Intensity: ${Intensity}, Layer: ${Layer}), Format: ${Format}\n"
                 done
             done
@@ -97,3 +100,5 @@ if [[ "${DEBUG}" == "${TRUE}" ]]; then
     done
     echo -ne "\n"
 fi
+
+exit $(( TRUE ))

@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-10-11
-# Last Modified: 2026-01-02
+# Last Modified: 2026-01-03
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -53,12 +53,14 @@ export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="$(dirna
 #####################################################################################################
 # Specify the Python script to run:
 ####################################################################################################
+log_trace "Read Command line params to Specify the Python script to run"
 PARAMS="${*}"
 
 
 ####################################################################################################
 # Update the Python Path for the script
 ####################################################################################################
+log_trace "Update the Python Path for the script"
 PATH_DEL=":"
 PATH_FOUND="$(echo "${PYTHONPATH}" | grep "${SOURCE_DIR}")"
 if [[ "${PATH_FOUND}" == "" ]]; then
@@ -70,17 +72,20 @@ export PYTHONPATH="${PYTHONPATH}${PATH_DEL}${SOURCE_DIR}"
 ####################################################################################################
 # Display Environment Values
 ####################################################################################################
-echo "Base Dir: ${BASE_DIR}"
-echo "Current OS: ${CURRENT_OS}"
-echo "Python: ${PYTHON} (ver: $(${PYTHON} --version))"
-echo "Python Path: ${PYTHONPATH}"
-echo "Python Script: ${PYTHON_SCRIPT}"
-echo " "
+log_debug "Display Environment Values"
+log_info "Base Dir: ${BASE_DIR}"
+log_info "Current OS: ${CURRENT_OS}"
+log_info "Python: ${PYTHON} (ver: $(${PYTHON} --version))"
+log_info "Python Path: ${PYTHONPATH}"
+log_info "Python Script: ${PYTHON_SCRIPT}"
+log_info " "
 
 
 ####################################################################################################
 # Execute Python script
 ####################################################################################################
-echo "time ${PYTHON} ${PYTHON_SCRIPT} ${PARAMS}"
-
+log_trace "Execute Python script"
+log_debug "time ${PYTHON} ${PYTHON_SCRIPT} ${PARAMS}"
 time ${PYTHON} "${PYTHON_SCRIPT}" "${PARAMS}"
+
+exit $(( TRUE ))

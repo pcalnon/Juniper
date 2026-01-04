@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-12-03
-# Last Modified: 2026-01-02
+# Last Modified: 2026-01-03
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -47,14 +47,16 @@ export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="$(dirna
 #####################################################################################################################################################################################################
 # Get git branches and ages.  yay.
 #####################################################################################################################################################################################################
+log_trace "Get git branches and ages. yay."
 git fetch --prune
+log_trace "Git fetch --prune completed."
 
+log_trace "Get ages for local git branches."
 echo -ne "\nLocal Branches:\n"
 git for-each-ref --sort='committerdate:iso8601' --color --format="%(color:green)%(committerdate:iso8601)|%(color:blue)%(committerdate:relative)|%(color:reset)%09%(refname)" refs/heads | awk -F "refs/heads/" '{print $1 $2;}' | column -s '|' -t
 
+log_trace "Get ages for remote git branches."
 echo -ne "\nRemote Branches:\n"
 git for-each-ref --sort='committerdate:iso8601' --color --format="%(color:green)%(committerdate:iso8601)|%(color:blue)%(committerdate:relative)|%(color:reset)%09%(refname)" refs/remotes | awk -F "refs/remotes/" '{print $1 $2;}' | column -s '|' -t
 
-# [[ "${DEBUG}" == "${TRUE}" ]] && exit $(( TRUE )) || return $(( TRUE ))
-# exit $(( TRUE ))
 return $(( TRUE ))

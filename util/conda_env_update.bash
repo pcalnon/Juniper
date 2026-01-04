@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-10-11
-# Last Modified: 2025-12-25
+# Last Modified: 2026-01-03
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -38,28 +38,14 @@
 #####################################################################################################################################################################################################
 set -o functrace
 # shellcheck disable=SC2155
-export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")"
-# shellcheck disable=SC1091
-source "conf/init.conf"; SUCCESS="$?"
-
-# shellcheck disable=SC1091
-[[ "${SUCCESS}" != "0" ]] && { source "conf/config_fail.conf"; log_error "${SUCCESS}" "${PARENT_PATH_PARAM}" "conf/init.conf" "${LINENO}" "${LOG_FILE}"; }
-log_debug "Successfully Configured Current Script: $(basename "${PARENT_PATH_PARAM}"), by Sourcing the Init Config File: ${INIT_CONF}, Returned: \"${SUCCESS}\""
+export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="$(dirname "$(dirname "${PARENT_PATH_PARAM}")")/conf/init.conf"
+# shellcheck disable=SC2015,SC1090
+[[ -f "${INIT_CONF}" ]] && source "${INIT_CONF}" || { echo "Init Config File Not Found. Unable to Continue."; exit 1; }
 
 
 #####################################################################################################################################################################################################
-# Define constants
+# Update Conda Environment
 #####################################################################################################################################################################################################
-CONDA_ENV_NAME="JuniperCanopy"
-
-CONDA_PKG_FILEDIR="conf"
-CONDA_PKG_FILENAME="conda_environment.yaml"
-CONDA_PKG_FILE="${CONDA_PKG_FILEDIR}/${CONDA_PKG_FILENAME}"
-
-
-#####################################################################################################################################################################################################
-#
-#####################################################################################################################################################################################################
-# conda env update --name JuniperCanopy --file  conf/conda_environment.yaml
-echo "conda env update --name \"${CONDA_ENV_NAME}\" --file \"${CONDA_PKG_FILE}\""
+log_trace "Updating Conda Environment"
+log_info "conda env update --name \"${CONDA_ENV_NAME}\" --file \"${CONDA_PKG_FILE}\""
 conda env update --name "${CONDA_ENV_NAME}" --file "${CONDA_PKG_FILE}"

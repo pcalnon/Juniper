@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2024-04-01
-# Last Modified: 2026-01-02
+# Last Modified: 2026-01-03
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -47,25 +47,38 @@ export PARENT_PATH_PARAM="$(realpath "${BASH_SOURCE[0]}")" && INIT_CONF="$(dirna
 #####################################################################################################################################################################################################
 # Process input parameters
 #####################################################################################################################################################################################################
-if [[ $1 ]]; then
+log_trace "Process input parameters"
+dest="./dest"
+src="./source"
 
-  dest="./dest"
-  src="./source"
-
-  test $2 && dest="$2"
-  test $1 && src="$1"
-
+if [[ "$1" != "" ]]; then
+  log_trace "Evaluate Input Parameters"
+  test "$2" && dest="$2"
+  test "$1" && src="$1"
 fi
+log_trace "Source: ${src}, Destination: ${dest}"
 
 
 #####################################################################################################################################################################################################
 # Perform rsync
 #####################################################################################################################################################################################################
-rsync -a --safe-links "${src}"/ "${dest}"/
+log_trace "Performing rsync from ${src} to ${dest}"
+log_debug "rsync -a --safe-links \"${src}/\" \"${dest}/\""
+rsync -a --safe-links "${src}"/ "${dest}"/ ; SUCCESS="$?"
+[[ "${SUCCESS}" != "${TRUE}" ]] && log_fatal "Rsync failed with status ${SUCCESS}"
+log_info "Rsync completed with status ${SUCCESS}"
 
+
+#####################################################################################################################################################################################################
+# Validate rsync Transfer
+#####################################################################################################################################################################################################
+log_trace "Validate rsync Transfer"
 abs_src="$(realpath -- "${src}")"
 while read -r filename; do
   target="$(target="$(readlink -f -- "${filename}")" && echo "${target%/*}")"
   while [[ $target && ( ! $abs_src -ef "${target}" ) ]]; do target="${target%/*}"; done
   test ! "${target}" && rsync -aL "${filename}" "${filename/$src/$dest}"
 done <<< "$(find "${src}" -type l)"
+log_trace "Rsync completed successfully"
+
+exit $(( TRUE ))

@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/conf/
 #
 # Date:          2025-10-31
-# Last Modified: 2025-12-25
+# Last Modified: 2026-01-03
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -46,7 +46,6 @@ import itertools
 import sys
 
 write = sys.stdout.write
-
 
 write("\n")
 for i, j in itertools.product(range(10), range(30, 38)):  # Text attributes and foreground colors
