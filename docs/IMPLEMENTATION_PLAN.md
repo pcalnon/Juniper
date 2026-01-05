@@ -6,15 +6,45 @@
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Priority Matrix](#priority-matrix)
-- [Phase 0: Core UX Stabilization (P0)](#phase-0-core-ux-stabilization-p0)
-- [Phase 1: High-Impact Enhancements (P1)](#phase-1-high-impact-enhancements-p1)
-- [Phase 2: Polish & Medium-Priority Features (P2)](#phase-2-polish--medium-priority-features-p2)
-- [Phase 3: Advanced Features & Infrastructure (P3)](#phase-3-advanced-features--infrastructure-p3)
-- [Dependencies](#dependencies)
-- [Risk Assessment](#risk-assessment)
-- [Implementation Details](#implementation-details)
+- [Juniper Canopy Implementation Plan](#juniper-canopy-implementation-plan)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+    - [Current State](#current-state)
+  - [Priority Matrix](#priority-matrix)
+    - [Summary by Priority](#summary-by-priority)
+  - [Phase 0: Core UX Stabilization (P0)](#phase-0-core-ux-stabilization-p0)
+    - [P0-1: Training Controls Button State Fix](#p0-1-training-controls-button-state-fix)
+    - [P0-2: Meta-Parameters Apply Button](#p0-2-meta-parameters-apply-button)
+    - [P0-3: Top Status Bar Status/Phase Updates](#p0-3-top-status-bar-statusphase-updates)
+    - [P0-4: Training Metrics Graph Range Persistence](#p0-4-training-metrics-graph-range-persistence)
+    - [P0-5: Network Topology Pan/Lasso Tool Fix](#p0-5-network-topology-panlasso-tool-fix)
+    - [P0-6: Network Topology Interaction Persistence](#p0-6-network-topology-interaction-persistence)
+    - [P0-7: Network Topology Dark Mode Info Bar](#p0-7-network-topology-dark-mode-info-bar)
+  - [Phase 1: High-Impact Enhancements (P1)](#phase-1-high-impact-enhancements-p1)
+    - [P1-1: Candidate Node Info Section Fix](#p1-1-candidate-node-info-section-fix)
+    - [P1-2: Network Topology Staggered Layout](#p1-2-network-topology-staggered-layout)
+    - [P1-3: Training Metrics Replay Functionality](#p1-3-training-metrics-replay-functionality)
+    - [P1-4: Node Selection Interactions (Phase 1)](#p1-4-node-selection-interactions-phase-1)
+  - [Phase 2: Polish \& Medium-Priority Features (P2)](#phase-2-polish--medium-priority-features-p2)
+    - [P2-1: Most Recently Added Node Indicator](#p2-1-most-recently-added-node-indicator)
+    - [P2-2: Unique Image Download Names](#p2-2-unique-image-download-names)
+    - [P2-3: About Tab](#p2-3-about-tab)
+    - [P2-4: HDF5 Snapshot Tab (Read-Only)](#p2-4-hdf5-snapshot-tab-read-only)
+  - [Phase 3: Advanced Features \& Infrastructure (P3)](#phase-3-advanced-features--infrastructure-p3)
+    - [P3-1: Training Metrics Save/Load](#p3-1-training-metrics-saveload)
+    - [P3-2: Network Topology 3D View](#p3-2-network-topology-3d-view)
+    - [P3-3: Cassandra Integration Tab](#p3-3-cassandra-integration-tab)
+    - [P3-4: Redis Integration Tab](#p3-4-redis-integration-tab)
+  - [Dependencies](#dependencies)
+    - [Critical Dependencies](#critical-dependencies)
+    - [Shared Dependencies](#shared-dependencies)
+  - [Risk Assessment](#risk-assessment)
+    - [High-Risk Areas](#high-risk-areas)
+    - [Medium-Risk Areas](#medium-risk-areas)
+    - [Low-Risk Areas](#low-risk-areas)
+  - [Implementation Details](#implementation-details)
+  - [Test Coverage Requirements](#test-coverage-requirements)
+  - [Change Log](#change-log)
 
 ---
 
@@ -34,7 +64,7 @@ This document provides a comprehensive implementation plan for all fixes and enh
 ## Priority Matrix
 
 | Priority | Description | Target Timeline |
-|----------|-------------|-----------------|
+| ---------- | ------------- | ----------------- |
 | **P0** | Critical bugs breaking core functionality | Phase 0 (1-2 days) |
 | **P1** | High-impact features and important fixes | Phase 1 (2-4 days) |
 | **P2** | Medium-priority polish and features | Phase 2 (2-3 days) |
@@ -43,7 +73,7 @@ This document provides a comprehensive implementation plan for all fixes and enh
 ### Summary by Priority
 
 | Priority | Fixes | Enhancements | New Tabs | Total |
-|----------|-------|--------------|----------|-------|
+| ---------- | ------- | -------------- | ---------- | ------- |
 | P0 | 6 | 0 | 0 | 6 |
 | P1 | 1 | 3 | 0 | 4 |
 | P2 | 1 | 2 | 2 | 5 |
@@ -65,7 +95,7 @@ This document provides a comprehensive implementation plan for all fixes and enh
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/dashboard_manager.py
 Methods: _handle_training_buttons_handler, _handle_button_timeout_and_acks_handler
 
@@ -88,7 +118,7 @@ Methods: _handle_training_buttons_handler, _handle_button_timeout_and_acks_handl
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/dashboard_manager.py
 Changes:
 1. Add "Apply Parameters" button below meta-parameter inputs
@@ -112,7 +142,7 @@ Changes:
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/dashboard_manager.py
 Method: _update_top_status_phase_handler, _get_status_phase_display_content
 
@@ -136,7 +166,7 @@ Method: _update_top_status_phase_handler, _get_status_phase_display_content
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/components/metrics_panel.py
 
 Strategy A (Preferred): Preserve layout on data updates
@@ -169,7 +199,7 @@ Implementation:
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/components/network_visualizer.py
 
 1. Check layout.dragmode and Plotly config options
@@ -193,7 +223,7 @@ Location: src/frontend/components/network_visualizer.py
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/components/network_visualizer.py
 
 1. Avoid recreating entire figure layout unless topology changes
@@ -215,7 +245,7 @@ Location: src/frontend/components/network_visualizer.py
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/components/network_visualizer.py
 
 1. Add theme-state input to update_network_graph callback
@@ -240,7 +270,7 @@ Location: src/frontend/components/network_visualizer.py
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/components/metrics_panel.py
 
 1. Add candidate-pools-history store (keyed by pool ID)
@@ -263,7 +293,7 @@ Location: src/frontend/components/metrics_panel.py
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/components/network_visualizer.py
 Method: _calculate_layout
 
@@ -289,7 +319,7 @@ Method: _calculate_layout
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/components/metrics_panel.py
 
 Phase 1 (MVP):
@@ -321,7 +351,7 @@ Dependencies:
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/components/network_visualizer.py
 
 Phase 1 (MVP):
@@ -352,7 +382,7 @@ Phase 2 (deferred):
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/components/network_visualizer.py
 
 1. Detect newly added unit in update_network_graph
@@ -373,7 +403,7 @@ Location: src/frontend/components/network_visualizer.py
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/components/network_visualizer.py
 
 1. Modify Plotly toImage config for download
@@ -391,7 +421,7 @@ Location: src/frontend/components/network_visualizer.py
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/components/about_tab.py (new)
 Integration: src/frontend/dashboard_manager.py
 
@@ -414,7 +444,7 @@ Content:
 
 **Implementation:**
 
-```
+```bash
 Location: src/frontend/components/hdf5_tab.py (new)
 Backend: Requires /api/snapshots endpoint
 
@@ -445,6 +475,7 @@ Phase 2 (Actions):
 **Dependencies:** Backend snapshot format definition, HDF5 API
 
 **Implementation deferred until:**
+
 - Snapshot semantics tested on backend
 - Replay functionality complete
 - HDF5 tab operational
@@ -457,6 +488,7 @@ Phase 2 (Actions):
 **Risk:** High
 
 **Implementation considerations:**
+
 - Plotly 3D scatter or separate 3D component
 - Maintain 2D as default
 - Add rotation, zoom, pan in 3D space
@@ -470,6 +502,7 @@ Phase 2 (Actions):
 **Dependencies:** Backend monitoring APIs, RBAC/permissions
 
 **Implementation deferred until:**
+
 - Cassandra backend APIs available
 - Security review complete
 
@@ -480,6 +513,7 @@ Phase 2 (Actions):
 **Dependencies:** Backend monitoring APIs, RBAC/permissions
 
 **Implementation deferred until:**
+
 - Redis backend APIs available
 - Security review complete
 
@@ -503,6 +537,7 @@ graph TD
 ### Shared Dependencies
 
 All fixes share dependencies on:
+
 - Training state from backend (WebSocket/store)
 - Consistent state model in `DashboardManager`
 
@@ -563,7 +598,7 @@ See individual implementation documents:
 ## Test Coverage Requirements
 
 | Phase | Unit Tests | Integration Tests | Target Coverage |
-|-------|------------|-------------------|-----------------|
+| ------- | ------------ | ------------------- | ----------------- |
 | Phase 0 | 15-20 | 8-10 | 88% |
 | Phase 1 | 20-25 | 10-12 | 89% |
 | Phase 2 | 10-15 | 5-8 | 90% |
@@ -574,5 +609,5 @@ See individual implementation documents:
 ## Change Log
 
 | Date | Version | Changes |
-|------|---------|---------|
+| ------ | --------- | --------- |
 | 2025-12-12 | 1.0.0 | Initial implementation plan |
