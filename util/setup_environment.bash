@@ -106,6 +106,7 @@ log_info "Conda found: ${CONDA_VERSION}"
 #####################################################################################################################################################################################################
 # Check if mamba is installed
 #####################################################################################################################################################################################################
+log_trace "Check if mamba is installed"
 RESULT="$(command_exists mamba)"
 [[ ${DEBUG} == "${TRUE}" ]] && print_status "DEBUG: Mamba check result: ${RESULT}"
 if [[ ${RESULT} == "" ]]; then
@@ -121,6 +122,7 @@ print_success "Mamba found: ${MAMBA_FOUND}"
 #####################################################################################################################################################################################################
 # Navigate to project directory
 #####################################################################################################################################################################################################
+log_trace "Navigate to project directory"
 cd "${PROJECT_DIR}" || {
 	print_error "Failed to navigate to project directory: ${PROJECT_DIR}"
 	exit 1
@@ -133,7 +135,7 @@ print_status "Working in directory: ${WORKING_DIR}"
 #####################################################################################################################################################################################################
 # Check if environment already exists
 #####################################################################################################################################################################################################
-print_status "Check if conda environment already exists: ${ENV_NAME}"
+log_trace "Check if conda environment already exists"
 ENV_LIST_RAW="$(eval "${CMD} env list")"
 ENV_LIST_NO_COM="$(echo "${ENV_LIST_RAW}" | grep -v -e "${COMMENT_REGEX}")"
 ENV_LIST="$(echo "${ENV_LIST_NO_COM}" | tail -n +"${OFFSET}")"
@@ -160,6 +162,7 @@ fi
 #####################################################################################################################################################################################################
 # Creating conda environment from Create conda environment YAML file
 #####################################################################################################################################################################################################
+log_trace "Creating conda environment from Create conda environment YAML file"
 print_status "Creating conda environment from conf/conda_environment.yaml..."
 if conda env create -f conf/conda_environment.yaml; then
 	print_success "Conda environment created successfully"
@@ -182,6 +185,7 @@ fi
 #####################################################################################################################################################################################################
 # Try to activate the environment; ensure conda is available in this shell
 #####################################################################################################################################################################################################
+log_trace "Try to activate the environment; ensure conda is available in this shell"
 if command -v conda >/dev/null 2>&1; then
 	conda activate "${ENV_NAME}"
 else
@@ -193,6 +197,7 @@ fi
 #####################################################################################################################################################################################################
 # Verify activation
 #####################################################################################################################################################################################################
+log_trace "Verify activation"
 if [[ ${CONDA_DEFAULT_ENV} != "${ENV_NAME}" ]]; then
 	print_error "Failed to activate environment"
 	exit 1
@@ -204,6 +209,7 @@ print_success "Environment '${ENV_NAME}' activated"
 #####################################################################################################################################################################################################
 # Install additional pip packages if needed
 #####################################################################################################################################################################################################
+log_trace "Install additional pip packages"
 print_status "Installing additional pip packages..."
 pip install -r conf/requirements.txt
 
@@ -211,6 +217,7 @@ pip install -r conf/requirements.txt
 #####################################################################################################################################################################################################
 # Verify key packages
 #####################################################################################################################################################################################################
+log_trace "Verify key packages"
 print_status "Verifying key package installations..."
 python -c "
 import sys
@@ -243,6 +250,7 @@ fi
 #####################################################################################################################################################################################################
 # Create necessary directories
 #####################################################################################################################################################################################################
+log_trace "Create necessary directories"
 print_status "Creating project directories..."
 mkdir -p logs data/training data/testing data/samples images
 
@@ -250,26 +258,8 @@ mkdir -p logs data/training data/testing data/samples images
 #####################################################################################################################################################################################################
 # Set up environment variables
 #####################################################################################################################################################################################################
-print_status "Setting up environment variables..."
-cat >.env <<EOF
-# Juniper Canopy Environment Variables
-CASCOR_ENV=development
-CASCOR_DEBUG=true
-CASCOR_LOG_LEVEL=DEBUG
-CASCOR_CONSOLE_LOG_LEVEL=INFO
-CASCOR_FILE_LOG_LEVEL=DEBUG
-CASCOR_CONFIG_PATH=conf/app_config.yaml
-
-# Performance settings
-OMP_NUM_THREADS=4
-MKL_NUM_THREADS=4
-NUMBA_NUM_THREADS=4
-
-# Application settings
-CASCOR_HOST=127.0.0.1
-CASCOR_PORT=8050
-EOF
-
+log_trace "Set up environment variables"
+echo "${ENV_DOT_FILE_CONTENT}" >"${ENV_DOT_FILE}"
 log_info "Environment file created"
 
 
@@ -380,6 +370,7 @@ EOF
 # Make test script executable
 #####################################################################################################################################################################################################
 log_trace "Make test script executable"
+log_debug "chmod +x test_setup.py"
 chmod +x test_setup.py
 
 
@@ -387,6 +378,7 @@ chmod +x test_setup.py
 # Run the test script
 #####################################################################################################################################################################################################
 log_trace "Running setup verification..."
+log_debug "python test_setup.py"
 python test_setup.py; SUCCESS=$?
 
 # shellcheck disable=SC2015
