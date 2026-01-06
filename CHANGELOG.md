@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed [0.14.3]
 
+- **P0-4: Graph Range Persistence**
+  - Implemented view-state dcc.Store to capture and persist user zoom/pan ranges
+  - Added capture_view_state callback listening to relayoutData from loss-plot and accuracy-plot
+  - Updated _update_metrics_display_handler to apply stored ranges to figures on data updates
+  - User's zoom/pan state now persists across interval-driven data updates
+  - Reset via autorange is properly handled (clears stored ranges when user resets)
+
 - **P0-2: Meta-Parameters Apply Button**
   - Fixed critical key mismatch between frontend and backend parameter names
   - Frontend was sending `hidden_units`/`epochs` but backend expected `max_hidden_units`/`max_epochs`

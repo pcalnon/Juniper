@@ -16,9 +16,9 @@ Phase 0 addresses critical bugs that make the dashboard feel unreliable. These P
 ## Table of Contents
 
 - [P0-1: Training Controls Button State Fix](#p0-1-training-controls-button-state-fix) - FIXED
-- [P0-2: Meta-Parameters Apply Button](#p0-2-meta-parameters-apply-button)
+- [P0-2: Meta-Parameters Apply Button](#p0-2-meta-parameters-apply-button) - FIXED
 - [P0-3: Top Status Bar Updates](#p0-3-top-status-bar-updates) - FIXED
-- [P0-4: Graph Range Persistence](#p0-4-graph-range-persistence)
+- [P0-4: Graph Range Persistence](#p0-4-graph-range-persistence) - FIXED
 - [P0-5: Pan/Lasso Tool Fix](#p0-5-panlasso-tool-fix)
 - [P0-6: Interaction Persistence](#p0-6-interaction-persistence)
 - [P0-7: Dark Mode Info Bar](#p0-7-dark-mode-info-bar)
@@ -757,6 +757,80 @@ def test_text_contrast_sufficient():
 
 ---
 
+## P0-8: Top Status Bar Updates on Completion
+
+(Quick win, low risk)
+
+### Problem, P0-8
+
+The Following Top Bar Data Elements: Status and Phase should be updated appropriately when the training run finishes.
+Currently these data elements are left in the following state: Status: Running | Phase: Output Training .
+
+### Solution Design, P0-8
+
+- Add handling for completed/failed states in `_get_status_phase_display_content()`
+- Ensure interval callback triggers properly to update status on completion
+- Add tests for status and phase updates
+
+### Files to Modify, P0-8
+
+- `src/frontend/dashboard_manager.py`
+  - `_get_status_phase_display_content()` - Add handling for completed/failed states
+  - Ensure interval callback triggers properly to update status on completion
+
+### Tests to Add, P0-8
+
+```python
+# tests/integration/test_status_phase_updates.py
+
+def test_status_phase_updates():
+    """Status and phase should update correctly when training run completes."""
+```
+
+---
+
+## P0-9: Legend Display and Positioning
+
+(Quick win, low risk)
+
+### Problem, P0-9
+
+In dark mode, the Network Topology Tab's Graph Display Legend should have a dark background so that the light text is readable.
+In light mode, the Legend should have dark text so that the text is visible against the light background and is readable.
+Additionally, the background should be effectively transparent so that elements of the network topology can be seen behind the legend.
+The legend should be positioned at the bottom, left of the graph display.
+
+### Solution Design, P0-9
+
+- Add handling for completed/failed states in `_get_status_phase_display_content()`
+- Ensure interval callback triggers properly to update status on completion
+- Add tests for status and phase updates
+
+### Files to Modify, P0-9
+
+- `src/frontend/components/network_visualizer.py`
+  - `get_layout()` - Add legend container
+  - `register_callbacks()` - Add theme callback
+- `src/frontend/assets/styles.css` (if needed)
+  - Add `.network-legend` class with theme variables
+
+### Tests to Add, P0-9
+
+```python
+# tests/unit/test_dark_mode_network.py
+
+def test_dark_mode_legend():
+    """Legend should have dark background in dark mode and Dark text in light mode."""
+
+def test_legend_transparency():
+    """Legend background should be effectively transparent."""
+
+def test_legend_position():
+    """Legend should be positioned at the bottom, left of the graph display."""
+```
+
+---
+
 ## Implementation Order
 
 Execute in this order to minimize dependencies and maximize stability:
@@ -768,6 +842,8 @@ Execute in this order to minimize dependencies and maximize stability:
 5. **P0-5: Pan/Lasso Tool Fix** (Foundation for P0-6)
 6. **P0-6: Interaction Persistence** (Uses P0-5 patterns)
 7. **P0-4: Graph Range Persistence** (Most complex, similar pattern)
+8. **P0-8: Legend Display and Positioning** (Quick win, low risk)
+9. **P0-9: Legend Theme Handling** (Quick win, low risk)
 
 ---
 
@@ -784,5 +860,9 @@ After Phase 0 completion:
 - [ ] Lasso tool actually lasso selects
 - [ ] Topology interactions persist for 30+ seconds
 - [ ] Dark mode info bar is readable
+- [ ] Legend is readable and positioned correctly
+- [ ] Legend theme changes with dark/light mode
+- [ ] Status and Phase update on training completion
+- [ ] Legend background is effectively transparent
 - [ ] All new tests pass
-- [ ] Coverage >= 88%
+- [ ] Coverage >= 95%

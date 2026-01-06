@@ -241,46 +241,46 @@ For detailed implementation plans, see:
 
 ### Status per Feature
 
-| Priority | Feature / Fix                                                          | Status       | Phase |
-|----------|------------------------------------------------------------------------|--------------|-------|
-| **P0**   | Top Status Bar: Status field not updating                              | ✅ Done      | 0     |
-| **P0**   | Top Status Bar: Phase field not updating                               | ✅ Done      | 0     |
-| Done     | Top Status Bar: Epoch/Hidden Units fields display/update               | Done         | -     |
-| **P0**   | Training Controls: Buttons not resetting after being pressed           | ✅ Done      | 0     |
-| **P0**   | Training Controls: Buttons become un-clickable after first press       | ✅ Done      | 0     |
-| **P0**   | Training Controls: All 5 buttons affected                              | ✅ Done      | 0     |
-| **P0**   | Training Controls: Meta-parameters not applied after change            | ✅ Done      | 0     |
-| **P0**   | Training Controls: Manual apply button for meta-parameters             | ✅ Done      | 0     |
-| **P0**   | Training Controls: Prevent in-progress updates from triggering         | ✅ Done      | 0     |
-| Done     | Training Controls: Up/down arrows and direct entry for meta-parameters | Done         | -     |
-| **P1**   | Training Metrics Tab: Candidate info section display/collapsibility    | ✅ Done      | 1     |
-| **P0**   | Training Metrics Tab: Graph range selection not persisting             | ✅ Done      | 0     |
-| **P1**   | Training Metrics Tab: Add replay functionality                         | ✅ Done      | 1     |
-| **P3**   | Training Metrics Tab: Add Save/Load buttons                            | Not Started  | 3     |
-| **P0**   | Network Topology Tab: Dark mode info bar background                    | ✅ Done      | 0     |
-| **P0**   | Network Topology Tab: Pan/Lasso tools performing Box Select            | ✅ Done      | 0     |
-| **P0**   | Network Topology Tab: Node interactions resetting after ~1 second      | ✅ Done      | 0     |
-| **P1**   | Network Topology Tab: Staggered hidden node layout                     | ✅ Done      | 1     |
-| **P1**   | Network Topology Tab: Mouse click events for node selection            | ✅ Done      | 1     |
-| **P2**   | Network Topology Tab: Visual indicator for most recently added node    | Not Started  | 2     |
-| **P2**   | Network Topology Tab: Unique name suggestion for image downloads       | Not Started  | 2     |
-| **P3**   | Network Topology Tab: 3D interactive view                              | Not Started  | 3     |
-| **P2**   | About Tab for Juniper Cascor backend                                   | Not Started  | 2     |
-| **P3**   | Cassandra Integration and Monitoring Tab                               | Not Started  | 3     |
-| **P3**   | Cassandra Tab: Display cluster state                                   | Not Started  | 3     |
-| **P3**   | Cassandra Tab: Display usage stats                                     | Not Started  | 3     |
-| **P3**   | Cassandra Tab: Display/edit db schema                                  | Not Started  | 3     |
-| **P3**   | Cassandra Tab: Manage cluster options                                  | Not Started  | 3     |
-| **P3**   | Redis Integration and Monitoring Tab                                   | Not Started  | 3     |
-| **P3**   | Redis Tab: Display cluster state                                       | Not Started  | 3     |
-| **P3**   | Redis Tab: Display usage stats                                         | Not Started  | 3     |
-| **P3**   | Redis Tab: Display/edit db schema                                      | Not Started  | 3     |
-| **P3**   | Redis Tab: Manage cluster options                                      | Not Started  | 3     |
-| **P2**   | HDF5 Snapshot Tab: List available snapshots                            | Not Started  | 2     |
-| **P2**   | HDF5 Tab: Show snapshot details (timestamp, size, etc.)                | Not Started  | 2     |
-| **P3**   | HDF5 Tab: Create new snapshot                                          | Not Started  | 3     |
-| **P3**   | HDF5 Tab: Restore from existing snapshot                               | Not Started  | 3     |
-| **P3**   | HDF5 Tab: Show history of snapshot activities                          | Not Started  | 3     |
+| Priority | Feature / Fix                                                          | Status      | Phase |
+| -------- | ---------------------------------------------------------------------- | ----------- | ----- |
+| **P0**   | Top Status Bar: Status field not updating                              | ✅ Done     | 0     |
+| **P0**   | Top Status Bar: Phase field not updating                               | ✅ Done     | 0     |
+| Done     | Top Status Bar: Epoch/Hidden Units fields display/update               | ✅ Done     | -     |
+| **P0**   | Training Controls: Buttons not resetting after being pressed           | ✅ Done     | 0     |
+| **P0**   | Training Controls: Buttons become un-clickable after first press       | ✅ Done     | 0     |
+| **P0**   | Training Controls: All 5 buttons affected                              | ✅ Done     | 0     |
+| **P0**   | Training Controls: Meta-parameters not applied after change            | ✅ Done     | 0     |
+| **P0**   | Training Controls: Manual apply button for meta-parameters             | ✅ Done     | 0     |
+| **P0**   | Training Controls: Prevent in-progress updates from triggering         | ✅ Done     | 0     |
+| Done     | Training Controls: Up/down arrows and direct entry for meta-parameters | ✅ Done     | -     |
+| **P1**   | Training Metrics Tab: Candidate info section display/collapsibility    | ✅ Done     | 1     |
+| **P0**   | Training Metrics Tab: Graph range selection not persisting             | ✅ Done     | 0     |
+| **P1**   | Training Metrics Tab: Add replay functionality                         | ✅ Done     | 1     |
+| **P3**   | Training Metrics Tab: Add Save/Load buttons                            | Not Started | 3     |
+| **P0**   | Network Topology Tab: Dark mode info bar background                    | ✅ Done     | 0     |
+| **P0**   | Network Topology Tab: Pan/Lasso tools performing Box Select            | ✅ Done     | 0     |
+| **P0**   | Network Topology Tab: Node interactions resetting after ~1 second      | ✅ Done     | 0     |
+| **P1**   | Network Topology Tab: Staggered hidden node layout                     | ✅ Done     | 1     |
+| **P1**   | Network Topology Tab: Mouse click events for node selection            | ✅ Done     | 1     |
+| **P2**   | Network Topology Tab: Visual indicator for most recently added node    | Not Started | 2     |
+| **P2**   | Network Topology Tab: Unique name suggestion for image downloads       | Not Started | 2     |
+| **P3**   | Network Topology Tab: 3D interactive view                              | Not Started | 3     |
+| **P2**   | About Tab for Juniper Cascor backend                                   | Not Started | 2     |
+| **P3**   | Cassandra Integration and Monitoring Tab                               | Not Started | 3     |
+| **P3**   | Cassandra Tab: Display cluster state                                   | Not Started | 3     |
+| **P3**   | Cassandra Tab: Display usage stats                                     | Not Started | 3     |
+| **P3**   | Cassandra Tab: Display/edit db schema                                  | Not Started | 3     |
+| **P3**   | Cassandra Tab: Manage cluster options                                  | Not Started | 3     |
+| **P3**   | Redis Integration and Monitoring Tab                                   | Not Started | 3     |
+| **P3**   | Redis Tab: Display cluster state                                       | Not Started | 3     |
+| **P3**   | Redis Tab: Display usage stats                                         | Not Started | 3     |
+| **P3**   | Redis Tab: Display/edit db schema                                      | Not Started | 3     |
+| **P3**   | Redis Tab: Manage cluster options                                      | Not Started | 3     |
+| **P2**   | HDF5 Snapshot Tab: List available snapshots                            | Not Started | 2     |
+| **P2**   | HDF5 Tab: Show snapshot details (timestamp, size, etc.)                | Not Started | 2     |
+| **P3**   | HDF5 Tab: Create new snapshot                                          | Not Started | 3     |
+| **P3**   | HDF5 Tab: Restore from existing snapshot                               | Not Started | 3     |
+| **P3**   | HDF5 Tab: Show history of snapshot activities                          | Not Started | 3     |
 
 ### Priority Legend
 
