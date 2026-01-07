@@ -497,6 +497,8 @@ class DemoMode:
 
             if not should_continue:
                 self.logger.info(f"Training complete: reached max_epochs={self.max_epochs}")
+                self.state_machine.mark_completed()
+                self._update_training_status()
                 break
 
             # Check if paused

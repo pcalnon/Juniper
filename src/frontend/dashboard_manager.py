@@ -1010,12 +1010,18 @@ class DashboardManager:
         # Get raw values from backend (now using FSM-based values)
         is_running = status_data.get("is_running", False)
         is_paused = status_data.get("is_paused", False)
+        is_completed = status_data.get("completed", False)
+        is_failed = status_data.get("failed", False)
         raw_phase = status_data.get("phase", "idle")
         epoch = status_data.get("current_epoch", 0)
         hidden_units = status_data.get("hidden_units", 0)
 
-        # Determine display status
-        if is_running and not is_paused:
+        # Determine display status (terminal states take priority)
+        if is_failed:
+            status = "Failed"
+        elif is_completed:
+            status = "Completed"
+        elif is_running and not is_paused:
             status = "Running"
         elif is_paused:
             status = "Paused"

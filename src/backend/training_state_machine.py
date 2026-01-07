@@ -50,6 +50,8 @@ class TrainingStatus(Enum):
     STOPPED = auto()
     STARTED = auto()
     PAUSED = auto()
+    COMPLETED = auto()
+    FAILED = auto()
 
 
 class Command(Enum):
@@ -112,6 +114,14 @@ class TrainingStateMachine:
     def is_paused(self) -> bool:
         """Check if in Paused state."""
         return self.__status == TrainingStatus.PAUSED
+
+    def is_completed(self) -> bool:
+        """Check if in Completed state."""
+        return self.__status == TrainingStatus.COMPLETED
+
+    def is_failed(self) -> bool:
+        """Check if in Failed state."""
+        return self.__status == TrainingStatus.FAILED
 
     def handle_command(self, command: Command) -> bool:
         """
@@ -260,6 +270,49 @@ class TrainingStateMachine:
     def get_candidate_state(self) -> Optional[dict]:
         """Get saved candidate phase sub-state."""
         return self.__candidate_sub_state
+
+    def mark_completed(self) -> bool:
+        """
+        Mark training as completed (terminal state).
+
+        Can only be called when training is STARTED (not paused/stopped).
+
+        Returns:
+            True if transition successful, False if invalid
+        """
+        if self.__status == TrainingStatus.STARTED:
+            prev_status = self.__status.name
+            self.__status = TrainingStatus.COMPLETED
+            self.__paused_phase = None
+            self.__candidate_sub_state = None
+            self.logger.info(f"State transition: {prev_status} → Completed (training finished successfully)")
+            return True
+        else:
+            self.logger.warning(f"Invalid transition: mark_completed while status is {self.__status.name}")
+            return False
+
+    def mark_failed(self, reason: str = "Unknown error") -> bool:
+        """
+        Mark training as failed (terminal state).
+
+        Can be called from any active state (STARTED or PAUSED).
+
+        Args:
+            reason: Description of why training failed
+
+        Returns:
+            True if transition successful, False if invalid
+        """
+        if self.__status in (TrainingStatus.STARTED, TrainingStatus.PAUSED):
+            prev_status = self.__status.name
+            self.__status = TrainingStatus.FAILED
+            self.__paused_phase = None
+            self.__candidate_sub_state = None
+            self.logger.info(f"State transition: {prev_status} → Failed ({reason})")
+            return True
+        else:
+            self.logger.warning(f"Invalid transition: mark_failed while status is {self.__status.name}")
+            return False
 
     def get_state_summary(self) -> dict:
         """

@@ -550,6 +550,11 @@ class NetworkVisualizer(BaseComponent):
 
         # Update layout
         is_dark = theme == "dark"
+
+        # Theme-aware legend styling (P0-9: transparent background, bottom-left position)
+        legend_bgcolor = "rgba(36, 36, 36, 0.7)" if is_dark else "rgba(248, 249, 250, 0.7)"
+        legend_font_color = "#f8f9fa" if is_dark else "#212529"
+
         fig.update_layout(
             title="Cascade Correlation Network Architecture",
             showlegend=True,
@@ -561,7 +566,16 @@ class NetworkVisualizer(BaseComponent):
             plot_bgcolor="#242424" if is_dark else "#f8f9fa",
             paper_bgcolor="#242424" if is_dark else "#ffffff",
             font={"color": "#e9ecef" if is_dark else "#212529"},
-            legend={"x": 0.7, "y": 0.95},
+            legend={
+                "x": 0.02,
+                "y": 0.02,
+                "xanchor": "left",
+                "yanchor": "bottom",
+                "bgcolor": legend_bgcolor,
+                "bordercolor": "rgba(0, 0, 0, 0)",
+                "borderwidth": 0,
+                "font": {"color": legend_font_color},
+            },
             transition={"duration": 500, "easing": "cubic-in-out"},
             dragmode="pan",
         )

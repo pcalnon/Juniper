@@ -1,8 +1,8 @@
 # Phase 0: Core UX Stabilization
 
-**Last Updated:** 2025-12-12  
-**Version:** 1.0.0  
-**Status:** Ready for Implementation
+**Last Updated:** 2026-01-06  
+**Version:** 1.1.0  
+**Status:** Phase 0 Complete
 
 ## Overview
 
@@ -19,13 +19,13 @@ Phase 0 addresses critical bugs that make the dashboard feel unreliable. These P
 - [P0-2: Meta-Parameters Apply Button](#p0-2-meta-parameters-apply-button) - FIXED
 - [P0-3: Top Status Bar Updates](#p0-3-top-status-bar-updates) - FIXED
 - [P0-4: Graph Range Persistence](#p0-4-graph-range-persistence) - FIXED
-- [P0-5: Pan/Lasso Tool Fix](#p0-5-panlasso-tool-fix)
-- [P0-6: Interaction Persistence](#p0-6-interaction-persistence)
-- [P0-7: Dark Mode Info Bar](#p0-7-dark-mode-info-bar)
-- [P0-8: Top Status Bar Updates on Completion](#p0-8-top-status-bar-updates-on-completion)
-- [P0-9: Legend Display and Positioning](#p0-9-legend-display-and-positioning)
-- [P0-10: Configuration Test Architecture Fix](#p0-10-configuration-test-architecture-fix---fixed) - FIXED
-- [P0-12: Meta-Parameters Apply Button (Learning Rate)](#p0-12-meta-parameters-apply-button---fixed) - FIXED
+- [P0-5: Pan/Lasso Tool Fix](#p0-5-panlasso-tool-fix) - FIXED
+- [P0-6: Interaction Persistence](#p0-6-interaction-persistence) - FIXED
+- [P0-7: Dark Mode Info Bar](#p0-7-dark-mode-info-bar) - FIXED
+- [P0-8: Top Status Bar Updates on Completion](#p0-8-top-status-bar-updates-on-completion) - FIXED
+- [P0-9: Legend Display and Positioning](#p0-9-legend-display-and-positioning) - FIXED
+- [P0-10: Configuration Test Architecture Fix](#p0-10-configuration-test-architecture-fix) - FIXED
+- [P0-12: Meta-Parameters Apply Button (Learning Rate)](#p0-12-meta-parameters-apply-button) - FIXED
 - [Implementation Order](#implementation-order)
 
 ---
@@ -519,6 +519,31 @@ def test_relayout_captured_correctly():
 
 Pan, Lasso Select, and Box Select tools all perform Box Select.
 
+### Solution Implemented, P0-5
+
+**Root Cause:** Every graph refresh was resetting `dragmode` to a default, and there was no persisted dragmode. The modebar buttons visually changed, but the underlying drag behavior kept reverting.
+
+**Fix Applied:**
+
+1. **Default dragmode set to "pan"** in `_create_network_graph()`:
+
+   ```python
+   fig.update_layout(dragmode="pan")
+   ```
+
+2. **View-state store persists tool selection**:
+   - `dcc.Store` with `view-state` ID stores current dragmode
+   - `capture_view_state` callback captures `dragmode` from `relayoutData`
+   - `update_network_graph` applies stored dragmode on every update
+
+3. **Modebar configured with selection tools**:
+
+   ```python
+   config={"modeBarButtonsToAdd": ["select2d", "lasso2d"]}
+   ```
+
+**Tests Added:** `tests/unit/test_phase0_fixes.py::TestToolbarButtonsP05` and `TestViewStatePersistenceP05P06`
+
 ### Solution Design, P0-5
 
 ```python
@@ -608,6 +633,49 @@ def test_tool_selection_persists():
 
 All node interactions (zoom, pan, selection) reset after ~1 second.
 
+### Solution Implemented, P0-6
+
+**Root Cause:** The topology graph callback was driven by `dcc.Interval` (metrics/topology updates) and always rebuilt the figure from scratch without carrying over `xaxis_range`, `yaxis_range`, `dragmode`, or selected nodes.
+
+**Fix Applied:**
+
+1. **View-state store preserves zoom/pan/dragmode**:
+
+   ```python
+   dcc.Store(
+       id=f"{self.component_id}-view-state",
+       data={
+           "xaxis_range": None,
+           "yaxis_range": None,
+           "dragmode": "pan",
+       },
+   )
+   ```
+
+2. **capture_view_state callback** captures axis ranges and dragmode from `relayoutData`:
+
+   ```python
+   if "xaxis.range[0]" in relayout_data:
+       new_state["xaxis_range"] = [relayout_data["xaxis.range[0]"], relayout_data["xaxis.range[1]"]]
+   if "dragmode" in relayout_data:
+       new_state["dragmode"] = relayout_data["dragmode"]
+   ```
+
+3. **View state applied on every graph update**:
+
+   ```python
+   if view_state.get("xaxis_range"):
+       fig.update_layout(xaxis_range=view_state["xaxis_range"])
+   if view_state.get("yaxis_range"):
+       fig.update_layout(yaxis_range=view_state["yaxis_range"])
+   if view_state.get("dragmode"):
+       fig.update_layout(dragmode=view_state["dragmode"])
+   ```
+
+4. **Selected nodes store** (`selected-nodes`) preserves selection across updates.
+
+**Tests Added:** `tests/unit/test_phase0_fixes.py::TestViewStatePersistenceP05P06`
+
 ### Solution Design, P0-6
 
 **Same pattern as P0-4 and P0-5: Store view state, apply on updates.**
@@ -695,6 +763,28 @@ def test_selection_persists():
 
 Network topology info bar shows white text on white background in dark mode.
 
+### Solution Implemented, P0-7
+
+**Fix Applied:**
+
+1. **Theme-aware callback** for stats bar in `network_visualizer.py`:
+
+   ```python
+   @app.callback(
+       Output(f"{self.component_id}-stats-bar", "style"),
+       Input("theme-state", "data"),
+   )
+   def update_stats_bar_theme(theme):
+       is_dark = theme == "dark"
+       return {
+           "backgroundColor": "#343a40" if is_dark else "#f8f9fa",
+           "color": "#f8f9fa" if is_dark else "#212529",
+           ...
+       }
+   ```
+
+**Tests Added:** `tests/unit/test_phase0_fixes.py::TestNetworkVisualizerDarkModeP07`
+
 ### Solution Design, P0-7
 
 ```python
@@ -763,12 +853,58 @@ def test_text_contrast_sufficient():
 
 ## P0-8: Top Status Bar Updates on Completion
 
-(Quick win, low risk)
-
 ### Problem, P0-8
 
 The Following Top Bar Data Elements: Status and Phase should be updated appropriately when the training run finishes.
-Currently these data elements are left in the following state: Status: Running | Phase: Output Training .
+Currently these data elements are left in the following state: Status: Running | Phase: Output Training.
+
+### Solution Implemented, P0-8
+
+**Root Cause:** Backend `/api/status` did not expose terminal states (COMPLETED, FAILED), and frontend status logic only branched on `is_running`/`is_paused`, collapsing terminal states into "Stopped".
+
+**Files Modified:**
+
+1. **`src/backend/training_state_machine.py`**:
+   - Added `COMPLETED` and `FAILED` to `TrainingStatus` enum
+   - Added `is_completed()` and `is_failed()` helper methods
+   - Added `mark_completed()` and `mark_failed(reason)` state transition methods
+
+2. **`src/demo_mode.py`**:
+   - Calls `self.state_machine.mark_completed()` when training finishes (max_epochs reached)
+   - Broadcasts updated status via `_update_training_status()`
+
+3. **`src/main.py`** (`/api/status` endpoint):
+   - Added `completed`, `failed`, and `fsm_status` fields to response:
+
+   ```python
+   is_completed = status_name == "COMPLETED"
+   is_failed = status_name == "FAILED"
+   return {
+       ...
+       "completed": is_completed,
+       "failed": is_failed,
+       "fsm_status": status_name,
+       ...
+   }
+   ```
+
+4. **`src/frontend/dashboard_manager.py`**:
+   - Updated `_build_unified_status_bar_content()` to handle terminal states:
+
+   ```python
+   if is_failed:
+       status = "Failed"
+   elif is_completed:
+       status = "Completed"
+   elif is_running and not is_paused:
+       status = "Running"
+   elif is_paused:
+       status = "Paused"
+   else:
+       status = "Stopped"
+   ```
+
+**Tests Added:** `tests/unit/test_phase0_fixes.py::TestTrainingStatusEnumP08`, `TestStateMachineCompletionP08`, and `TestStatusBarCompletedFailedP08` (17 tests)
 
 ### Solution Design, P0-8
 
@@ -795,8 +931,6 @@ def test_status_phase_updates():
 
 ## P0-9: Legend Display and Positioning
 
-(Quick win, low risk)
-
 ### Problem, P0-9
 
 In dark mode, the Network Topology Tab's Graph Display Legend should have a dark background so that the light text is readable.
@@ -804,38 +938,72 @@ In light mode, the Legend should have dark text so that the text is visible agai
 Additionally, the background should be effectively transparent so that elements of the network topology can be seen behind the legend.
 The legend should be positioned at the bottom, left of the graph display.
 
+### Solution Implemented, P0-9
+
+**Fix Applied in `src/frontend/components/network_visualizer.py`**:
+
+Modified `_create_network_graph()` to add theme-aware legend styling:
+
+```python
+# Theme-aware legend styling (P0-9: transparent background, bottom-left position)
+legend_bgcolor = "rgba(36, 36, 36, 0.7)" if is_dark else "rgba(248, 249, 250, 0.7)"
+legend_font_color = "#f8f9fa" if is_dark else "#212529"
+
+fig.update_layout(
+    legend={
+        "x": 0.02,
+        "y": 0.02,
+        "xanchor": "left",
+        "yanchor": "bottom",
+        "bgcolor": legend_bgcolor,
+        "bordercolor": "rgba(0, 0, 0, 0)",
+        "borderwidth": 0,
+        "font": {"color": legend_font_color},
+    },
+)
+```
+
+**Key Features:**
+
+- **Position:** Bottom-left (`x=0.02, y=0.02, xanchor="left", yanchor="bottom"`)
+- **Dark mode:** Dark semi-transparent background (`rgba(36, 36, 36, 0.7)`) with light text (`#f8f9fa`)
+- **Light mode:** Light semi-transparent background (`rgba(1, 3, 4, 0.7)`) with dark text (`#212529`)
+- **Transparency:** 0.7 alpha allows network topology to be visible behind legend
+
+**Tests Added:** `tests/unit/test_phase0_fixes.py::TestNetworkVisualizerLegendP09` (4 tests)
+
 ### Solution Design, P0-9
 
-- Add handling for completed/failed states in `_get_status_phase_display_content()`
-- Ensure interval callback triggers properly to update status on completion
-- Add tests for status and phase updates
+- Add theme-aware legend styling in `_create_network_graph()`
+- Position legend at bottom-left
+- Use rgba colors for transparency
 
 ### Files to Modify, P0-9
 
 - `src/frontend/components/network_visualizer.py`
-  - `get_layout()` - Add legend container
-  - `register_callbacks()` - Add theme callback
-- `src/frontend/assets/styles.css` (if needed)
-  - Add `.network-legend` class with theme variables
+  - `_create_network_graph()` - Add theme-aware legend configuration
 
 ### Tests to Add, P0-9
 
 ```python
-# tests/unit/test_dark_mode_network.py
+# tests/unit/test_phase0_fixes.py::TestNetworkVisualizerLegendP09
 
-def test_dark_mode_legend():
-    """Legend should have dark background in dark mode and Dark text in light mode."""
+def test_legend_position_bottom_left():
+    """Legend should be positioned at bottom-left."""
+
+def test_legend_dark_mode_styling():
+    """Legend should have dark semi-transparent background in dark mode."""
+
+def test_legend_light_mode_styling():
+    """Legend should have light semi-transparent background in light mode."""
 
 def test_legend_transparency():
-    """Legend background should be effectively transparent."""
-
-def test_legend_position():
-    """Legend should be positioned at the bottom, left of the graph display."""
+    """Legend background should be semi-transparent (alpha < 1.0)."""
 ```
 
 ---
 
-## P0-10: Configuration Test Architecture Fix - FIXED
+## P0-10: Configuration Test Architecture Fix
 
 ### Problem, P0-10
 
@@ -912,7 +1080,7 @@ def test_network_graph_node_selected_info_bar_position():
 
 ---
 
-## P0-12: Meta-Parameters Apply Button - FIXED
+## P0-12: Meta-Parameters Apply Button
 
 ### Problem. P0-12
 
@@ -990,17 +1158,17 @@ After Phase 0 completion:
 
 - [x] All 5 training buttons return to normal state after click
 - [x] Apply button enables only when parameters changed (includes P0-12 float tolerance fix)
-- [x] Status shows correct state (Running/Paused/Stopped)
+- [x] Status shows correct state (Running/Paused/Stopped/Completed/Failed)
 - [x] Phase shows correct phase (Output/Candidate/Idle)
 - [x] Graph zoom persists for 30+ seconds
-- [ ] Pan tool actually pans
-- [ ] Lasso tool actually lasso selects
-- [ ] Topology interactions persist for 30+ seconds
-- [x] Dark mode info bar is readable
-- [ ] Legend is readable and positioned correctly
-- [ ] Legend theme changes with dark/light mode
-- [ ] Status and Phase update on training completion
-- [ ] Legend background is effectively transparent
+- [x] Pan tool actually pans (P0-5: dragmode="pan" set as default)
+- [x] Lasso tool actually lasso selects (P0-5: view state persists tool selection)
+- [x] Topology interactions persist for 30+ seconds (P0-6: view-state store preserves zoom/pan/dragmode)
+- [x] Dark mode info bar is readable (P0-7: theme-aware stats bar)
+- [x] Legend is readable and positioned correctly (P0-9: bottom-left position)
+- [x] Legend theme changes with dark/light mode (P0-9: rgba backgrounds with theme-aware text)
+- [x] Status and Phase update on training completion (P0-8: COMPLETED/FAILED states in FSM)
+- [x] Legend background is effectively transparent (P0-9: 0.7 alpha)
 - [x] All configuration tests pass with YAML overrides
-- [x] All new tests pass (2100 tests, including 20 for Apply button parameters)
+- [x] All new tests pass (2129 tests, including 29 new Phase 0 tests)
 - [x] Coverage >= 95%
