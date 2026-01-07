@@ -91,7 +91,7 @@ Following the critical bug fix, the test suite was significantly expanded to rea
 #### Coverage Improvement
 
 | Metric | Before | After | Change |
-|--------|--------|-------|--------|
+| -------- | -------- | ------- | -------- |
 | Overall Coverage | 84% | 90% | +6% |
 | Total Tests | 1213 | 1666 | +453 |
 | Tests Passing | 1213 | 1666 | +453 |
@@ -99,7 +99,7 @@ Following the critical bug fix, the test suite was significantly expanded to rea
 #### New Test Files Created
 
 | Test File | Tests | Target Component | Coverage Impact |
-|-----------|-------|------------------|-----------------|
+| ----------- | ------- | ------------------ | ----------------- |
 | `test_callback_context_coverage.py` | 29 | `callback_context.py` | 49% → 100% |
 | `test_dashboard_helpers_coverage.py` | 48 | `dashboard_manager.py` | 51% → 67% |
 | `test_network_visualizer_layout_coverage.py` | 43 | `network_visualizer.py` | 59% → 71% |
@@ -114,7 +114,7 @@ Following the critical bug fix, the test suite was significantly expanded to rea
 #### Component Coverage Summary
 
 | Component | Before | After | Status |
-|-----------|--------|-------|--------|
+| --------- | -------- | ------- | -------- |
 | `callback_context.py` | 49% | 100% | ✅ |
 | `config_manager.py` | 79% | 95% | ✅ |
 | `cascor_integration.py` | 76% | 95% | ✅ |
