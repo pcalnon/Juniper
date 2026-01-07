@@ -508,15 +508,21 @@ async def get_status():
 
         # Get FSM state for accurate status and phase
         fsm_state = demo_mode_instance.state_machine.get_state_summary()
+        status_name = fsm_state["status"]  # "STARTED", "PAUSED", "STOPPED", "COMPLETED", "FAILED"
 
-        # Map FSM status to is_running/is_paused flags
-        is_running = fsm_state["status"] == "STARTED"
-        is_paused = fsm_state["status"] == "PAUSED"
+        # Map FSM status to flags
+        is_running = status_name == "STARTED"
+        is_paused = status_name == "PAUSED"
+        is_completed = status_name == "COMPLETED"
+        is_failed = status_name == "FAILED"
 
         return {
             "is_training": is_running and not is_paused,
             "is_running": is_running,
             "is_paused": is_paused,
+            "completed": is_completed,
+            "failed": is_failed,
+            "fsm_status": status_name,
             "current_epoch": state["current_epoch"],
             "current_loss": state["current_loss"],
             "current_accuracy": state["current_accuracy"],
@@ -536,6 +542,9 @@ async def get_status():
         "is_training": False,
         "is_running": False,
         "is_paused": False,
+        "completed": False,
+        "failed": False,
+        "fsm_status": "STOPPED",
         "network_connected": False,
         "monitoring_active": False,
         "phase": "idle",

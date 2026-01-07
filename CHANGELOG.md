@@ -5,6 +5,78 @@ All notable changes to the juniper_canopy prototype will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2026-01-06
+
+### Fixed [0.15.0] - Phase 0 Completion
+
+- **P0-5: Pan/Lasso Tool Fix**
+  - Default dragmode set to "pan" in network topology graph
+  - View-state store persists tool selection across interval updates
+  - Modebar configured with select2d and lasso2d buttons
+  - Tools now behave correctly (Pan actually pans, Lasso actually lasso selects)
+
+- **P0-6: Interaction Persistence**
+  - View-state dcc.Store preserves zoom, pan, and dragmode across updates
+  - capture_view_state callback captures axis ranges and tool selection from relayoutData
+  - View state applied on every graph update to prevent ~1 second reset
+  - Selected nodes store preserves selection across topology updates
+
+- **P0-8: Top Status Bar Updates on Completion**
+  - Added COMPLETED and FAILED states to TrainingStatus enum
+  - Added mark_completed() and mark_failed(reason) state transition methods
+  - Demo mode now properly marks training as COMPLETED when max_epochs reached
+  - /api/status endpoint exposes completed, failed, and fsm_status fields
+  - Dashboard status bar displays "Completed" (cyan) and "Failed" (red) states
+
+- **P0-9: Legend Display and Positioning**
+  - Legend positioned at bottom-left (x=0.02, y=0.02)
+  - Theme-aware styling with semi-transparent backgrounds (0.7 alpha)
+  - Dark mode: rgba(36, 36, 36, 0.7) background with #f8f9fa text
+  - Light mode: rgba(248, 249, 250, 0.7) background with #212529 text
+
+### Added [0.15.0]
+
+- **TrainingStateMachine** (`src/backend/training_state_machine.py`)
+  - COMPLETED and FAILED entries in TrainingStatus enum
+  - is_completed() and is_failed() helper methods
+  - mark_completed() - transitions STARTED → COMPLETED
+  - mark_failed(reason) - transitions STARTED/PAUSED → FAILED
+
+- **Phase 0 Tests** (`src/tests/unit/test_phase0_fixes.py`)
+  - 29 new tests covering all remaining Phase 0 fixes
+  - TestTrainingStatusEnumP08 (2 tests)
+  - TestStateMachineCompletionP08 (10 tests)
+  - TestStatusBarCompletedFailedP08 (5 tests)
+  - TestNetworkVisualizerDarkModeP07 (2 tests)
+  - TestNetworkVisualizerLegendP09 (4 tests)
+  - TestViewStatePersistenceP05P06 (4 tests)
+  - TestToolbarButtonsP05 (2 tests)
+
+### Changed [0.15.0]
+
+- **Demo Mode** (`src/demo_mode.py`)
+  - Calls state_machine.mark_completed() when training finishes
+  - Broadcasts updated status via _update_training_status()
+
+- **API Endpoint** (`src/main.py`)
+  - /api/status returns completed, failed, and fsm_status fields
+
+- **Dashboard Manager** (`src/frontend/dashboard_manager.py`)
+  - _build_unified_status_bar_content() handles COMPLETED/FAILED terminal states
+  - Failed takes priority over Completed if both are True
+
+- **Network Visualizer** (`src/frontend/components/network_visualizer.py`)
+  - Legend positioned at bottom-left with theme-aware styling
+  - Semi-transparent backgrounds for better topology visibility
+
+### Test Results [0.15.0]
+
+- **2129 passed**, 37 skipped
+- All Phase 0 issues now FIXED
+- Phase 0 verification checklist 100% complete
+
+---
+
 ## [0.14.4] - 2026-01-06
 
 ### Fixed [0.14.4]
