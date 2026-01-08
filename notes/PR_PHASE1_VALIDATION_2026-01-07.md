@@ -59,7 +59,7 @@ Validates and documents all Phase 1 (P1) high-impact enhancements for the Junipe
 - New "Staggered" layout option in dropdown
 - Wave pattern: center node first, then alternating left/right
 - Dynamic spread that increases with node count
-- Implementation: `network_visualizer.py` lines 110, 676-706
+- Implementation: `network_visualizer.py` lines 110, 688-706
 
 ### P1-4: Mouse Click Events for Node Selection
 

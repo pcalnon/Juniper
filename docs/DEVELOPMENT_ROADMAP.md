@@ -1,8 +1,8 @@
 # Juniper Canopy Fixes and Enhancements
 
 **Last Updated:** 2026-01-08  
-**Version:** 2.2.0  
-**Status:** Phase 1 Complete - Active Development
+**Version:** 2.4.0  
+**Status:** Phase 2 Complete (All P2 Items Done)
 
 ## Implementation Plan
 
@@ -262,10 +262,10 @@ For detailed implementation plans, see:
 | **P0**   | Network Topology Tab: Node interactions resetting after ~1 second      | ✅ Done     | 0     |
 | **P1**   | Network Topology Tab: Staggered hidden node layout                     | ✅ Done     | 1     |
 | **P1**   | Network Topology Tab: Mouse click events for node selection            | ✅ Done     | 1     |
-| **P2**   | Network Topology Tab: Visual indicator for most recently added node    | Not Started | 2     |
-| **P2**   | Network Topology Tab: Unique name suggestion for image downloads       | Not Started | 2     |
+| **P2**   | Network Topology Tab: Visual indicator for most recently added node    | ✅ Done     | 2     |
+| **P2**   | Network Topology Tab: Unique name suggestion for image downloads       | ✅ Done     | 2     |
 | **P3**   | Network Topology Tab: 3D interactive view                              | Not Started | 3     |
-| **P2**   | About Tab for Juniper Cascor backend                                   | Not Started | 2     |
+| **P2**   | About Tab for Juniper Cascor backend                                   | ✅ Done     | 2     |
 | **P3**   | Cassandra Integration and Monitoring Tab                               | Not Started | 3     |
 | **P3**   | Cassandra Tab: Display cluster state                                   | Not Started | 3     |
 | **P3**   | Cassandra Tab: Display usage stats                                     | Not Started | 3     |
@@ -276,8 +276,8 @@ For detailed implementation plans, see:
 | **P3**   | Redis Tab: Display usage stats                                         | Not Started | 3     |
 | **P3**   | Redis Tab: Display/edit db schema                                      | Not Started | 3     |
 | **P3**   | Redis Tab: Manage cluster options                                      | Not Started | 3     |
-| **P2**   | HDF5 Snapshot Tab: List available snapshots                            | Not Started | 2     |
-| **P2**   | HDF5 Tab: Show snapshot details (timestamp, size, etc.)                | Not Started | 2     |
+| **P2**   | HDF5 Snapshot Tab: List available snapshots                            | ✅ Done     | 2     |
+| **P2**   | HDF5 Tab: Show snapshot details (timestamp, size, etc.)                | ✅ Done     | 2     |
 | **P3**   | HDF5 Tab: Create new snapshot                                          | Not Started | 3     |
 | **P3**   | HDF5 Tab: Restore from existing snapshot                               | Not Started | 3     |
 | **P3**   | HDF5 Tab: Show history of snapshot activities                          | Not Started | 3     |

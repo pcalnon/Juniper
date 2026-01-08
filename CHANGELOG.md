@@ -5,7 +5,98 @@ All notable changes to the juniper_canopy prototype will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.16.0] - 2026-01-08
+## [0.18.0] - 2026-01-08
+
+### Phase 2 Complete - HDF5 Snapshots Tab (P2-4, P2-5)
+
+Phase 2 is now complete with the implementation of the HDF5 Snapshots tab. All five P2 items are finished. Full documentation in `docs/phase2/README.md`.
+
+### Added [0.18.0]
+
+- **P2-4: HDF5 Snapshot Tab - List Available Snapshots**
+  - New "HDF5 Snapshots" tab in dashboard
+  - Table displaying available snapshots with Name/ID, Timestamp, Size
+  - Auto-refresh polling (default 10s, configurable via `JUNIPER_CANOPY_SNAPSHOTS_REFRESH_INTERVAL_MS`)
+  - Manual refresh button
+  - Demo mode support with simulated snapshots
+  - New component: `src/frontend/components/hdf5_snapshots_panel.py`
+  - New API endpoint: `GET /api/v1/snapshots`
+  - Tests: 33 new tests in `test_hdf5_snapshots_panel.py`
+
+- **P2-5: HDF5 Tab - Show Snapshot Details**
+  - Detail panel showing selected snapshot metadata
+  - Displays: ID, Name, Timestamp, Size, Path, Description
+  - HDF5 Attributes section (reads from real HDF5 files via h5py when available)
+  - Demo mode shows simulated attributes
+  - New API endpoint: `GET /api/v1/snapshots/{snapshot_id}`
+  - Tests: 21 new tests in `test_hdf5_snapshots_api.py`
+
+### Changed [0.18.0]
+
+- **DashboardManager** now registers 6 components (added HDF5SnapshotsPanel)
+- **main.py** now includes HDF5 snapshot API endpoints and helper functions
+
+### Test Results [0.18.0]
+
+- **54 new tests** added for P2-4/P2-5
+- Coverage maintained at 95%+
+- Phase 2 fully complete
+
+---
+
+## [0.17.0] - 2026-01-07
+
+### Phase 2 Partial - Polish Features (P2-1, P2-2, P2-3 Complete)
+
+Phase 2 focuses on polish features and medium-priority enhancements. Three of five P2 items are now complete. Status documented in `docs/phase2/README.md`.
+
+### Added [0.17.0]
+
+- **P2-1: Visual Indicator for Most Recently Added Node**
+  - Pulsing glow effect on newly added hidden nodes (cyan/teal color)
+  - Edge highlighting for all connections to new node
+  - Persistent highlight with state machine (active → fading → None)
+  - 2-second smooth fade-out animation
+  - Visually distinct from selected node indicator (yellow/orange)
+  - Implementation: `network_visualizer.py` lines 213-219, 960-1166
+  - Tests: 17 new tests in `test_network_visualizer_coverage.py`
+
+- **P2-2: Unique Name Suggestion for Image Downloads**
+  - Network topology image downloads now use timestamp-based filenames
+  - Format: `juniper_topology_YYYYMMDD_HHMMSS.png`
+  - High-resolution export (2x scale)
+  - Implementation: `network_visualizer.py` lines 39, 189-193
+  - Tests: 4 new tests in `test_network_visualizer_coverage.py`
+
+- **P2-3: About Tab for Juniper Cascor Backend**
+  - New "About" tab in dashboard with application information
+  - Displays version, license (MIT), credits, documentation links, and contact info
+  - Collapsible System Information section (Python version, platform, architecture)
+  - New component: `src/frontend/components/about_panel.py`
+  - Tests: 27 new tests in `test_about_panel.py`
+
+- **Phase 2 Documentation** (`docs/phase2/README.md`)
+  - Complete documentation structure for all P2 features
+  - Status tracking, solution designs, and verification checklist
+
+### Changed [0.17.0]
+
+- **DashboardManager** now registers 5 components (added AboutPanel)
+- **NetworkVisualizer** callback now includes interval-based animation support
+- Updated component count tests in:
+  - `test_dashboard_enhancements.py`
+  - `test_dashboard_manager.py`
+  - `test_dashboard_manager_coverage.py`
+- Updated callback invocation tests for new signature
+
+### Test Results [0.17.0]
+
+- **2177 passed**, 37 skipped (48 new tests added)
+- Coverage maintained at 95%+
+
+---
+
+## [0.16.0] - 2026-01-07
 
 ### Phase 1 Complete - High-Impact Enhancements
 
@@ -31,7 +122,7 @@ All Phase 1 items validated and documented. Phase 1 README created at `docs/phas
   - "Staggered" layout option in dropdown
   - Wave pattern: first node center, alternating outward
   - Dynamic spread increases with node count (max 3.0)
-  - Implementation: `network_visualizer.py` lines 110, 676-706
+  - Implementation: `network_visualizer.py` lines 110, 688-706
 
 - **P1-4: Mouse Click Events for Node Selection**
   - Single-click selects/deselects nodes
@@ -46,6 +137,10 @@ All Phase 1 items validated and documented. Phase 1 README created at `docs/phas
   - Complete documentation of all P1 implementations
   - Root cause analysis and solution details
   - Verification checklist
+
+- **PR Description** (`notes/PR_PHASE1_VALIDATION_2026-01-07.md`)
+  - Pull request documentation for Phase 1 validation
+  - Summary of all validated features and changes
 
 ### Test Results [0.16.0]
 
