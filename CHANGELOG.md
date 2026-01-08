@@ -31,7 +31,7 @@ All Phase 1 items validated and documented. Phase 1 README created at `docs/phas
   - "Staggered" layout option in dropdown
   - Wave pattern: first node center, alternating outward
   - Dynamic spread increases with node count (max 3.0)
-  - Implementation: `network_visualizer.py` lines 110, 688-706
+  - Implementation: `network_visualizer.py` lines 110, 676-706
 
 - **P1-4: Mouse Click Events for Node Selection**
   - Single-click selects/deselects nodes
