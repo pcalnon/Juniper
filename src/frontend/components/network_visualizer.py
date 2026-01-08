@@ -4,7 +4,7 @@
 # Prototype:     Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
 # File Name:     network_visualizer.py
 # Author:        Paul Calnon
-# Version:       1.5.0
+# Version:       1.6.0
 #
 # Date:          2025-10-11
 # Last Modified: 2026-01-07
@@ -274,6 +274,7 @@ class NetworkVisualizer(BaseComponent):
                 Output(f"{self.component_id}-output-count", "children"),
                 Output(f"{self.component_id}-connection-count", "children"),
                 Output(f"{self.component_id}-topology-hash", "data"),
+                Output(f"{self.component_id}-new-node-highlight", "data"),
             ],
             [
                 Input(f"{self.component_id}-topology-store", "data"),
@@ -282,10 +283,12 @@ class NetworkVisualizer(BaseComponent):
                 Input("metrics-panel-metrics-store", "data"),
                 Input("theme-state", "data"),
                 Input(f"{self.component_id}-selected-nodes", "data"),
+                Input("fast-update-interval", "n_intervals"),
             ],
             [
                 State(f"{self.component_id}-view-state", "data"),
                 State(f"{self.component_id}-topology-hash", "data"),
+                State(f"{self.component_id}-new-node-highlight", "data"),
             ],
         )
         def update_network_graph(
@@ -295,8 +298,10 @@ class NetworkVisualizer(BaseComponent):
             metrics_data: List[Dict[str, Any]],
             theme: str,
             selected_nodes: List[str],
+            n_intervals: int,
             view_state: Dict[str, Any],
             prev_hash: str,
+            current_highlight: Optional[Dict[str, Any]],
         ):
             """
             Update network visualization based on topology data.
@@ -308,11 +313,13 @@ class NetworkVisualizer(BaseComponent):
                 metrics_data: Historical metrics data for detecting new units
                 theme: Current theme
                 selected_nodes: List of selected node IDs
+                n_intervals: Current interval count for animation timing
                 view_state: Stored view state (zoom, pan, dragmode)
                 prev_hash: Previous topology hash
+                current_highlight: Current new-node highlight state
 
             Returns:
-                Tuple of updated components
+                Tuple of updated components including new highlight state
             """
 
             def compute_hash(topo):
@@ -326,11 +333,12 @@ class NetworkVisualizer(BaseComponent):
 
             if not topology_data or topology_data.get("input_units", 0) == 0:
                 empty_fig = self._create_empty_graph(theme)
-                return empty_fig, "0", "0", "0", "0", None
+                return empty_fig, "0", "0", "0", "0", None, None
 
             current_hash = compute_hash(topology_data)
+            n_hidden = topology_data.get("hidden_units", 0)
 
-            # Detect newly added hidden unit
+            # Detect newly added hidden unit from metrics delta
             newly_added_unit = None
             if metrics_data and len(metrics_data) >= 2:
                 prev_hidden = metrics_data[-2].get("network_topology", {}).get("hidden_units", 0)
@@ -338,10 +346,28 @@ class NetworkVisualizer(BaseComponent):
                 if curr_hidden > prev_hidden:
                     newly_added_unit = curr_hidden - 1  # Index of new unit
 
-            # Create network graph
+            # P2-1: Manage new node highlight state
+            new_highlight = self._update_highlight_state(
+                current_highlight=current_highlight,
+                newly_added_unit=newly_added_unit,
+                n_hidden=n_hidden,
+                selected_nodes=selected_nodes,
+                n_intervals=n_intervals,
+            )
+
+            # Calculate highlight visual properties (pulse scale, opacity)
+            highlight_props = self._calculate_highlight_properties(new_highlight, n_intervals)
+
+            # Create network graph with enhanced highlight info
             show_weight_labels = bool(show_weights) and ("show" in show_weights)
             fig = self._create_network_graph(
-                topology_data, layout_type, show_weight_labels, newly_added_unit, theme, selected_nodes
+                topology_data,
+                layout_type,
+                show_weight_labels,
+                newly_added_unit=None,  # Disable old highlighting, use new system
+                theme=theme,
+                selected_nodes=selected_nodes,
+                new_node_highlight=highlight_props,
             )
 
             # Apply stored view state
@@ -355,11 +381,11 @@ class NetworkVisualizer(BaseComponent):
 
             # Extract counts
             input_count = str(topology_data.get("input_units", 0))
-            hidden_count = str(topology_data.get("hidden_units", 0))
+            hidden_count = str(n_hidden)
             output_count = str(topology_data.get("output_units", 0))
             connection_count = str(len(topology_data.get("connections", [])))
 
-            return fig, input_count, hidden_count, output_count, connection_count, current_hash
+            return fig, input_count, hidden_count, output_count, connection_count, current_hash, new_highlight
 
         @app.callback(
             Output(f"{self.component_id}-stats-bar", "style"),
@@ -475,6 +501,7 @@ class NetworkVisualizer(BaseComponent):
         newly_added_unit: int = None,
         theme: str = "light",
         selected_nodes: List[str] = None,
+        new_node_highlight: Optional[Dict[str, Any]] = None,
     ) -> go.Figure:
         """
         Create network graph visualization.
@@ -483,9 +510,10 @@ class NetworkVisualizer(BaseComponent):
             topology: Network topology dictionary
             layout_type: Layout algorithm ('hierarchical', 'spring', 'circular')
             show_weights: Whether to display weight values on edges
-            newly_added_unit: Index of newly added hidden unit (for highlighting)
+            newly_added_unit: Index of newly added hidden unit (for highlighting) - deprecated, use new_node_highlight
             theme: Current theme ("light" or "dark")
             selected_nodes: List of selected node IDs for highlighting
+            new_node_highlight: P2-1 enhanced highlight props {node_id, size_scale, opacity}
 
         Returns:
             Plotly figure object
@@ -532,20 +560,24 @@ class NetworkVisualizer(BaseComponent):
         # Combine traces
         fig = go.Figure(data=edge_traces + node_traces)
 
-        # Highlight newly added hidden unit
-        if newly_added_unit is not None and newly_added_unit < n_hidden:
+        # P2-1: Add new node highlight with pulsing glow and edge highlights
+        if new_node_highlight:
+            new_node_traces = self._create_new_node_highlight_traces(G, pos, new_node_highlight)
+            for trace in new_node_traces:
+                fig.add_trace(trace)
+        elif newly_added_unit is not None and newly_added_unit < n_hidden:
+            # Fallback to old-style highlighting (for backwards compatibility)
             hidden_node = f"hidden_{newly_added_unit}"
             if hidden_node in pos:
                 x, y = pos[hidden_node]
-                # Add pulse effect for newly added hidden unit
                 fig.add_trace(
                     go.Scatter(
                         x=[x],
                         y=[y],
                         mode="markers",
                         marker={
-                            "size": 28,  # Larger than normal
-                            "color": "#17a2b8",  # Cyan highlight
+                            "size": 28,
+                            "color": "#17a2b8",
                             "line": {"width": 4, "color": "#fff"},
                             "opacity": 0.9,
                         },
@@ -931,6 +963,212 @@ class NetworkVisualizer(BaseComponent):
         )
 
         return fig
+
+    def _update_highlight_state(
+        self,
+        current_highlight: Optional[Dict[str, Any]],
+        newly_added_unit: Optional[int],
+        n_hidden: int,
+        selected_nodes: List[str],
+        n_intervals: int,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Update the new node highlight state machine (P2-1).
+
+        State transitions:
+        - None -> active: When a new hidden unit is detected
+        - active -> fading: When user selects a different node
+        - fading -> None: After 2 seconds of fade-out
+        - active/fading -> active: When a new hidden unit is added (reset to new node)
+
+        Args:
+            current_highlight: Current highlight state
+            newly_added_unit: Index of newly added unit (if any)
+            n_hidden: Total number of hidden units
+            selected_nodes: Currently selected nodes
+            n_intervals: Current interval count
+
+        Returns:
+            Updated highlight state or None
+        """
+        # If a new hidden unit was just added, create/reset highlight to that node
+        if newly_added_unit is not None and newly_added_unit < n_hidden:
+            node_id = f"hidden_{newly_added_unit}"
+            return {
+                "node_id": node_id,
+                "unit_index": newly_added_unit,
+                "state": "active",
+                "start_interval": n_intervals,
+                "fade_start_interval": None,
+            }
+
+        # No current highlight - nothing to do
+        if not current_highlight:
+            return None
+
+        highlight_node = current_highlight.get("node_id")
+        state = current_highlight.get("state", "active")
+
+        # Check if user has selected a different node (trigger for fade)
+        if state == "active" and selected_nodes:
+            if highlight_node not in selected_nodes:
+                # User selected a different node, start fading
+                return {
+                    **current_highlight,
+                    "state": "fading",
+                    "fade_start_interval": n_intervals,
+                }
+
+        # If fading, check if fade duration has elapsed
+        if state == "fading":
+            fade_start = current_highlight.get("fade_start_interval", n_intervals)
+            elapsed_intervals = n_intervals - fade_start
+            elapsed_ms = elapsed_intervals * DashboardConstants.FAST_UPDATE_INTERVAL_MS
+            fade_duration_ms = 2000  # 2 seconds
+
+            if elapsed_ms >= fade_duration_ms:
+                # Fade complete, clear highlight
+                return None
+
+        return current_highlight
+
+    def _calculate_highlight_properties(
+        self, highlight: Optional[Dict[str, Any]], n_intervals: int
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Calculate visual properties for the new node highlight (P2-1).
+
+        Computes pulse scale (for breathing animation) and opacity (for fade-out).
+
+        Args:
+            highlight: Current highlight state
+            n_intervals: Current interval count
+
+        Returns:
+            Dict with node_id, size_scale, opacity, or None if no highlight
+        """
+        if not highlight:
+            return None
+
+        node_id = highlight.get("node_id")
+        state = highlight.get("state", "active")
+        start_interval = highlight.get("start_interval", n_intervals)
+
+        # Calculate pulse scale (breathing effect)
+        # Use a 1-second period for the pulse
+        period_ms = 1000
+        elapsed_ms = (n_intervals - start_interval) * DashboardConstants.FAST_UPDATE_INTERVAL_MS
+        phase = 2 * math.pi * ((elapsed_ms % period_ms) / period_ms)
+        size_scale = 1.0 + 0.12 * math.sin(phase)  # Oscillate between 0.88 and 1.12
+
+        # Calculate opacity
+        if state == "active":
+            opacity = 1.0
+        else:  # fading
+            fade_start = highlight.get("fade_start_interval", n_intervals)
+            fade_elapsed_ms = (n_intervals - fade_start) * DashboardConstants.FAST_UPDATE_INTERVAL_MS
+            fade_duration_ms = 2000
+            t = min(1.0, max(0.0, fade_elapsed_ms / fade_duration_ms))
+            opacity = 1.0 - t
+
+        return {
+            "node_id": node_id,
+            "size_scale": size_scale,
+            "opacity": opacity,
+        }
+
+    def _create_new_node_highlight_traces(
+        self,
+        G: "nx.DiGraph",
+        pos: Dict[str, Tuple[float, float]],
+        highlight_props: Dict[str, Any],
+    ) -> List[go.Scatter]:
+        """
+        Create highlight traces for the newly added node (P2-1).
+
+        Creates:
+        - Pulsing glow effect on the node (cyan/teal color)
+        - Highlighted edges connected to the node (more muted)
+
+        Args:
+            G: NetworkX graph with edges
+            pos: Node positions
+            highlight_props: Dict with node_id, size_scale, opacity
+
+        Returns:
+            List of Scatter traces for the highlight
+        """
+        traces = []
+        node_id = highlight_props.get("node_id")
+        size_scale = highlight_props.get("size_scale", 1.0)
+        opacity = highlight_props.get("opacity", 1.0)
+
+        if not node_id or node_id not in pos:
+            return traces
+
+        x, y = pos[node_id]
+
+        # Edge highlights (draw first, behind node)
+        edge_opacity = 0.5 * opacity  # More muted than node
+        for from_node, to_node, data in G.edges(data=True):
+            if from_node == node_id or to_node == node_id:
+                if from_node in pos and to_node in pos:
+                    x0, y0 = pos[from_node]
+                    x1, y1 = pos[to_node]
+                    traces.append(
+                        go.Scatter(
+                            x=[x0, x1, None],
+                            y=[y0, y1, None],
+                            mode="lines",
+                            line={
+                                "width": 6,
+                                "color": f"rgba(23, 162, 184, {edge_opacity})",  # Cyan with opacity
+                            },
+                            hoverinfo="skip",
+                            showlegend=False,
+                            name="New Unit Edges",
+                        )
+                    )
+
+        # Node glow effect (outer glow)
+        base_glow_size = 38
+        glow_size = base_glow_size * size_scale
+        traces.append(
+            go.Scatter(
+                x=[x],
+                y=[y],
+                mode="markers",
+                marker={
+                    "size": glow_size,
+                    "color": f"rgba(23, 162, 184, {0.3 * opacity})",  # Soft cyan glow
+                    "line": {"width": 0},
+                },
+                hoverinfo="skip",
+                showlegend=False,
+                name="New Unit Glow",
+            )
+        )
+
+        # Node highlight (inner ring)
+        base_ring_size = 30
+        ring_size = base_ring_size * size_scale
+        traces.append(
+            go.Scatter(
+                x=[x],
+                y=[y],
+                mode="markers",
+                marker={
+                    "size": ring_size,
+                    "color": f"rgba(23, 162, 184, {0.9 * opacity})",  # Cyan
+                    "line": {"width": 4, "color": f"rgba(255, 255, 255, {opacity})"},
+                },
+                hoverinfo="skip",
+                showlegend=False,
+                name="New Unit Highlight",
+            )
+        )
+
+        return traces
 
     def update_topology(self, topology: Dict[str, Any]):
         """

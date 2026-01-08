@@ -1,8 +1,8 @@
 # Juniper Canopy Fixes and Enhancements
 
 **Last Updated:** 2026-01-07  
-**Version:** 2.2.0  
-**Status:** Phase 1 Complete - Active Development
+**Version:** 2.3.0  
+**Status:** Phase 2 In Progress (P2-1, P2-2, P2-3 Complete)
 
 ## Implementation Plan
 
@@ -262,7 +262,7 @@ For detailed implementation plans, see:
 | **P0**   | Network Topology Tab: Node interactions resetting after ~1 second      | ✅ Done     | 0     |
 | **P1**   | Network Topology Tab: Staggered hidden node layout                     | ✅ Done     | 1     |
 | **P1**   | Network Topology Tab: Mouse click events for node selection            | ✅ Done     | 1     |
-| **P2**   | Network Topology Tab: Visual indicator for most recently added node    | Not Started | 2     |
+| **P2**   | Network Topology Tab: Visual indicator for most recently added node    | ✅ Done     | 2     |
 | **P2**   | Network Topology Tab: Unique name suggestion for image downloads       | ✅ Done     | 2     |
 | **P3**   | Network Topology Tab: 3D interactive view                              | Not Started | 3     |
 | **P2**   | About Tab for Juniper Cascor backend                                   | ✅ Done     | 2     |

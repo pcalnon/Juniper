@@ -7,11 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.17.0] - 2026-01-07
 
-### Phase 2 In Progress - Polish Features
+### Phase 2 Partial - Polish Features (P2-1, P2-2, P2-3 Complete)
 
-Phase 2 focuses on polish features and medium-priority enhancements. Status documented in `docs/phase2/README.md`.
+Phase 2 focuses on polish features and medium-priority enhancements. Three of five P2 items are now complete. Status documented in `docs/phase2/README.md`.
 
 ### Added [0.17.0]
+
+- **P2-1: Visual Indicator for Most Recently Added Node**
+  - Pulsing glow effect on newly added hidden nodes (cyan/teal color)
+  - Edge highlighting for all connections to new node
+  - Persistent highlight with state machine (active → fading → None)
+  - 2-second smooth fade-out animation
+  - Visually distinct from selected node indicator (yellow/orange)
+  - Implementation: `network_visualizer.py` lines 213-219, 960-1166
+  - Tests: 17 new tests in `test_network_visualizer_coverage.py`
 
 - **P2-2: Unique Name Suggestion for Image Downloads**
   - Network topology image downloads now use timestamp-based filenames
@@ -34,14 +43,16 @@ Phase 2 focuses on polish features and medium-priority enhancements. Status docu
 ### Changed [0.17.0]
 
 - **DashboardManager** now registers 5 components (added AboutPanel)
+- **NetworkVisualizer** callback now includes interval-based animation support
 - Updated component count tests in:
   - `test_dashboard_enhancements.py`
   - `test_dashboard_manager.py`
   - `test_dashboard_manager_coverage.py`
+- Updated callback invocation tests for new signature
 
 ### Test Results [0.17.0]
 
-- **2160 passed**, 37 skipped (26 new tests added)
+- **2177 passed**, 37 skipped (48 new tests added)
 - Coverage maintained at 95%+
 
 ---

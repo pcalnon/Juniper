@@ -966,10 +966,12 @@ class TestCallbackInvocation:
                     [],  # metrics_data
                     "light",  # theme
                     [],  # selected_nodes
+                    0,  # n_intervals
                     {"xaxis_range": None, "yaxis_range": None, "dragmode": "pan"},  # view_state
                     None,  # prev_hash
+                    None,  # current_highlight
                 )
-                fig, input_ct, hidden_ct, output_ct, conn_ct, hash_val = result
+                fig, input_ct, hidden_ct, output_ct, conn_ct, hash_val, new_highlight = result
                 assert isinstance(fig, go.Figure)
                 assert input_ct == "2"
                 assert hidden_ct == "1"
@@ -1013,10 +1015,12 @@ class TestCallbackInvocation:
                     [],
                     "light",
                     [],
-                    None,
-                    None,
+                    0,  # n_intervals
+                    None,  # view_state
+                    None,  # prev_hash
+                    None,  # current_highlight
                 )
-                fig, input_ct, hidden_ct, output_ct, conn_ct, hash_val = result
+                fig, input_ct, hidden_ct, output_ct, conn_ct, hash_val, new_highlight = result
                 assert input_ct == "0"
                 assert hash_val is None
                 break
@@ -1058,10 +1062,13 @@ class TestCallbackInvocation:
             if callback_key in key:
                 func = callback_info["callback"]
                 result = func.__wrapped__(
-                    simple_topology, "hierarchical", ["show"], metrics_data, "light", [], None, None
+                    simple_topology, "hierarchical", ["show"], metrics_data, "light", [], 0, None, None, None
                 )
-                fig, _, _, _, _, _ = result
+                fig, _, _, _, _, _, new_highlight = result
                 assert isinstance(fig, go.Figure)
+                # Should have detected new unit and created highlight
+                assert new_highlight is not None
+                assert new_highlight["node_id"] == "hidden_0"
                 break
 
     @pytest.mark.unit
@@ -1097,8 +1104,10 @@ class TestCallbackInvocation:
         for key, callback_info in app.callback_map.items():
             if callback_key in key:
                 func = callback_info["callback"]
-                result = func.__wrapped__(simple_topology, "hierarchical", [], [], "light", [], view_state, None)
-                fig, _, _, _, _, _ = result
+                result = func.__wrapped__(
+                    simple_topology, "hierarchical", [], [], "light", [], 0, view_state, None, None
+                )
+                fig, _, _, _, _, _, _ = result
                 assert isinstance(fig, go.Figure)
                 break
 

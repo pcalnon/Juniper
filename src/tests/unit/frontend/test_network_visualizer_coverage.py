@@ -421,6 +421,293 @@ class TestEdgeCases:
         assert isinstance(fig, go.Figure)
 
 
+class TestP21NewNodeHighlightState:
+    """Test P2-1: New node highlight state management."""
+
+    def test_highlight_state_created_on_new_unit(self, visualizer):
+        """Should create highlight state when new unit is added."""
+        result = visualizer._update_highlight_state(
+            current_highlight=None,
+            newly_added_unit=0,
+            n_hidden=1,
+            selected_nodes=[],
+            n_intervals=100,
+        )
+        assert result is not None
+        assert result["node_id"] == "hidden_0"
+        assert result["state"] == "active"
+        assert result["start_interval"] == 100
+
+    def test_highlight_state_resets_on_new_unit(self, visualizer):
+        """Should reset to new node when another unit is added."""
+        existing = {
+            "node_id": "hidden_0",
+            "unit_index": 0,
+            "state": "active",
+            "start_interval": 50,
+            "fade_start_interval": None,
+        }
+        result = visualizer._update_highlight_state(
+            current_highlight=existing,
+            newly_added_unit=1,
+            n_hidden=2,
+            selected_nodes=[],
+            n_intervals=100,
+        )
+        assert result["node_id"] == "hidden_1"
+        assert result["state"] == "active"
+        assert result["start_interval"] == 100
+
+    def test_highlight_state_fades_on_different_selection(self, visualizer):
+        """Should start fading when user selects a different node."""
+        existing = {
+            "node_id": "hidden_0",
+            "unit_index": 0,
+            "state": "active",
+            "start_interval": 50,
+            "fade_start_interval": None,
+        }
+        result = visualizer._update_highlight_state(
+            current_highlight=existing,
+            newly_added_unit=None,
+            n_hidden=1,
+            selected_nodes=["input_0"],  # Different node selected
+            n_intervals=100,
+        )
+        assert result["state"] == "fading"
+        assert result["fade_start_interval"] == 100
+
+    def test_highlight_state_persists_when_no_selection(self, visualizer):
+        """Should persist active state when no node is selected."""
+        existing = {
+            "node_id": "hidden_0",
+            "unit_index": 0,
+            "state": "active",
+            "start_interval": 50,
+            "fade_start_interval": None,
+        }
+        result = visualizer._update_highlight_state(
+            current_highlight=existing,
+            newly_added_unit=None,
+            n_hidden=1,
+            selected_nodes=[],
+            n_intervals=100,
+        )
+        assert result["state"] == "active"
+
+    def test_highlight_state_persists_when_same_node_selected(self, visualizer):
+        """Should persist when highlighted node is selected."""
+        existing = {
+            "node_id": "hidden_0",
+            "unit_index": 0,
+            "state": "active",
+            "start_interval": 50,
+            "fade_start_interval": None,
+        }
+        result = visualizer._update_highlight_state(
+            current_highlight=existing,
+            newly_added_unit=None,
+            n_hidden=1,
+            selected_nodes=["hidden_0"],  # Same node selected
+            n_intervals=100,
+        )
+        assert result["state"] == "active"
+
+    def test_highlight_clears_after_fade_duration(self, visualizer):
+        """Should clear highlight after 2-second fade completes."""
+        # Assume FAST_UPDATE_INTERVAL_MS = 100, so 20 intervals = 2000ms
+        from constants import DashboardConstants
+
+        intervals_for_2s = 2000 // DashboardConstants.FAST_UPDATE_INTERVAL_MS
+
+        existing = {
+            "node_id": "hidden_0",
+            "unit_index": 0,
+            "state": "fading",
+            "start_interval": 50,
+            "fade_start_interval": 100,
+        }
+        result = visualizer._update_highlight_state(
+            current_highlight=existing,
+            newly_added_unit=None,
+            n_hidden=1,
+            selected_nodes=[],
+            n_intervals=100 + intervals_for_2s + 1,  # Past fade duration
+        )
+        assert result is None
+
+    def test_no_highlight_returns_none(self, visualizer):
+        """Should return None when no highlight exists and no new unit."""
+        result = visualizer._update_highlight_state(
+            current_highlight=None,
+            newly_added_unit=None,
+            n_hidden=1,
+            selected_nodes=[],
+            n_intervals=100,
+        )
+        assert result is None
+
+
+class TestP21HighlightProperties:
+    """Test P2-1: Highlight visual property calculation."""
+
+    def test_calculate_properties_returns_none_for_no_highlight(self, visualizer):
+        """Should return None when no highlight."""
+        result = visualizer._calculate_highlight_properties(None, 100)
+        assert result is None
+
+    def test_calculate_properties_includes_node_id(self, visualizer):
+        """Should include node_id in properties."""
+        highlight = {
+            "node_id": "hidden_0",
+            "state": "active",
+            "start_interval": 50,
+            "fade_start_interval": None,
+        }
+        result = visualizer._calculate_highlight_properties(highlight, 100)
+        assert result["node_id"] == "hidden_0"
+
+    def test_calculate_properties_pulse_scale_in_range(self, visualizer):
+        """Size scale should be within pulse range."""
+        highlight = {
+            "node_id": "hidden_0",
+            "state": "active",
+            "start_interval": 0,
+            "fade_start_interval": None,
+        }
+        # Test at different intervals
+        for i in range(5):
+            result = visualizer._calculate_highlight_properties(highlight, i)
+            scale = result["size_scale"]
+            # Scale should be around 1.0 +/- 0.12 (0.88 to 1.12)
+            assert 0.85 <= scale <= 1.15, f"Scale {scale} out of expected range"
+
+    def test_calculate_properties_opacity_full_when_active(self, visualizer):
+        """Opacity should be 1.0 when active."""
+        highlight = {
+            "node_id": "hidden_0",
+            "state": "active",
+            "start_interval": 50,
+            "fade_start_interval": None,
+        }
+        result = visualizer._calculate_highlight_properties(highlight, 100)
+        assert result["opacity"] == 1.0
+
+    def test_calculate_properties_opacity_decreases_when_fading(self, visualizer):
+        """Opacity should decrease over time when fading."""
+        from constants import DashboardConstants
+
+        highlight = {
+            "node_id": "hidden_0",
+            "state": "fading",
+            "start_interval": 50,
+            "fade_start_interval": 100,
+        }
+        # At start of fade
+        result_start = visualizer._calculate_highlight_properties(highlight, 100)
+        assert result_start["opacity"] == 1.0
+
+        # With 1000ms intervals, 2 intervals = 2000ms = full fade
+        # Midway through fade (1 interval = 1000ms = 50% of 2000ms)
+        result_mid = visualizer._calculate_highlight_properties(highlight, 101)
+        assert 0.4 <= result_mid["opacity"] <= 0.6
+
+        # At end of fade (2 intervals = 2000ms = 100% of fade)
+        result_end = visualizer._calculate_highlight_properties(highlight, 102)
+        assert result_end["opacity"] == 0.0
+
+
+class TestP21HighlightTraces:
+    """Test P2-1: New node highlight trace creation."""
+
+    def test_create_traces_returns_empty_for_invalid_node(self, visualizer):
+        """Should return empty list for non-existent node."""
+        import networkx as nx
+
+        G = nx.DiGraph()
+        pos = {"input_0": (0, 0)}
+        props = {"node_id": "hidden_99", "size_scale": 1.0, "opacity": 1.0}
+
+        traces = visualizer._create_new_node_highlight_traces(G, pos, props)
+        assert traces == []
+
+    def test_create_traces_includes_glow_and_ring(self, visualizer):
+        """Should create glow and ring traces for node."""
+        import networkx as nx
+
+        G = nx.DiGraph()
+        G.add_node("hidden_0")
+        pos = {"hidden_0": (5, 0)}
+        props = {"node_id": "hidden_0", "size_scale": 1.0, "opacity": 1.0}
+
+        traces = visualizer._create_new_node_highlight_traces(G, pos, props)
+        # Should have at least 2 traces (glow + ring)
+        assert len(traces) >= 2
+
+    def test_create_traces_includes_edge_highlights(self, visualizer):
+        """Should create edge highlight traces for connected edges."""
+        import networkx as nx
+
+        G = nx.DiGraph()
+        G.add_node("input_0")
+        G.add_node("hidden_0")
+        G.add_edge("input_0", "hidden_0", weight=0.5)
+        pos = {"input_0": (0, 0), "hidden_0": (5, 0)}
+        props = {"node_id": "hidden_0", "size_scale": 1.0, "opacity": 1.0}
+
+        traces = visualizer._create_new_node_highlight_traces(G, pos, props)
+        # Should have edge trace + glow + ring = at least 3
+        assert len(traces) >= 3
+
+    def test_create_traces_respects_opacity(self, visualizer):
+        """Trace opacity should reflect highlight opacity."""
+        import networkx as nx
+
+        G = nx.DiGraph()
+        G.add_node("hidden_0")
+        pos = {"hidden_0": (5, 0)}
+        props = {"node_id": "hidden_0", "size_scale": 1.0, "opacity": 0.5}
+
+        traces = visualizer._create_new_node_highlight_traces(G, pos, props)
+        # Should have traces (glow + ring)
+        assert len(traces) >= 2, "Should have at least glow and ring traces"
+        # Traces with markers should have opacity-based colors
+        for trace in traces:
+            if hasattr(trace, "marker") and trace.marker:
+                color = str(trace.marker.color)
+                if "rgba" in color:
+                    # Check that opacity is reduced (not 1.0)
+                    assert "0.5" in color or "0.45" in color or "0.15" in color or "0.25" in color
+
+    def test_create_traces_respects_size_scale(self, visualizer):
+        """Trace size should reflect size_scale."""
+        import networkx as nx
+
+        G = nx.DiGraph()
+        G.add_node("hidden_0")
+        pos = {"hidden_0": (5, 0)}
+
+        # Normal scale
+        props_normal = {"node_id": "hidden_0", "size_scale": 1.0, "opacity": 1.0}
+        traces_normal = visualizer._create_new_node_highlight_traces(G, pos, props_normal)
+
+        # Larger scale
+        props_large = {"node_id": "hidden_0", "size_scale": 1.12, "opacity": 1.0}
+        traces_large = visualizer._create_new_node_highlight_traces(G, pos, props_large)
+
+        # Compare marker sizes - at least one marker trace should have different sizes
+        size_diff_found = False
+        for tn, tl in zip(traces_normal, traces_large):
+            if hasattr(tn, "marker") and tn.marker and hasattr(tl, "marker") and tl.marker:
+                size_n = tn.marker.size
+                size_l = tl.marker.size
+                if size_n and size_l and size_n > 0 and size_l > 0:
+                    if size_l > size_n:
+                        size_diff_found = True
+                        break
+        assert size_diff_found, "Larger scale should produce larger marker sizes"
+
+
 class TestImageDownloadFilename:
     """Test P2-2: Unique name suggestion for image downloads."""
 
