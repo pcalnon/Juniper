@@ -21,7 +21,7 @@ All Phase 1 items validated and documented. Phase 1 README created at `docs/phas
   - Implementation: `metrics_panel.py` lines 337-563, 1342-1503
 
 - **P1-2: Replay Functionality**
-  - Full replay controls (⏮, ◀, ▶, ▶, ⏭)
+  - Full replay controls (⏮, ◀, ▶, ⏩, ⏭)
   - Speed selection (1x, 2x, 4x)
   - Progress slider with position display
   - Controls visible when training STOPPED/PAUSED/COMPLETED/FAILED
