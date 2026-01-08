@@ -48,7 +48,7 @@ Validates and documents all Phase 1 (P1) high-impact enhancements for the Junipe
 
 ### P1-2: Replay Functionality
 
-- Full playback controls (⏮, ◀, ▶, ▶, ⏭)
+- Full playback controls (⏮, ◀, ▶, ⏵, ⏭)
 - Speed selection (1x, 2x, 4x)
 - Progress slider with position display
 - Controls visible when training STOPPED/PAUSED/COMPLETED/FAILED
