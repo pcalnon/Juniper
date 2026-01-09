@@ -42,7 +42,7 @@ JuniperCanopy is a real-time monitoring and diagnostic frontend for Cascade Corr
 
 JuniperCanopy deployments are affected if **both** of the following are true:
 
-1. They are based on **v[PREVIOUS_VERSION]** (or earlier versions/alpha snapshots that allow `[PACKAGE_NAME]` [VULNERABLE_VERSION] **and**
+1. They are based on **v[PREVIOUS_VERSION]** (or earlier versions/alpha snapshots that allow `[PACKAGE_NAME]` [VULNERABLE_VERSION]) **and**
 2. Their environment resolves `[PACKAGE_NAME]` to **[VULNERABLE_VERSION]** (for example, via `pip`, a requirements file, or a lockfile that includes this version).
 
 Any JuniperCanopy environment that installs `[PACKAGE_NAME]==[VULNERABLE_VERSION]` is potentially vulnerable.
