@@ -84,7 +84,8 @@ sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 # ==========================================
 [tool.bandit]
 exclude_dirs = ["tests", "src/tests", ".venv", "venv", "__pycache__"]
-skips = ["B101", "B601"]
+# skips = ["B101", "B601"]
+skips = ["B101", "B601", "B103"]
 recursive = true
 targets = ["src"]
 

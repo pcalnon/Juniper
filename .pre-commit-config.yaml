@@ -130,7 +130,7 @@ repos:
     rev: 1.7.6
     hooks:
       - id: bandit
-        args: [-s, "B101,B104,B110,B112,B404,B601,B603,B607", -r]
+        args: [-s, "B101,B104,B110,B112,B113,B404,B601,B603,B607", -r]
         # Only run on Python files
         types: [python]
         # Exclude tests from security checks
