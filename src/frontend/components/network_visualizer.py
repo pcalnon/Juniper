@@ -4,7 +4,7 @@
 # Prototype:     Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
 # File Name:     network_visualizer.py
 # Author:        Paul Calnon
-# Version:       1.6.0
+# Version:       1.7.0
 #
 # Date:          2025-10-11
 # Last Modified: 2026-01-07
@@ -122,6 +122,20 @@ class NetworkVisualizer(BaseComponent):
                                     options=[{"label": "", "value": "show"}],
                                     value=["show"] if self.show_weights else [],
                                     style={"display": "inline-block"},
+                                ),
+                                # P3-5: 2D/3D View Toggle
+                                html.Label("View:", style={"marginLeft": "20px", "marginRight": "10px"}),
+                                dcc.RadioItems(
+                                    id=f"{self.component_id}-view-mode",
+                                    options=[
+                                        {"label": "2D", "value": "2d"},
+                                        {"label": "3D", "value": "3d"},
+                                    ],
+                                    value="2d",
+                                    inline=True,
+                                    style={"display": "inline-block"},
+                                    inputStyle={"marginRight": "5px"},
+                                    labelStyle={"marginRight": "15px"},
                                 ),
                             ],
                             style={"display": "inline-block", "float": "right"},
@@ -280,6 +294,7 @@ class NetworkVisualizer(BaseComponent):
                 Input(f"{self.component_id}-topology-store", "data"),
                 Input(f"{self.component_id}-layout-selector", "value"),
                 Input(f"{self.component_id}-show-weights", "value"),
+                Input(f"{self.component_id}-view-mode", "value"),  # P3-5: 2D/3D toggle
                 Input("metrics-panel-metrics-store", "data"),
                 Input("theme-state", "data"),
                 Input(f"{self.component_id}-selected-nodes", "data"),
@@ -295,6 +310,7 @@ class NetworkVisualizer(BaseComponent):
             topology_data: Dict[str, Any],
             layout_type: str,
             show_weights: List[str],
+            view_mode: str,  # P3-5: 2D/3D mode
             metrics_data: List[Dict[str, Any]],
             theme: str,
             selected_nodes: List[str],
@@ -310,6 +326,7 @@ class NetworkVisualizer(BaseComponent):
                 topology_data: Network topology dictionary
                 layout_type: Layout algorithm to use
                 show_weights: List containing 'show' if weights should be displayed
+                view_mode: View mode ('2d' or '3d')
                 metrics_data: Historical metrics data for detecting new units
                 theme: Current theme
                 selected_nodes: List of selected node IDs
@@ -332,7 +349,7 @@ class NetworkVisualizer(BaseComponent):
                 return hashlib.md5(json.dumps(key, sort_keys=True).encode(), usedforsecurity=False).hexdigest()
 
             if not topology_data or topology_data.get("input_units", 0) == 0:
-                empty_fig = self._create_empty_graph(theme)
+                empty_fig = self._create_empty_graph(theme, view_mode=view_mode)
                 return empty_fig, "0", "0", "0", "0", None, None
 
             current_hash = compute_hash(topology_data)
@@ -358,26 +375,36 @@ class NetworkVisualizer(BaseComponent):
             # Calculate highlight visual properties (pulse scale, opacity)
             highlight_props = self._calculate_highlight_properties(new_highlight, n_intervals)
 
-            # Create network graph with enhanced highlight info
             show_weight_labels = bool(show_weights) and ("show" in show_weights)
-            fig = self._create_network_graph(
-                topology_data,
-                layout_type,
-                show_weight_labels,
-                newly_added_unit=None,  # Disable old highlighting, use new system
-                theme=theme,
-                selected_nodes=selected_nodes,
-                new_node_highlight=highlight_props,
-            )
 
-            # Apply stored view state
-            if view_state:
-                if view_state.get("xaxis_range"):
-                    fig.update_layout(xaxis_range=view_state["xaxis_range"])
-                if view_state.get("yaxis_range"):
-                    fig.update_layout(yaxis_range=view_state["yaxis_range"])
-                if view_state.get("dragmode"):
-                    fig.update_layout(dragmode=view_state["dragmode"])
+            # P3-5: Select 2D or 3D rendering
+            if view_mode == "3d":
+                fig = self._create_3d_network_graph(
+                    topology_data,
+                    layout_type,
+                    show_weight_labels,
+                    theme=theme,
+                )
+            else:
+                # Create 2D network graph with enhanced highlight info
+                fig = self._create_network_graph(
+                    topology_data,
+                    layout_type,
+                    show_weight_labels,
+                    newly_added_unit=None,  # Disable old highlighting, use new system
+                    theme=theme,
+                    selected_nodes=selected_nodes,
+                    new_node_highlight=highlight_props,
+                )
+
+                # Apply stored view state (2D only)
+                if view_state:
+                    if view_state.get("xaxis_range"):
+                        fig.update_layout(xaxis_range=view_state["xaxis_range"])
+                    if view_state.get("yaxis_range"):
+                        fig.update_layout(yaxis_range=view_state["yaxis_range"])
+                    if view_state.get("dragmode"):
+                        fig.update_layout(dragmode=view_state["dragmode"])
 
             # Extract counts
             input_count = str(topology_data.get("input_units", 0))
@@ -928,12 +955,13 @@ class NetworkVisualizer(BaseComponent):
                 )
         return highlight_traces
 
-    def _create_empty_graph(self, theme: str = "light") -> go.Figure:
+    def _create_empty_graph(self, theme: str = "light", view_mode: str = "2d") -> go.Figure:
         """
         Create empty placeholder graph.
 
         Args:
             theme: Current theme ("light" or "dark")
+            view_mode: View mode ("2d" or "3d")
 
         Returns:
             Empty Plotly figure
@@ -953,16 +981,243 @@ class NetworkVisualizer(BaseComponent):
             font={"size": 16, "color": text_color},
         )
 
+        base_layout = {
+            "template": "plotly_dark" if is_dark else "plotly",
+            "plot_bgcolor": "#242424" if is_dark else "#f8f9fa",
+            "paper_bgcolor": "#242424" if is_dark else "#ffffff",
+            "margin": {"l": 20, "r": 20, "t": 20, "b": 20},
+        }
+
+        if view_mode == "3d":
+            base_layout["scene"] = {
+                "xaxis": {"showgrid": False, "showticklabels": False, "zeroline": False, "visible": False},
+                "yaxis": {"showgrid": False, "showticklabels": False, "zeroline": False, "visible": False},
+                "zaxis": {"showgrid": False, "showticklabels": False, "zeroline": False, "visible": False},
+                "bgcolor": "#242424" if is_dark else "#f8f9fa",
+            }
+        else:
+            base_layout["xaxis"] = {"showgrid": False, "showticklabels": False, "zeroline": False}
+            base_layout["yaxis"] = {"showgrid": False, "showticklabels": False, "zeroline": False}
+
+        fig.update_layout(**base_layout)
+
+        return fig
+
+    def _create_3d_network_graph(
+        self,
+        topology: Dict[str, Any],
+        layout_type: str,
+        show_weights: bool,
+        theme: str = "light",
+    ) -> go.Figure:
+        """
+        Create 3D network graph visualization (P3-5).
+
+        Args:
+            topology: Network topology dictionary
+            layout_type: Layout algorithm ('hierarchical', etc.)
+            show_weights: Whether to display weight values on edges
+            theme: Current theme ("light" or "dark")
+
+        Returns:
+            Plotly figure object with 3D visualization
+        """
+        # Create NetworkX graph
+        G = nx.DiGraph()
+
+        n_input = topology.get("input_units", 0)
+        n_hidden = topology.get("hidden_units", 0)
+        n_output = topology.get("output_units", 0)
+
+        # Add nodes
+        for i in range(n_input):
+            G.add_node(f"input_{i}", layer="input", index=i)
+        for i in range(n_hidden):
+            G.add_node(f"hidden_{i}", layer="hidden", index=i)
+        for i in range(n_output):
+            G.add_node(f"output_{i}", layer="output", index=i)
+
+        # Add edges
+        connections = topology.get("connections", [])
+        for conn in connections:
+            from_node = conn.get("from")
+            to_node = conn.get("to")
+            weight = conn.get("weight", 0.0)
+            if from_node and to_node:
+                G.add_edge(from_node, to_node, weight=weight)
+
+        # Calculate 3D positions (layer as z-axis)
+        pos_3d = self._calculate_3d_layout(n_input, n_hidden, n_output)
+
+        # Create edge traces (3D lines)
+        edge_traces = []
+        for from_node, to_node, data in G.edges(data=True):
+            if from_node in pos_3d and to_node in pos_3d:
+                x0, y0, z0 = pos_3d[from_node]
+                x1, y1, z1 = pos_3d[to_node]
+                weight = data.get("weight", 0.0)
+
+                # Color by weight (blue negative, gray zero, red positive)
+                if weight > 0:
+                    color = f"rgba(220, 53, 69, {min(1.0, abs(weight) * 0.8 + 0.2)})"
+                elif weight < 0:
+                    color = f"rgba(0, 123, 255, {min(1.0, abs(weight) * 0.8 + 0.2)})"
+                else:
+                    color = "rgba(150, 150, 150, 0.4)"
+
+                edge_traces.append(
+                    go.Scatter3d(
+                        x=[x0, x1, None],
+                        y=[y0, y1, None],
+                        z=[z0, z1, None],
+                        mode="lines",
+                        line={"color": color, "width": max(1, min(5, abs(weight) * 3 + 1))},
+                        hoverinfo="skip",
+                        showlegend=False,
+                    )
+                )
+
+        # Create node traces by layer
+        layer_colors = {
+            "input": "#28a745",  # Green
+            "hidden": "#17a2b8",  # Teal
+            "output": "#dc3545",  # Red
+        }
+
+        node_traces = []
+        for layer, color in layer_colors.items():
+            layer_nodes = [n for n, d in G.nodes(data=True) if d.get("layer") == layer]
+            if not layer_nodes:
+                continue
+
+            x_vals = [pos_3d[n][0] for n in layer_nodes]
+            y_vals = [pos_3d[n][1] for n in layer_nodes]
+            z_vals = [pos_3d[n][2] for n in layer_nodes]
+            labels = [n.replace("_", " ").title() for n in layer_nodes]
+
+            node_traces.append(
+                go.Scatter3d(
+                    x=x_vals,
+                    y=y_vals,
+                    z=z_vals,
+                    mode="markers+text",
+                    marker={
+                        "size": 12,
+                        "color": color,
+                        "line": {"width": 1, "color": "#ffffff"},
+                        "opacity": 0.9,
+                    },
+                    text=labels,
+                    textposition="top center",
+                    textfont={"size": 10},
+                    name=f"{layer.title()} Layer",
+                    hoverinfo="text",
+                )
+            )
+
+        # Combine traces
+        fig = go.Figure(data=edge_traces + node_traces)
+
+        # Update layout for 3D
+        is_dark = theme == "dark"
         fig.update_layout(
-            xaxis={"showgrid": False, "showticklabels": False, "zeroline": False},
-            yaxis={"showgrid": False, "showticklabels": False, "zeroline": False},
+            title="Cascade Correlation Network Architecture (3D)",
+            showlegend=True,
+            hovermode="closest",
+            margin={"l": 0, "r": 0, "t": 40, "b": 0},
             template="plotly_dark" if is_dark else "plotly",
-            plot_bgcolor="#242424" if is_dark else "#f8f9fa",
             paper_bgcolor="#242424" if is_dark else "#ffffff",
-            margin={"l": 20, "r": 20, "t": 20, "b": 20},
+            scene={
+                "xaxis": {
+                    "showgrid": True,
+                    "gridcolor": "#444" if is_dark else "#ddd",
+                    "showticklabels": False,
+                    "title": "",
+                    "zeroline": False,
+                    "backgroundcolor": "#242424" if is_dark else "#f8f9fa",
+                },
+                "yaxis": {
+                    "showgrid": True,
+                    "gridcolor": "#444" if is_dark else "#ddd",
+                    "showticklabels": False,
+                    "title": "",
+                    "zeroline": False,
+                    "backgroundcolor": "#242424" if is_dark else "#f8f9fa",
+                },
+                "zaxis": {
+                    "showgrid": True,
+                    "gridcolor": "#444" if is_dark else "#ddd",
+                    "showticklabels": True,
+                    "title": "Layer",
+                    "ticktext": ["Input", "Hidden", "Output"],
+                    "tickvals": [0, 1, 2],
+                    "zeroline": False,
+                    "backgroundcolor": "#242424" if is_dark else "#f8f9fa",
+                },
+                "camera": {
+                    "eye": {"x": 1.5, "y": 1.5, "z": 0.8},
+                    "up": {"x": 0, "y": 0, "z": 1},
+                },
+                "aspectmode": "manual",
+                "aspectratio": {"x": 1, "y": 1, "z": 0.5},
+            },
+            legend={
+                "x": 0.02,
+                "y": 0.98,
+                "xanchor": "left",
+                "yanchor": "top",
+                "bgcolor": "rgba(36, 36, 36, 0.7)" if is_dark else "rgba(248, 249, 250, 0.7)",
+                "font": {"color": "#f8f9fa" if is_dark else "#212529"},
+            },
         )
 
         return fig
+
+    def _calculate_3d_layout(
+        self,
+        n_input: int,
+        n_hidden: int,
+        n_output: int,
+    ) -> Dict[str, Tuple[float, float, float]]:
+        """
+        Calculate 3D node positions for network visualization (P3-5).
+
+        Uses layers as z-axis, with input at z=0, hidden at z=1, output at z=2.
+        Nodes are spread in x/y plane within each layer.
+
+        Args:
+            n_input: Number of input units
+            n_hidden: Number of hidden units
+            n_output: Number of output units
+
+        Returns:
+            Dictionary mapping node IDs to (x, y, z) positions
+        """
+        pos = {}
+
+        # Input layer (z=0) - arranged in a line along y-axis
+        for i in range(n_input):
+            x = 0
+            y = (i - n_input / 2) * 1.2
+            pos[f"input_{i}"] = (x, y, 0)
+        # Hidden layer (z=1) - arranged in a grid or circle
+        if n_hidden > 0:
+            for i in range(n_hidden):
+                if n_hidden <= 4:
+                    x = 0
+                    y = (i - n_hidden / 2) * 1.2
+                else:
+                    angle = 2 * math.pi * i / n_hidden
+                    radius = min(3, n_hidden * 0.4)
+                    x = radius * math.cos(angle)
+                    y = radius * math.sin(angle)
+                pos[f"hidden_{i}"] = (x, y, 1)
+        # Output layer (z=2) - arranged in a line along y-axis
+        for i in range(n_output):
+            x = 0
+            y = (i - n_output / 2) * 1.2
+            pos[f"output_{i}"] = (x, y, 2)
+        return pos
 
     def _update_highlight_state(
         self,

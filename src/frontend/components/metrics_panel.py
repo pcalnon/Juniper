@@ -4,7 +4,7 @@
 # Prototype:     Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
 # File Name:     metrics_panel.py
 # Author:        Paul Calnon
-# Version:       1.4.0
+# Version:       1.5.0
 #
 # Date:          2025-10-11
 # Last Modified: 2025-12-03
@@ -168,6 +168,86 @@ class MetricsPanel(BaseComponent):
                     ],
                     style={"marginBottom": "10px"},
                 ),
+                # Layout Save/Load Controls (P3-4)
+                html.Div(
+                    id=f"{self.component_id}-layout-controls",
+                    children=[
+                        html.Div(
+                            [
+                                # Save Layout section
+                                html.Div(
+                                    [
+                                        dbc.Input(
+                                            id=f"{self.component_id}-layout-name-input",
+                                            placeholder="Layout name...",
+                                            type="text",
+                                            size="sm",
+                                            style={"width": "150px", "display": "inline-block"},
+                                        ),
+                                        dbc.Button(
+                                            "💾 Save",
+                                            id=f"{self.component_id}-save-layout-btn",
+                                            size="sm",
+                                            color="success",
+                                            className="ms-2",
+                                            title="Save current layout",
+                                        ),
+                                    ],
+                                    style={"display": "inline-flex", "alignItems": "center"},
+                                ),
+                                html.Span("|", style={"margin": "0 15px", "color": "#ccc"}),
+                                # Load Layout section
+                                html.Div(
+                                    [
+                                        dcc.Dropdown(
+                                            id=f"{self.component_id}-layout-dropdown",
+                                            placeholder="Select layout...",
+                                            options=[],
+                                            style={"width": "180px", "display": "inline-block"},
+                                        ),
+                                        dbc.Button(
+                                            "📂 Load",
+                                            id=f"{self.component_id}-load-layout-btn",
+                                            size="sm",
+                                            color="primary",
+                                            className="ms-2",
+                                            title="Load selected layout",
+                                        ),
+                                        dbc.Button(
+                                            "🗑️",
+                                            id=f"{self.component_id}-delete-layout-btn",
+                                            size="sm",
+                                            color="danger",
+                                            outline=True,
+                                            className="ms-1",
+                                            title="Delete selected layout",
+                                        ),
+                                    ],
+                                    style={"display": "inline-flex", "alignItems": "center"},
+                                ),
+                            ],
+                            style={"display": "flex", "alignItems": "center"},
+                        ),
+                        # Status message
+                        html.Div(
+                            id=f"{self.component_id}-layout-status",
+                            children="",
+                            style={
+                                "marginTop": "5px",
+                                "fontSize": "12px",
+                                "color": "#6c757d",
+                            },
+                        ),
+                    ],
+                    style={
+                        "marginBottom": "15px",
+                        "padding": "10px",
+                        "backgroundColor": "#f8f9fa",
+                        "borderRadius": "5px",
+                    },
+                ),
+                # Store for layout data
+                dcc.Store(id=f"{self.component_id}-layout-store", data=None),
                 # Replay Controls
                 html.Div(
                     id=f"{self.component_id}-replay-controls",
@@ -802,6 +882,59 @@ class MetricsPanel(BaseComponent):
             """Update play button icon based on replay state."""
             return "⏸" if state and state.get("mode") == "playing" else "▶"
 
+        # Layout Save/Load Callbacks (P3-4)
+        @app.callback(
+            Output(f"{self.component_id}-layout-dropdown", "options"),
+            Input(f"{self.component_id}-layout-store", "data"),
+        )
+        def refresh_layout_dropdown(layout_data):
+            """Refresh layout dropdown options from API."""
+            return self._fetch_layout_options_handler()
+
+        @app.callback(
+            [
+                Output(f"{self.component_id}-layout-status", "children"),
+                Output(f"{self.component_id}-layout-store", "data", allow_duplicate=True),
+                Output(f"{self.component_id}-layout-name-input", "value"),
+            ],
+            Input(f"{self.component_id}-save-layout-btn", "n_clicks"),
+            [
+                State(f"{self.component_id}-layout-name-input", "value"),
+                State(f"{self.component_id}-view-state", "data"),
+            ],
+            prevent_initial_call=True,
+        )
+        def save_layout(n_clicks, name, view_state):
+            """Save current layout configuration."""
+            return self._save_layout_handler(n_clicks, name, view_state)
+
+        @app.callback(
+            [
+                Output(f"{self.component_id}-layout-status", "children", allow_duplicate=True),
+                Output(f"{self.component_id}-view-state", "data", allow_duplicate=True),
+            ],
+            Input(f"{self.component_id}-load-layout-btn", "n_clicks"),
+            State(f"{self.component_id}-layout-dropdown", "value"),
+            prevent_initial_call=True,
+        )
+        def load_layout(n_clicks, layout_name):
+            """Load selected layout configuration."""
+            return self._load_layout_handler(n_clicks, layout_name)
+
+        @app.callback(
+            [
+                Output(f"{self.component_id}-layout-status", "children", allow_duplicate=True),
+                Output(f"{self.component_id}-layout-store", "data", allow_duplicate=True),
+                Output(f"{self.component_id}-layout-dropdown", "value"),
+            ],
+            Input(f"{self.component_id}-delete-layout-btn", "n_clicks"),
+            State(f"{self.component_id}-layout-dropdown", "value"),
+            prevent_initial_call=True,
+        )
+        def delete_layout(n_clicks, layout_name):
+            """Delete selected layout."""
+            return self._delete_layout_handler(n_clicks, layout_name)
+
         self.logger.debug(f"Callbacks registered for {self.component_id}")
 
     def _fetch_network_stats_handler(self, n_intervals=None):
@@ -941,6 +1074,155 @@ class MetricsPanel(BaseComponent):
             status_text,
             status_style,
         )
+
+    # Layout Save/Load Handlers (P3-4)
+    def _fetch_layout_options_handler(self) -> List[Dict[str, str]]:
+        """
+        Fetch available layout options from the API.
+
+        Returns:
+            List of dropdown options with label and value
+        """
+        import requests
+
+        try:
+            response = requests.get("http://localhost:8050/api/v1/metrics/layouts", timeout=2)
+            if response.status_code == 200:
+                data = response.json()
+                layouts = data.get("layouts", [])
+                return [{"label": layout["name"], "value": layout["name"]} for layout in layouts]
+        except Exception as e:
+            self.logger.debug(f"Failed to fetch layouts: {e}")
+
+        return []
+
+    def _save_layout_handler(self, n_clicks, name: str, view_state: dict):
+        """
+        Handle save layout button click.
+
+        Args:
+            n_clicks: Number of button clicks
+            name: Layout name from input
+            view_state: Current view state with zoom ranges
+
+        Returns:
+            Tuple of (status message, layout store data, cleared input value)
+        """
+        import requests
+
+        if not n_clicks:
+            return "", None, ""
+
+        if not name or not name.strip():
+            return "⚠️ Please enter a layout name", None, name
+
+        try:
+            response = requests.post(
+                "http://localhost:8050/api/v1/metrics/layouts",
+                params={
+                    "name": name.strip(),
+                    "smoothing_window": self.smoothing_window,
+                },
+                json={
+                    "zoom_ranges": view_state or {},
+                },
+                timeout=5,
+            )
+
+            if response.status_code == 201:
+                return f"✅ Layout '{name}' saved", {"refresh": True}, ""
+            else:
+                error = response.json().get("detail", "Unknown error")
+                return f"❌ Failed: {error}", None, name
+
+        except requests.exceptions.Timeout:
+            return "❌ Request timed out", None, name
+        except Exception as e:
+            self.logger.error(f"Failed to save layout: {e}")
+            return f"❌ Error: {str(e)}", None, name
+
+    def _load_layout_handler(self, n_clicks, layout_name: str):
+        """
+        Handle load layout button click.
+
+        Args:
+            n_clicks: Number of button clicks
+            layout_name: Selected layout name
+
+        Returns:
+            Tuple of (status message, updated view state)
+        """
+        import requests
+
+        if not n_clicks:
+            return "", {}
+
+        if not layout_name:
+            return "⚠️ Please select a layout", {}
+
+        try:
+            response = requests.get(
+                f"http://localhost:8050/api/v1/metrics/layouts/{layout_name}",
+                timeout=2,
+            )
+
+            if response.status_code == 200:
+                layout_data = response.json()
+                zoom_ranges = layout_data.get("zoom_ranges", {})
+
+                return f"✅ Layout '{layout_name}' loaded", zoom_ranges
+
+            elif response.status_code == 404:
+                return f"❌ Layout '{layout_name}' not found", {}
+            else:
+                error = response.json().get("detail", "Unknown error")
+                return f"❌ Failed: {error}", {}
+
+        except requests.exceptions.Timeout:
+            return "❌ Request timed out", {}
+        except Exception as e:
+            self.logger.error(f"Failed to load layout: {e}")
+            return f"❌ Error: {str(e)}", {}
+
+    def _delete_layout_handler(self, n_clicks, layout_name: str):
+        """
+        Handle delete layout button click.
+
+        Args:
+            n_clicks: Number of button clicks
+            layout_name: Selected layout name
+
+        Returns:
+            Tuple of (status message, layout store data, cleared dropdown value)
+        """
+        import requests
+
+        if not n_clicks:
+            return "", None, layout_name
+
+        if not layout_name:
+            return "⚠️ Please select a layout to delete", None, layout_name
+
+        try:
+            response = requests.delete(
+                f"http://localhost:8050/api/v1/metrics/layouts/{layout_name}",
+                timeout=5,
+            )
+
+            if response.status_code == 200:
+                return f"✅ Layout '{layout_name}' deleted", {"refresh": True}, None
+
+            elif response.status_code == 404:
+                return f"❌ Layout '{layout_name}' not found", None, layout_name
+            else:
+                error = response.json().get("detail", "Unknown error")
+                return f"❌ Failed: {error}", None, layout_name
+
+        except requests.exceptions.Timeout:
+            return "❌ Request timed out", None, layout_name
+        except Exception as e:
+            self.logger.error(f"Failed to delete layout: {e}")
+            return f"❌ Error: {str(e)}", None, layout_name
 
     def _create_loss_plot(self, metrics_data: List[Dict[str, Any]], theme: str = "light") -> go.Figure:
         """

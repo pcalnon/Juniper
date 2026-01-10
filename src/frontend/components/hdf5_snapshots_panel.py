@@ -34,9 +34,11 @@
 #   - Initial implementation for Phase 2 (P2-4, P2-5)
 #
 #####################################################################################################################################################################################################
+import contextlib
 import os
 from typing import Any, Dict, List
 
+import dash
 import dash_bootstrap_components as dbc
 import requests
 from dash import callback_context, dcc, html
@@ -46,6 +48,9 @@ from ..base_component import BaseComponent
 
 # Default refresh interval in milliseconds
 DEFAULT_REFRESH_INTERVAL_MS = 10000  # 10 seconds
+
+# Default API base URL
+DEFAULT_API_BASE_URL = "http://localhost:8050"
 
 
 class HDF5SnapshotsPanel(BaseComponent):
@@ -117,6 +122,69 @@ class HDF5SnapshotsPanel(BaseComponent):
                         ),
                     ],
                     style={"marginBottom": "15px"},
+                ),
+                # Create Snapshot section (P3-1)
+                dbc.Card(
+                    [
+                        dbc.CardHeader(
+                            html.H5("Create New Snapshot", className="mb-0"),
+                            style={"backgroundColor": "#f8f9fa"},
+                        ),
+                        dbc.CardBody(
+                            [
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            [
+                                                dbc.Label("Snapshot Name (optional):", size="sm"),
+                                                dbc.Input(
+                                                    id=f"{self.component_id}-create-name",
+                                                    type="text",
+                                                    placeholder="Auto-generated if empty",
+                                                    size="sm",
+                                                ),
+                                            ],
+                                            width=4,
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                dbc.Label("Description (optional):", size="sm"),
+                                                dbc.Input(
+                                                    id=f"{self.component_id}-create-description",
+                                                    type="text",
+                                                    placeholder="Enter description",
+                                                    size="sm",
+                                                ),
+                                            ],
+                                            width=5,
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                dbc.Label("\u00a0", size="sm"),  # Spacer for alignment
+                                                html.Div(
+                                                    dbc.Button(
+                                                        "📸 Create Snapshot",
+                                                        id=f"{self.component_id}-create-button",
+                                                        color="success",
+                                                        size="sm",
+                                                        className="w-100",
+                                                    ),
+                                                ),
+                                            ],
+                                            width=3,
+                                        ),
+                                    ],
+                                    className="g-2",
+                                ),
+                                # Create status message
+                                html.Div(
+                                    id=f"{self.component_id}-create-status",
+                                    style={"marginTop": "10px", "fontSize": "0.9rem"},
+                                ),
+                            ]
+                        ),
+                    ],
+                    className="mb-3",
                 ),
                 # Description
                 html.P(
@@ -192,6 +260,74 @@ class HDF5SnapshotsPanel(BaseComponent):
                     ],
                     className="mb-3",
                 ),
+                # Restore confirmation modal (P3-2)
+                dbc.Modal(
+                    [
+                        dbc.ModalHeader(dbc.ModalTitle("Confirm Restore")),
+                        dbc.ModalBody(
+                            id=f"{self.component_id}-restore-modal-body",
+                            children="Are you sure you want to restore from this snapshot?",
+                        ),
+                        dbc.ModalFooter(
+                            [
+                                dbc.Button(
+                                    "Cancel",
+                                    id=f"{self.component_id}-restore-cancel",
+                                    color="secondary",
+                                    className="me-2",
+                                ),
+                                dbc.Button(
+                                    "Restore",
+                                    id=f"{self.component_id}-restore-confirm",
+                                    color="warning",
+                                ),
+                            ]
+                        ),
+                    ],
+                    id=f"{self.component_id}-restore-modal",
+                    is_open=False,
+                    centered=True,
+                ),
+                # Restore status message
+                html.Div(
+                    id=f"{self.component_id}-restore-status",
+                    style={"marginBottom": "15px"},
+                ),
+                # History section (P3-3) - collapsible
+                dbc.Card(
+                    [
+                        dbc.CardHeader(
+                            dbc.Button(
+                                [
+                                    html.Span("📜 Snapshot History"),
+                                    html.Span(
+                                        id=f"{self.component_id}-history-toggle-icon",
+                                        children=" ▼",
+                                        style={"marginLeft": "10px"},
+                                    ),
+                                ],
+                                id=f"{self.component_id}-history-toggle",
+                                color="link",
+                                className="p-0 text-decoration-none",
+                                style={"color": "#2c3e50", "fontWeight": "500"},
+                            ),
+                            style={"backgroundColor": "#f8f9fa"},
+                        ),
+                        dbc.Collapse(
+                            dbc.CardBody(
+                                [
+                                    html.Div(
+                                        id=f"{self.component_id}-history-content",
+                                        children="Loading history...",
+                                    ),
+                                ]
+                            ),
+                            id=f"{self.component_id}-history-collapse",
+                            is_open=False,
+                        ),
+                    ],
+                    className="mb-3",
+                ),
                 # Auto-refresh interval
                 dcc.Interval(
                     id=f"{self.component_id}-refresh-interval",
@@ -202,10 +338,57 @@ class HDF5SnapshotsPanel(BaseComponent):
                 dcc.Store(id=f"{self.component_id}-snapshots-store", data={"snapshots": []}),
                 # Store for selected snapshot ID
                 dcc.Store(id=f"{self.component_id}-selected-id", data=None),
+                # Store for triggering table refresh after create (P3-1)
+                dcc.Store(id=f"{self.component_id}-refresh-trigger", data=0),
+                # Store for snapshot ID pending restore (P3-2)
+                dcc.Store(id=f"{self.component_id}-restore-pending-id", data=None),
             ],
             id=self.component_id,
             style={"padding": "20px", "maxWidth": "1000px", "margin": "0 auto"},
         )
+
+    def _create_snapshot_handler(self, name: str = None, description: str = None) -> Dict[str, Any]:
+        """
+        Create a new snapshot via the backend API.
+
+        Args:
+            name: Optional custom name for the snapshot
+            description: Optional description for the snapshot
+
+        Returns:
+            Dict with created snapshot data or error information
+        """
+        try:
+            params = {}
+            if name:
+                params["name"] = name
+            if description:
+                params["description"] = description
+
+            resp = requests.post(
+                f"{DEFAULT_API_BASE_URL}/api/v1/snapshots",
+                params=params,
+                timeout=self.api_timeout + 3,  # Allow extra time for creation
+            )
+
+            if resp.status_code == 201:
+                data = resp.json()
+                self.logger.info(f"Created snapshot: {data.get('id')}")
+                return {"success": True, "snapshot": data, "message": data.get("message", "Snapshot created")}
+            else:
+                error_detail = resp.json().get("detail", "Unknown error") if resp.text else f"HTTP {resp.status_code}"
+                self.logger.warning(f"Failed to create snapshot: {error_detail}")
+                return {"success": False, "error": error_detail}
+
+        except requests.exceptions.Timeout:
+            self.logger.warning("Create snapshot request timed out")
+            return {"success": False, "error": "Request timed out"}
+        except requests.exceptions.ConnectionError:
+            self.logger.warning("Cannot connect to snapshot API for create")
+            return {"success": False, "error": "Service unavailable"}
+        except Exception as e:
+            self.logger.warning(f"Failed to create snapshot: {e}")
+            return {"success": False, "error": str(e)}
 
     def _fetch_snapshots_handler(self, n_intervals: int = 0) -> Dict[str, Any]:
         """
@@ -218,19 +401,7 @@ class HDF5SnapshotsPanel(BaseComponent):
             Dict with 'snapshots' list and optional 'message'
         """
         try:
-            resp = requests.get(
-                "http://localhost:8050/api/v1/snapshots",
-                timeout=self.api_timeout,
-            )
-            if resp.status_code != 200:
-                self.logger.warning(f"Snapshots API returned status {resp.status_code}")
-                return {"snapshots": [], "message": f"API error {resp.status_code}"}
-
-            data = resp.json()
-            snapshots = data.get("snapshots", [])
-            message = data.get("message")
-            return {"snapshots": snapshots, "message": message}
-
+            return self._parse_snapshots_response()
         except requests.exceptions.Timeout:
             self.logger.warning("Snapshots API request timed out")
             return {"snapshots": [], "message": "Request timed out"}
@@ -240,6 +411,26 @@ class HDF5SnapshotsPanel(BaseComponent):
         except Exception as e:
             self.logger.warning(f"Failed to fetch snapshots: {e}")
             return {"snapshots": [], "message": "Snapshot service unavailable"}
+
+    def _parse_snapshots_response(self):
+        """
+        Parse snapshots list from backend API.
+
+        Returns:
+            Dict with 'snapshots' list and optional 'message'
+        """
+        self.logger.info("Fetching snapshots from API")
+        resp = requests.get(
+            "http://localhost:8050/api/v1/snapshots",
+            timeout=self.api_timeout,
+        )
+        if resp.status_code != 200:
+            self.logger.warning(f"Snapshots API returned status {resp.status_code}")
+            return {"snapshots": [], "message": f"API error {resp.status_code}"}
+        data = resp.json()
+        snapshots = data.get("snapshots", [])
+        message = data.get("message")
+        return {"snapshots": snapshots, "message": message}
 
     def _fetch_snapshot_detail_handler(self, snapshot_id: str) -> Dict[str, Any]:
         """
@@ -274,6 +465,85 @@ class HDF5SnapshotsPanel(BaseComponent):
         except Exception as e:
             self.logger.warning(f"Failed to fetch snapshot detail for {snapshot_id}: {e}")
             return {}
+
+    def _restore_snapshot_handler(self, snapshot_id: str) -> Dict[str, Any]:
+        """
+        Restore from a snapshot via the backend API (P3-2).
+
+        Args:
+            snapshot_id: The snapshot ID to restore from
+
+        Returns:
+            Dict with restore result or error information
+        """
+        if not snapshot_id:
+            return {"success": False, "error": "No snapshot ID provided"}
+
+        try:
+            resp = requests.post(
+                f"{DEFAULT_API_BASE_URL}/api/v1/snapshots/{snapshot_id}/restore",
+                timeout=self.api_timeout + 5,  # Allow extra time for restore
+            )
+
+            if resp.status_code == 200:
+                data = resp.json()
+                self.logger.info(f"Restored from snapshot: {snapshot_id}")
+                return {"success": True, "data": data, "message": data.get("message", "Restored successfully")}
+            elif resp.status_code == 409:
+                error_detail = resp.json().get("detail", "Training is running")
+                self.logger.warning(f"Cannot restore: {error_detail}")
+                return {"success": False, "error": error_detail}
+            elif resp.status_code == 404:
+                self.logger.warning(f"Snapshot not found: {snapshot_id}")
+                return {"success": False, "error": "Snapshot not found"}
+            else:
+                error_detail = resp.json().get("detail", "Unknown error") if resp.text else f"HTTP {resp.status_code}"
+                self.logger.warning(f"Failed to restore snapshot: {error_detail}")
+                return {"success": False, "error": error_detail}
+
+        except requests.exceptions.Timeout:
+            self.logger.warning("Restore snapshot request timed out")
+            return {"success": False, "error": "Request timed out"}
+        except requests.exceptions.ConnectionError:
+            self.logger.warning("Cannot connect to snapshot API for restore")
+            return {"success": False, "error": "Service unavailable"}
+        except Exception as e:
+            self.logger.warning(f"Failed to restore snapshot: {e}")
+            return {"success": False, "error": str(e)}
+
+    def _fetch_history_handler(self, limit: int = 50) -> Dict[str, Any]:
+        """
+        Fetch snapshot history from backend API (P3-3).
+
+        Args:
+            limit: Maximum number of history entries to fetch
+
+        Returns:
+            Dict with 'history' list and optional 'message'
+        """
+        try:
+            resp = requests.get(
+                f"{DEFAULT_API_BASE_URL}/api/v1/snapshots/history",
+                params={"limit": limit},
+                timeout=self.api_timeout,
+            )
+
+            if resp.status_code != 200:
+                self.logger.warning(f"History API returned status {resp.status_code}")
+                return {"history": [], "message": f"API error {resp.status_code}"}
+
+            data = resp.json()
+            return {"history": data.get("history", []), "total": data.get("total", 0), "message": data.get("message")}
+
+        except requests.exceptions.Timeout:
+            self.logger.warning("History API request timed out")
+            return {"history": [], "message": "Request timed out"}
+        except requests.exceptions.ConnectionError:
+            self.logger.warning("Cannot connect to history API")
+            return {"history": [], "message": "Service unavailable"}
+        except Exception as e:
+            self.logger.warning(f"Failed to fetch history: {e}")
+            return {"history": [], "message": "History service unavailable"}
 
     def _format_size(self, size_bytes: int) -> str:
         """
@@ -323,6 +593,53 @@ class HDF5SnapshotsPanel(BaseComponent):
             app: Dash application instance
         """
 
+        # Callback: Create Snapshot button → create snapshot and trigger refresh (P3-1)
+        @app.callback(
+            Output(f"{self.component_id}-create-status", "children"),
+            Output(f"{self.component_id}-refresh-trigger", "data"),
+            Output(f"{self.component_id}-create-name", "value"),
+            Output(f"{self.component_id}-create-description", "value"),
+            Input(f"{self.component_id}-create-button", "n_clicks"),
+            State(f"{self.component_id}-create-name", "value"),
+            State(f"{self.component_id}-create-description", "value"),
+            State(f"{self.component_id}-refresh-trigger", "data"),
+            prevent_initial_call=True,
+        )
+        def create_snapshot(n_clicks, name, description, current_trigger):
+            """Handle create snapshot button click."""
+            if not n_clicks:
+                return "", current_trigger or 0, name, description
+
+            result = self._create_snapshot_handler(name=name, description=description)
+
+            if result.get("success"):
+                snapshot = result.get("snapshot", {})
+                snapshot_id = snapshot.get("id", "")
+                message = result.get("message", "Snapshot created successfully")
+
+                status_content = html.Div(
+                    [
+                        html.Span("✅ ", style={"color": "#28a745"}),
+                        html.Span(f"{message}: "),
+                        html.Strong(snapshot_id),
+                    ],
+                    style={"color": "#28a745"},
+                )
+
+                # Increment trigger to refresh table, clear inputs
+                return status_content, (current_trigger or 0) + 1, "", ""
+            else:
+                error = result.get("error", "Unknown error")
+                status_content = html.Div(
+                    [
+                        html.Span("❌ ", style={"color": "#dc3545"}),
+                        html.Span(f"Failed to create snapshot: {error}"),
+                    ],
+                    style={"color": "#dc3545"},
+                )
+                # Don't clear inputs on error, keep trigger unchanged
+                return status_content, current_trigger or 0, name, description
+
         # Callback: Refresh / auto-refresh → update snapshots table
         @app.callback(
             Output(f"{self.component_id}-table-body", "children"),
@@ -331,9 +648,10 @@ class HDF5SnapshotsPanel(BaseComponent):
             Output(f"{self.component_id}-snapshots-store", "data"),
             Input(f"{self.component_id}-refresh-interval", "n_intervals"),
             Input(f"{self.component_id}-refresh-button", "n_clicks"),
+            Input(f"{self.component_id}-refresh-trigger", "data"),
             prevent_initial_call=False,
         )
-        def update_snapshots_table(n_intervals, n_clicks):
+        def update_snapshots_table(n_intervals, n_clicks, refresh_trigger):
             """Update the snapshots table with current data."""
             result = self._fetch_snapshots_handler(n_intervals)
             snapshots = result.get("snapshots", [])
@@ -354,12 +672,25 @@ class HDF5SnapshotsPanel(BaseComponent):
                             html.Td(timestamp, style={"padding": "10px", "borderBottom": "1px solid #dee2e6"}),
                             html.Td(size, style={"padding": "10px", "borderBottom": "1px solid #dee2e6"}),
                             html.Td(
-                                dbc.Button(
-                                    "View Details",
-                                    id={"type": f"{self.component_id}-view-btn", "index": snapshot_id},
-                                    size="sm",
-                                    color="info",
-                                    outline=True,
+                                html.Div(
+                                    [
+                                        dbc.Button(
+                                            "View Details",
+                                            id={"type": f"{self.component_id}-view-btn", "index": snapshot_id},
+                                            size="sm",
+                                            color="info",
+                                            outline=True,
+                                            className="me-1",
+                                        ),
+                                        dbc.Button(
+                                            "🔄 Restore",
+                                            id={"type": f"{self.component_id}-restore-btn", "index": snapshot_id},
+                                            size="sm",
+                                            color="warning",
+                                            outline=True,
+                                        ),
+                                    ],
+                                    style={"display": "flex", "gap": "5px"},
                                 ),
                                 style={"padding": "10px", "borderBottom": "1px solid #dee2e6"},
                             ),
@@ -532,5 +863,220 @@ class HDF5SnapshotsPanel(BaseComponent):
                 )
 
             return html.Div(items)
+
+        # Callback: Restore button click → open modal with snapshot ID (P3-2)
+        @app.callback(
+            #     Output(f"{self.component_id}-restore-modal", "is_open"),
+            #     Output(f"{self.component_id}-restore-modal-body", "children"),
+            #     Output(f"{self.component_id}-restore-pending-id", "data"),
+            #     Input({"type": f"{self.component_id}-restore-btn", "index": ALL}, "n_clicks"),
+            #     State({"type": f"{self.component_id}-restore-btn", "index": ALL}, "id"),
+            #     State(f"{self.component_id}-restore-modal", "is_open"),
+            #     prevent_initial_call=True,
+            # )
+            Output(f"{self.component_id}-restore-modal", "is_open"),
+            Output(f"{self.component_id}-restore-modal-body", "children"),
+            Output(f"{self.component_id}-restore-pending-id", "data"),
+            Input({"type": f"{self.component_id}-restore-btn", "index": ALL}, "n_clicks"),
+            State({"type": f"{self.component_id}-restore-btn", "index": ALL}, "id"),
+            State(f"{self.component_id}-restore-modal", "is_open"),
+            prevent_initial_call=True,
+        )
+        def open_restore_modal(n_clicks_list, ids, is_open):
+            """Open restore confirmation modal when Restore button clicked."""
+            if not n_clicks_list or not any(n_clicks_list):
+                return False, "", None
+
+            ctx = callback_context
+            if not ctx.triggered:
+                return False, "", None
+
+            triggered = ctx.triggered[0]
+            if not triggered.get("value"):
+                return False, "", None
+
+            prop_id = triggered.get("prop_id", "")
+            if not prop_id:
+                return False, "", None
+
+            import json
+            with contextlib.suppress(json.JSONDecodeError, IndexError):
+                id_str = prop_id.rsplit(".", 1)[0]
+                id_dict = json.loads(id_str)
+                snapshot_id = id_dict.get("index")
+                if snapshot_id:
+                    modal_body = html.Div(
+                        [
+                            html.P("Are you sure you want to restore from snapshot:"),
+                            html.P(
+                                html.Strong(snapshot_id),
+                                style={
+                                    "fontFamily": "monospace",
+                                    "fontSize": "1.1rem",
+                                },
+                            ),
+                            html.P(
+                                "⚠️ Training must be paused or stopped to restore.",
+                                style={"color": "#856404", "fontSize": "0.9rem"},
+                            ),
+                        ]
+                    )
+                    return True, modal_body, snapshot_id
+
+            # except (json.JSONDecodeError, IndexError):
+            #     pass
+
+            return False, "", None
+
+        # Callback: Modal cancel button → close modal (P3-2)
+        @app.callback(
+            #     Output(f"{self.component_id}-restore-modal", "is_open", allow_duplicate=True),
+            #     Input(f"{self.component_id}-restore-cancel", "n_clicks"),
+            #     prevent_initial_call=True,
+            # )
+            Output(f"{self.component_id}-restore-modal", "is_open", allow_duplicate=True),
+            Input(f"{self.component_id}-restore-cancel", "n_clicks"),
+            prevent_initial_call=True,
+        )
+        def close_restore_modal(n_clicks):
+            """Close restore modal on cancel."""
+            # if n_clicks:
+            #     return False
+            # return dash.no_update
+            return False if n_clicks else dash.no_update
+
+        # Callback: Modal confirm button → perform restore (P3-2)
+        @app.callback(
+            Output(f"{self.component_id}-restore-modal", "is_open", allow_duplicate=True),
+            Output(f"{self.component_id}-restore-status", "children"),
+            Output(f"{self.component_id}-refresh-trigger", "data", allow_duplicate=True),
+            Input(f"{self.component_id}-restore-confirm", "n_clicks"),
+            State(f"{self.component_id}-restore-pending-id", "data"),
+            State(f"{self.component_id}-refresh-trigger", "data"),
+            prevent_initial_call=True,
+        )
+        def confirm_restore(n_clicks, snapshot_id, current_trigger):
+            """Perform restore when confirmed."""
+            if not n_clicks or not snapshot_id:
+                return dash.no_update, dash.no_update, dash.no_update
+
+            result = self._restore_snapshot_handler(snapshot_id)
+
+            if result.get("success"):
+                message = result.get("message", "Restored successfully")
+                status_content = html.Div(
+                    [
+                        html.Span("✅ ", style={"color": "#28a745"}),
+                        html.Span(f"{message}"),
+                    ],
+                    style={"color": "#28a745", "padding": "10px", "backgroundColor": "#d4edda", "borderRadius": "5px"},
+                )
+                return False, status_content, (current_trigger or 0) + 1
+            else:
+                error = result.get("error", "Unknown error")
+                status_content = html.Div(
+                    [
+                        html.Span("❌ ", style={"color": "#dc3545"}),
+                        html.Span(f"Failed to restore: {error}"),
+                    ],
+                    style={"color": "#dc3545", "padding": "10px", "backgroundColor": "#f8d7da", "borderRadius": "5px"},
+                )
+                return False, status_content, current_trigger or 0
+
+        # Callback: Toggle history collapse (P3-3)
+        @app.callback(
+            Output(f"{self.component_id}-history-collapse", "is_open"),
+            Output(f"{self.component_id}-history-toggle-icon", "children"),
+            Output(f"{self.component_id}-history-content", "children"),
+            Input(f"{self.component_id}-history-toggle", "n_clicks"),
+            State(f"{self.component_id}-history-collapse", "is_open"),
+            prevent_initial_call=True,
+        )
+        def toggle_history(n_clicks, is_open):
+            """Toggle history section and load history when opening."""
+            if not n_clicks:
+                return dash.no_update, dash.no_update, dash.no_update
+
+            new_is_open = not is_open
+            icon = " ▲" if new_is_open else " ▼"
+
+            if new_is_open:
+                # Fetch history when opening
+                result = self._fetch_history_handler(limit=20)
+                history = result.get("history", [])
+
+                if not history:
+                    content = html.P(
+                        "No snapshot activity recorded yet.",
+                        style={"color": "#6c757d", "fontStyle": "italic"},
+                    )
+                else:
+                    # Build history entries
+                    entries = []
+                    for entry in history:
+                        action = entry.get("action", "unknown")
+                        snapshot_id = entry.get("snapshot_id", "")
+                        timestamp = entry.get("timestamp", "")
+                        message = entry.get("message", "")
+
+                        # Format timestamp
+                        ts_formatted = self._format_timestamp(timestamp) if timestamp else ""
+
+                        # Action icon and color
+                        action_config = {
+                            "create": ("📸", "#28a745"),
+                            "restore": ("🔄", "#ffc107"),
+                            "delete": ("🗑️", "#dc3545"),
+                        }
+                        action_icon, action_color = action_config.get(action, ("•", "#6c757d"))
+
+                        entries.append(
+                            html.Div(
+                                [
+                                    html.Span(
+                                        f"{action_icon} {action.upper()}",
+                                        style={
+                                            "fontWeight": "bold",
+                                            "color": action_color,
+                                            "marginRight": "10px",
+                                            "minWidth": "100px",
+                                            "display": "inline-block",
+                                        },
+                                    ),
+                                    html.Span(
+                                        snapshot_id,
+                                        style={"fontFamily": "monospace", "marginRight": "10px"},
+                                    ),
+                                    html.Span(
+                                        ts_formatted,
+                                        style={"color": "#6c757d", "fontSize": "0.85rem", "marginRight": "10px"},
+                                    ),
+                                    html.Span(
+                                        message,
+                                        style={"color": "#495057", "fontSize": "0.9rem"},
+                                    ),
+                                ],
+                                style={
+                                    "padding": "8px 0",
+                                    "borderBottom": "1px solid #eee",
+                                },
+                            )
+                        )
+
+                    content = html.Div(entries)
+
+                return True, icon, content
+            else:
+                return False, icon, "Loading history..."
+
+        # Expose callback functions for unit testing
+        self._cb_create_snapshot = create_snapshot
+        self._cb_update_snapshots_table = update_snapshots_table
+        self._cb_select_snapshot = select_snapshot
+        self._cb_update_detail_panel = update_detail_panel
+        self._cb_open_restore_modal = open_restore_modal
+        self._cb_close_restore_modal = close_restore_modal
+        self._cb_confirm_restore = confirm_restore
+        self._cb_toggle_history = toggle_history
 
         self.logger.debug(f"Callbacks registered for {self.component_id}")
