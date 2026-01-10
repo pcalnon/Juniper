@@ -6,12 +6,12 @@
 # Purpose:       Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
 #
 # Author:        Paul Calnon
-# Version:       0.7.1
+# Version:       0.8.0
 # File Name:     main.py
 # File Path:     ${HOME}/Development/python/JuniperCanopy/juniper_canopy/src/
 #
 # Date Created:  2025-10-11
-# Last Modified: 2026-01-08
+# Last Modified: 2026-01-09
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -888,13 +888,68 @@ async def get_snapshots():
 
     # Demo mode or no real snapshots available → return mock data
     if (demo_mode_active or not snapshots) and not cascor_integration:
-        snapshots = _generate_mock_snapshots()
-        return {"snapshots": snapshots, "message": "Demo mode: showing simulated snapshots"}
+        # Combine session-created demo snapshots with mock snapshots
+        mock_snapshots = _generate_mock_snapshots()
+
+        # Merge: session snapshots first, then mock snapshots (avoid duplicates by ID)
+        existing_ids = {s["id"] for s in _demo_snapshots}
+        combined = list(_demo_snapshots)
+        for mock in mock_snapshots:
+            if mock["id"] not in existing_ids:
+                combined.append(mock)
+
+        return {"snapshots": combined, "message": "Demo mode: showing simulated snapshots"}
 
     if not snapshots:
         return {"snapshots": [], "message": "No snapshots available"}
 
     return {"snapshots": snapshots}
+
+
+@app.get("/api/v1/snapshots/history")
+async def get_snapshot_history(limit: int = 50):
+    """
+    Get snapshot activity history (P3-3).
+
+    Reads from snapshot_history.jsonl and returns entries in reverse chronological order.
+
+    Args:
+        limit: Maximum number of entries to return (default 50)
+
+    Returns:
+        JSON object with history entries array
+    """
+    from pathlib import Path
+
+    history_file = Path(_snapshots_dir) / "snapshot_history.jsonl"
+
+    entries = []
+
+    if history_file.exists():
+        try:
+            with open(history_file, "r") as f:
+                for line in f:
+                    if line := line.strip():
+                        try:
+                            entry = json.loads(line)
+                            entries.append(entry)
+                        except json.JSONDecodeError:
+                            system_logger.warning(f"Invalid JSON in history file: {line[:50]}...")
+        except Exception as e:
+            system_logger.warning(f"Failed to read snapshot history: {e}")
+
+    # Return in reverse chronological order (newest first)
+    entries.reverse()
+
+    # Apply limit
+    if limit and limit > 0:
+        entries = entries[:limit]
+
+    return {
+        "history": entries,
+        "total": len(entries),
+        "message": "Demo mode history" if demo_mode_active else None,
+    }
 
 
 @app.get("/api/v1/snapshots/{snapshot_id}")
@@ -917,6 +972,20 @@ async def get_snapshot_detail(snapshot_id: str):
 
     # Demo mode: return synthetic details
     if demo_mode_active or not cascor_integration:
+        # Check session-created demo snapshots first
+        for s in _demo_snapshots:
+            if s["id"] == snapshot_id:
+                s_copy = dict(s)
+                s_copy["attributes"] = {
+                    "mode": "demo",
+                    "description": s.get("description", "Demo snapshot (no real HDF5 file)"),
+                    "epochs_trained": 0,
+                    "hidden_units": 0,
+                    "created_in_session": True,
+                }
+                return s_copy
+
+        # Then check mock snapshots
         for s in _generate_mock_snapshots():
             if s["id"] == snapshot_id:
                 s["attributes"] = {
@@ -926,6 +995,7 @@ async def get_snapshot_detail(snapshot_id: str):
                     "hidden_units": 3 + int(snapshot_id.split("_")[-1]),
                 }
                 return s
+
         raise HTTPException(status_code=404, detail="Snapshot not found")
 
     # Real mode: find file in snapshots directory
@@ -970,6 +1040,636 @@ async def get_snapshot_detail(snapshot_id: str):
         system_logger.warning(f"Failed to read HDF5 attributes for {snapshot_file}: {e}")
 
     return detail
+
+
+# Session-persistent storage for demo mode snapshots (P3-1)
+_demo_snapshots: list = []
+
+
+def _log_snapshot_activity(action: str, snapshot_id: str, details: dict = None, message: str = None):
+    """
+    Log snapshot activity to history file for P3-3.
+
+    Args:
+        action: The action type ('create', 'restore', 'delete')
+        snapshot_id: The snapshot ID
+        details: Additional details about the action
+        message: Human-readable message
+    """
+    import json
+    from datetime import UTC, datetime
+    from pathlib import Path
+
+    history_file = Path(_snapshots_dir) / "snapshot_history.jsonl"
+
+    entry = {
+        "timestamp": f"{datetime.now(UTC).isoformat()}Z",
+        "action": action,
+        "snapshot_id": snapshot_id,
+        "details": details or {},
+        "message": message or f"Snapshot {action} completed",
+    }
+
+    try:
+        # Ensure directory exists
+        Path(_snapshots_dir).mkdir(parents=True, exist_ok=True)
+
+        with open(history_file, "a") as f:
+            f.write(json.dumps(entry) + "\n")
+
+        system_logger.debug(f"Logged snapshot activity: {action} for {snapshot_id}")
+    except Exception as e:
+        system_logger.warning(f"Failed to log snapshot activity: {e}")
+
+
+@app.post("/api/v1/snapshots", status_code=201)
+async def create_snapshot(
+    name: str = None,
+    description: str = None,
+):
+    """
+    Create a new HDF5 snapshot of the current training state.
+
+    Args:
+        name: Optional custom name for the snapshot (auto-generated if not provided)
+        description: Optional description for the snapshot
+
+    Returns:
+        JSON object with the created snapshot metadata
+    """
+    from datetime import UTC, datetime
+    from pathlib import Path
+
+    from fastapi import HTTPException
+
+    global demo_mode_active
+
+    now = datetime.now(UTC)
+    timestamp_str = now.strftime("%Y%m%d_%H%M%S")
+
+    # Generate snapshot ID and name
+    snapshot_id = name or f"snapshot_{timestamp_str}"
+    snapshot_name = f"{snapshot_id}.h5"
+
+    # Demo mode: create mock snapshot entry
+    if demo_mode_active or not cascor_integration:
+        size_bytes = 1024 * 1024 + int(now.timestamp()) % (512 * 1024)  # ~1-1.5 MB mock size
+
+        snapshot = {
+            "id": snapshot_id,
+            "name": snapshot_name,
+            "timestamp": f"{now.replace(microsecond=0).isoformat()}Z",
+            "size_bytes": size_bytes,
+            "description": description or "Demo snapshot (no real HDF5 file)",
+            "path": f"{_snapshots_dir}/{snapshot_name}",
+        }
+
+        # Add to session-persistent demo snapshots list
+        _demo_snapshots.insert(0, snapshot)
+
+        # Log the activity
+        _log_snapshot_activity(
+            action="create",
+            snapshot_id=snapshot_id,
+            details={"name": snapshot_name, "size_bytes": size_bytes, "mode": "demo"},
+            message="Demo snapshot created successfully",
+        )
+
+        system_logger.info(f"Created demo snapshot: {snapshot_id}")
+
+        return {
+            **snapshot,
+            "message": "Demo snapshot created successfully",
+        }
+
+    # Real mode: create actual HDF5 file via cascor_integration
+    try:
+        snapshot_path = Path(_snapshots_dir) / snapshot_name
+        Path(_snapshots_dir).mkdir(parents=True, exist_ok=True)
+
+        # Attempt to create HDF5 snapshot via CasCor integration
+        if hasattr(cascor_integration, "save_snapshot"):
+            cascor_integration.save_snapshot(str(snapshot_path), description=description)
+        else:
+            # Fallback: create a minimal HDF5 file with current state
+            try:
+                import h5py
+
+                with h5py.File(snapshot_path, "w") as f:
+                    f.attrs["created"] = now.isoformat()
+                    f.attrs["description"] = description or ""
+                    f.attrs["mode"] = "manual"
+
+                    # Try to store current training state if available
+                    if training_state:
+                        state_group = f.create_group("training_state")
+                        for key, value in training_state.__dict__.items():
+                            if isinstance(value, (int, float, str, bool)):
+                                state_group.attrs[key] = value
+
+            except ImportError as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail="h5py not available for creating HDF5 snapshots",
+                ) from e
+
+        # Get file stats after creation
+        stat = snapshot_path.stat()
+        ts = datetime.fromtimestamp(stat.st_mtime, tz=UTC).replace(microsecond=0)
+
+        snapshot = {
+            "id": snapshot_id,
+            "name": snapshot_name,
+            "timestamp": f"{ts.isoformat()}Z",
+            "size_bytes": stat.st_size,
+            "description": description,
+            "path": str(snapshot_path.absolute()),
+        }
+
+        # Log the activity
+        _log_snapshot_activity(
+            action="create",
+            snapshot_id=snapshot_id,
+            details={"name": snapshot_name, "size_bytes": stat.st_size, "mode": "real"},
+            message="Snapshot created successfully",
+        )
+
+        system_logger.info(f"Created snapshot: {snapshot_id} at {snapshot_path}")
+
+        return {
+            **snapshot,
+            "message": "Snapshot created successfully",
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        system_logger.error(f"Failed to create snapshot: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create snapshot: {str(e)}",
+        ) from e
+
+
+@app.post("/api/v1/snapshots/{snapshot_id}/restore")
+async def restore_snapshot(snapshot_id: str):
+    """
+    Restore training state from an HDF5 snapshot (P3-2).
+
+    Args:
+        snapshot_id: The snapshot ID to restore from
+
+    Returns:
+        JSON object with restore status and restored state info
+
+    Raises:
+        HTTPException 404: Snapshot not found
+        HTTPException 409: Training is currently running (must be paused/stopped)
+        HTTPException 500: Restore failed
+    """
+    from datetime import UTC, datetime
+    from pathlib import Path
+
+    from fastapi import HTTPException
+
+    global demo_mode_active, demo_mode_instance, training_state
+
+    # Check if training is running - only allow restore when paused/stopped
+    if demo_mode_instance:
+        fsm = demo_mode_instance.state_machine
+        if fsm.is_started():
+            raise HTTPException(
+                status_code=409,
+                detail="Cannot restore while training is running. Please pause or stop training first.",
+            )
+
+    # Find the snapshot
+    snapshot_data = next(
+        (s for s in _demo_snapshots if s["id"] == snapshot_id),
+        None,
+    )
+
+    # Check mock demo snapshots if not found
+    if not snapshot_data and (demo_mode_active or not cascor_integration):
+        # Check against generated mock snapshots
+        for s in _generate_mock_snapshots():
+            if s["id"] == snapshot_id:
+                snapshot_data = {
+                    "id": snapshot_id,
+                    "name": f"{snapshot_id}.h5",
+                    "mode": "demo",
+                }
+                break
+
+    # Check real file system if in real mode
+    if not snapshot_data and not demo_mode_active and cascor_integration:
+        snapshot_path = Path(_snapshots_dir) / f"{snapshot_id}.h5"
+        if not snapshot_path.exists():
+            snapshot_path = Path(_snapshots_dir) / f"{snapshot_id}.hdf5"
+        if snapshot_path.exists():
+            snapshot_data = {
+                "id": snapshot_id,
+                "name": snapshot_path.name,
+                "path": str(snapshot_path),
+                "mode": "real",
+            }
+
+    if not snapshot_data:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Snapshot '{snapshot_id}' not found",
+        )
+
+    try:
+        now = datetime.now(UTC)
+
+        # Demo mode: simulate restore by resetting training state
+        if demo_mode_active or not cascor_integration:
+            # Reset demo mode state
+            if demo_mode_instance:
+                demo_mode_instance.reset()
+
+            # Update training state with simulated restored values
+            if training_state:
+                training_state.update_state(
+                    status="Stopped",
+                    phase="Idle",
+                    current_epoch=0,
+                    current_step=0,
+                )
+
+            restored_state = {
+                "snapshot_id": snapshot_id,
+                "restored_at": f"{now.isoformat()}Z",
+                "mode": "demo",
+                "current_epoch": 0,
+                "training_status": "Stopped",
+            }
+
+            # Log the activity
+            _log_snapshot_activity(
+                action="restore",
+                snapshot_id=snapshot_id,
+                details={"mode": "demo", "restored_at": restored_state["restored_at"]},
+                message=f"Restored from demo snapshot {snapshot_id}",
+            )
+
+            # Broadcast state change via WebSocket
+            await websocket_manager.broadcast(
+                {
+                    "type": "state",
+                    "data": {
+                        "action": "snapshot_restored",
+                        "snapshot_id": snapshot_id,
+                        "training_state": training_state.get_state() if training_state else {},
+                    },
+                }
+            )
+
+            system_logger.info(f"Restored from demo snapshot: {snapshot_id}")
+
+            return {
+                "status": "success",
+                "message": f"Restored from snapshot '{snapshot_id}'",
+                **restored_state,
+            }
+
+        # Real mode: load from HDF5 file
+        snapshot_path = Path(snapshot_data.get("path", f"{_snapshots_dir}/{snapshot_id}.h5"))
+
+        if hasattr(cascor_integration, "load_snapshot"):
+            cascor_integration.load_snapshot(str(snapshot_path))
+        else:
+            # Fallback: read HDF5 file and restore state
+            try:
+                import h5py
+
+                with h5py.File(snapshot_path, "r") as f:
+                    if "training_state" in f:
+                        state_group = f["training_state"]
+                        restored_attrs = {key: state_group.attrs[key] for key in state_group.attrs.keys()}
+                        if training_state and restored_attrs:
+                            training_state.update_state(**restored_attrs)
+
+            except ImportError as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail="h5py not available for reading HDF5 snapshots",
+                ) from e
+
+        restored_state = {
+            "snapshot_id": snapshot_id,
+            "restored_at": f"{now.isoformat()}Z",
+            "mode": "real",
+            "path": str(snapshot_path),
+        }
+
+        # Log the activity
+        _log_snapshot_activity(
+            action="restore",
+            snapshot_id=snapshot_id,
+            details={"mode": "real", "path": str(snapshot_path)},
+            message=f"Restored from snapshot {snapshot_id}",
+        )
+
+        # Broadcast state change
+        await websocket_manager.broadcast(
+            {
+                "type": "state",
+                "data": {
+                    "action": "snapshot_restored",
+                    "snapshot_id": snapshot_id,
+                    "training_state": training_state.get_state() if training_state else {},
+                },
+            }
+        )
+
+        system_logger.info(f"Restored from snapshot: {snapshot_id} at {snapshot_path}")
+
+        return {
+            "status": "success",
+            "message": f"Restored from snapshot '{snapshot_id}'",
+            **restored_state,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        system_logger.error(f"Failed to restore snapshot: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to restore snapshot: {str(e)}",
+        ) from e
+
+
+# ============================================================================
+# Metrics Layouts API (P3-4)
+# ============================================================================
+
+# Directory for storing metric layout presets
+_layouts_dir = os.path.join(os.path.dirname(__file__), "..", "conf", "layouts")
+
+
+def _get_layouts_file() -> "Path":
+    """Get the path to the layouts JSON file."""
+    from pathlib import Path
+
+    layouts_path = Path(_layouts_dir)
+    layouts_path.mkdir(parents=True, exist_ok=True)
+    return layouts_path / "metrics_layouts.json"
+
+
+def _load_layouts() -> dict:
+    """Load all saved layouts from disk."""
+    import json
+    from pathlib import Path
+
+    layouts_file = _get_layouts_file()
+    if layouts_file.exists():
+        try:
+            with open(layouts_file) as f:
+                return json.load(f)
+        except Exception as e:
+            system_logger.warning(f"Failed to load layouts file: {e}")
+    return {}
+
+
+def _save_layouts(layouts: dict) -> None:
+    """Save all layouts to disk."""
+    import json
+
+    layouts_file = _get_layouts_file()
+    try:
+        with open(layouts_file, "w") as f:
+            json.dump(layouts, f, indent=2)
+    except Exception as e:
+        system_logger.error(f"Failed to save layouts file: {e}")
+        raise
+
+
+@app.get("/api/v1/metrics/layouts")
+async def list_metrics_layouts():
+    """
+    List all saved metrics layouts (P3-4).
+
+    Returns:
+        JSON object with list of layout names and metadata
+    """
+    layouts = _load_layouts()
+
+    layout_list = [
+        {
+            "name": name,
+            "created": data.get("created"),
+            "description": data.get("description", ""),
+        }
+        for name, data in layouts.items()
+    ]
+
+    return {
+        "layouts": sorted(layout_list, key=lambda x: x.get("created", ""), reverse=True),
+        "total": len(layout_list),
+    }
+
+
+@app.get("/api/v1/metrics/layouts/{name}")
+async def get_metrics_layout(name: str):
+    """
+    Get a specific metrics layout by name (P3-4).
+
+    Args:
+        name: The layout name to retrieve
+
+    Returns:
+        JSON object with layout configuration
+    """
+    from fastapi import HTTPException
+
+    layouts = _load_layouts()
+
+    if name not in layouts:
+        raise HTTPException(status_code=404, detail=f"Layout '{name}' not found")
+
+    return layouts[name]
+
+
+@app.post("/api/v1/metrics/layouts", status_code=201)
+async def save_metrics_layout(
+    name: str,
+    selected_metrics: list = None,
+    zoom_ranges: dict = None,
+    smoothing_window: int = None,
+    hyperparameters: dict = None,
+    description: str = None,
+):
+    """
+    Save a new metrics layout preset (P3-4).
+
+    Args:
+        name: Unique name for the layout
+        selected_metrics: List of metric names to display
+        zoom_ranges: Dict of axis ranges for plots
+        smoothing_window: Smoothing window size
+        hyperparameters: Training hyperparameters (learning_rate, max_hidden_units, max_epochs)
+        description: Optional description
+
+    Returns:
+        JSON object confirming save with layout metadata
+    """
+    from datetime import UTC, datetime
+
+    from fastapi import HTTPException
+
+    if not name or not name.strip():
+        raise HTTPException(status_code=400, detail="Layout name is required")
+
+    name = name.strip()
+
+    layouts = _load_layouts()
+
+    now = datetime.now(UTC)
+
+    layout_data = {
+        "name": name,
+        "created": f"{now.isoformat()}Z",
+        "description": description or "",
+        "selected_metrics": selected_metrics or ["loss", "accuracy"],
+        "zoom_ranges": zoom_ranges or {},
+        "smoothing_window": smoothing_window or 10,
+        "hyperparameters": hyperparameters or {},
+    }
+
+    layouts[name] = layout_data
+
+    try:
+        _save_layouts(layouts)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save layout: {e}") from e
+
+    system_logger.info(f"Saved metrics layout: {name}")
+
+    return {
+        "name": name,
+        "created": layout_data["created"],
+        "message": "Layout saved successfully",
+    }
+
+
+@app.delete("/api/v1/metrics/layouts/{name}")
+async def delete_metrics_layout(name: str):
+    """
+    Delete a metrics layout by name (P3-4).
+
+    Args:
+        name: The layout name to delete
+
+    Returns:
+        JSON object confirming deletion
+    """
+    from fastapi import HTTPException
+
+    layouts = _load_layouts()
+
+    if name not in layouts:
+        raise HTTPException(status_code=404, detail=f"Layout '{name}' not found")
+
+    del layouts[name]
+
+    try:
+        _save_layouts(layouts)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete layout: {e}") from e
+
+    system_logger.info(f"Deleted metrics layout: {name}")
+
+    return {
+        "name": name,
+        "message": "Layout deleted successfully",
+    }
+
+
+# ============================================================================
+# Redis Monitoring API (P3-6)
+# ============================================================================
+
+
+@app.get("/api/v1/redis/status")
+async def get_redis_status():
+    """
+    Get Redis health and availability status (P3-6).
+
+    Always returns HTTP 200 with a 'status' field:
+    - DISABLED: Feature disabled via config or missing driver
+    - UNAVAILABLE: Enabled but cannot connect
+    - UP: Redis connection is healthy
+    - DOWN: Redis connection failed
+
+    Returns:
+        JSON object with status, mode, message, and details
+    """
+    from backend.redis_client import get_redis_client
+
+    client = get_redis_client()
+    return client.get_status()
+
+
+@app.get("/api/v1/redis/metrics")
+async def get_redis_metrics():
+    """
+    Get Redis usage metrics (P3-6).
+
+    Returns metrics including memory usage, connection stats,
+    keyspace info, and hit rates.
+
+    Returns:
+        JSON object with status, mode, message, and metrics
+    """
+    from backend.redis_client import get_redis_client
+
+    client = get_redis_client()
+    return client.get_metrics()
+
+
+# ============================================================================
+# Cassandra Monitoring API (P3-7)
+# ============================================================================
+
+
+@app.get("/api/v1/cassandra/status")
+async def get_cassandra_status():
+    """
+    Get Cassandra cluster health and availability status (P3-7).
+
+    Always returns HTTP 200 with a 'status' field:
+    - DISABLED: Feature disabled via config or missing driver
+    - UNAVAILABLE: Enabled but cannot connect
+    - UP: Cluster connection is healthy
+    - DOWN: Cluster connection failed
+
+    Returns:
+        JSON object with status, mode, message, and details (hosts, keyspace, etc.)
+    """
+    from backend.cassandra_client import get_cassandra_client
+
+    client = get_cassandra_client()
+    return client.get_status()
+
+
+@app.get("/api/v1/cassandra/metrics")
+async def get_cassandra_metrics():
+    """
+    Get Cassandra keyspace and table metrics (P3-7).
+
+    Returns metrics including keyspace counts, table information,
+    and cluster statistics.
+
+    Returns:
+        JSON object with status, mode, message, and metrics
+    """
+    from backend.cassandra_client import get_cassandra_client
+
+    client = get_cassandra_client()
+    return client.get_metrics()
 
 
 @app.websocket("/ws")

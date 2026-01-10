@@ -380,8 +380,8 @@ class TestHDF5SnapshotsPanelCallbacks:
         # Should not raise
         panel.register_callbacks(mock_app)
 
-    def test_register_callbacks_creates_three_callbacks(self, panel):
-        """Should register three callbacks (table, selection, detail)."""
+    def test_register_callbacks_creates_callbacks(self, panel):
+        """Should register all callbacks (create, table, selection, detail, restore, history)."""
         mock_app = MagicMock()
         callback_count = 0
 
@@ -394,8 +394,11 @@ class TestHDF5SnapshotsPanelCallbacks:
 
         panel.register_callbacks(mock_app)
 
-        # Should have 3 callbacks: update_snapshots_table, select_snapshot, update_detail_panel
-        assert callback_count == 3
+        # Should have 8 callbacks:
+        # P3-1: create_snapshot, update_snapshots_table, select_snapshot, update_detail_panel
+        # P3-2: open_restore_modal, close_restore_modal, confirm_restore
+        # P3-3: toggle_history
+        assert callback_count == 8
 
 
 # =============================================================================
@@ -436,8 +439,402 @@ class TestHDF5SnapshotsPanelInterface:
 
 
 # =============================================================================
+# P3-1: Create Snapshot Handler Tests
+# =============================================================================
+
+
+class TestHDF5SnapshotsCreateHandler:
+    """Test HDF5SnapshotsPanel create snapshot handler."""
+
+    def test_create_snapshot_success(self, panel):
+        """Should return success on 201 response."""
+        mock_response = MagicMock()
+        mock_response.status_code = 201
+        mock_response.json.return_value = {
+            "id": "snapshot_20260108_143022",
+            "name": "snapshot_20260108_143022.h5",
+            "timestamp": "2026-01-08T14:30:22Z",
+            "size_bytes": 1048576,
+            "message": "Demo snapshot created successfully",
+        }
+
+        with patch("requests.post", return_value=mock_response):
+            result = panel._create_snapshot_handler()
+            assert result["success"] is True
+            assert result["snapshot"]["id"] == "snapshot_20260108_143022"
+            assert "message" in result
+
+    def test_create_snapshot_with_custom_name(self, panel):
+        """Should pass custom name to API."""
+        mock_response = MagicMock()
+        mock_response.status_code = 201
+        mock_response.json.return_value = {
+            "id": "my_custom_snapshot",
+            "name": "my_custom_snapshot.h5",
+            "timestamp": "2026-01-08T14:30:22Z",
+            "size_bytes": 1048576,
+            "message": "Snapshot created successfully",
+        }
+
+        with patch("requests.post", return_value=mock_response) as mock_post:
+            result = panel._create_snapshot_handler(name="my_custom_snapshot")
+            assert result["success"] is True
+
+            # Verify the name was passed as a parameter
+            call_kwargs = mock_post.call_args
+            assert call_kwargs.kwargs.get("params", {}).get("name") == "my_custom_snapshot"
+
+    def test_create_snapshot_with_description(self, panel):
+        """Should pass description to API."""
+        mock_response = MagicMock()
+        mock_response.status_code = 201
+        mock_response.json.return_value = {
+            "id": "snapshot_001",
+            "message": "Snapshot created successfully",
+        }
+
+        with patch("requests.post", return_value=mock_response) as mock_post:
+            result = panel._create_snapshot_handler(description="Test description")
+            assert result["success"] is True
+
+            # Verify the description was passed as a parameter
+            call_kwargs = mock_post.call_args
+            assert call_kwargs.kwargs.get("params", {}).get("description") == "Test description"
+
+    def test_create_snapshot_server_error(self, panel):
+        """Should return error on 500 response."""
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.text = '{"detail": "Internal server error"}'
+        mock_response.json.return_value = {"detail": "Internal server error"}
+
+        with patch("requests.post", return_value=mock_response):
+            result = panel._create_snapshot_handler()
+            assert result["success"] is False
+            assert "error" in result
+
+    def test_create_snapshot_timeout(self, panel):
+        """Should handle timeout gracefully."""
+        import requests
+
+        with patch("requests.post", side_effect=requests.exceptions.Timeout):
+            result = panel._create_snapshot_handler()
+            assert result["success"] is False
+            assert "timed out" in result["error"].lower()
+
+    def test_create_snapshot_connection_error(self, panel):
+        """Should handle connection error gracefully."""
+        import requests
+
+        with patch("requests.post", side_effect=requests.exceptions.ConnectionError):
+            result = panel._create_snapshot_handler()
+            assert result["success"] is False
+            assert "unavailable" in result["error"].lower()
+
+    def test_create_snapshot_generic_exception(self, panel):
+        """Should handle generic exception gracefully."""
+        with patch("requests.post", side_effect=Exception("Unknown error")):
+            result = panel._create_snapshot_handler()
+            assert result["success"] is False
+            assert "Unknown error" in result["error"]
+
+
+# =============================================================================
+# P3-1: Create Snapshot Layout Tests
+# =============================================================================
+
+
+class TestHDF5SnapshotsCreateLayout:
+    """Test HDF5SnapshotsPanel create snapshot layout elements."""
+
+    def test_layout_has_create_button(self, panel):
+        """Layout should have create snapshot button."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "create-button" in layout_str
+
+    def test_layout_has_create_name_input(self, panel):
+        """Layout should have name input for create."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "create-name" in layout_str
+
+    def test_layout_has_create_description_input(self, panel):
+        """Layout should have description input for create."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "create-description" in layout_str
+
+    def test_layout_has_create_status(self, panel):
+        """Layout should have create status area."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "create-status" in layout_str
+
+    def test_layout_has_refresh_trigger_store(self, panel):
+        """Layout should have refresh trigger store."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "refresh-trigger" in layout_str
+
+    def test_create_section_has_card_header(self, panel):
+        """Create section should have 'Create New Snapshot' header."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "Create New Snapshot" in layout_str
+
+
+# =============================================================================
 # Module Constants Tests
 # =============================================================================
+
+
+# =============================================================================
+# P3-2: Restore Snapshot Handler Tests
+# =============================================================================
+
+
+class TestHDF5SnapshotsRestoreHandler:
+    """Test HDF5SnapshotsPanel restore snapshot handler (P3-2)."""
+
+    def test_restore_snapshot_success(self, panel):
+        """Should return success on 200 response."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "status": "success",
+            "message": "Restored from snapshot 'demo_001'",
+            "snapshot_id": "demo_001",
+            "restored_at": "2026-01-09T10:30:00Z",
+        }
+
+        with patch("requests.post", return_value=mock_response):
+            result = panel._restore_snapshot_handler("demo_001")
+            assert result["success"] is True
+            assert "message" in result
+            assert result["data"]["snapshot_id"] == "demo_001"
+
+    def test_restore_snapshot_conflict_409(self, panel):
+        """Should return error on 409 (training running) response."""
+        mock_response = MagicMock()
+        mock_response.status_code = 409
+        mock_response.json.return_value = {"detail": "Cannot restore while training is running"}
+
+        with patch("requests.post", return_value=mock_response):
+            result = panel._restore_snapshot_handler("demo_001")
+            assert result["success"] is False
+            assert "running" in result["error"].lower()
+
+    def test_restore_snapshot_not_found_404(self, panel):
+        """Should return error on 404 (snapshot not found) response."""
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_response.json.return_value = {"detail": "Snapshot not found"}
+
+        with patch("requests.post", return_value=mock_response):
+            result = panel._restore_snapshot_handler("nonexistent")
+            assert result["success"] is False
+            assert "not found" in result["error"].lower()
+
+    def test_restore_snapshot_server_error(self, panel):
+        """Should return error on 500 response."""
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.text = '{"detail": "Internal server error"}'
+        mock_response.json.return_value = {"detail": "Internal server error"}
+
+        with patch("requests.post", return_value=mock_response):
+            result = panel._restore_snapshot_handler("demo_001")
+            assert result["success"] is False
+            assert "error" in result
+
+    def test_restore_snapshot_timeout(self, panel):
+        """Should handle timeout gracefully."""
+        import requests
+
+        with patch("requests.post", side_effect=requests.exceptions.Timeout):
+            result = panel._restore_snapshot_handler("demo_001")
+            assert result["success"] is False
+            assert "timed out" in result["error"].lower()
+
+    def test_restore_snapshot_connection_error(self, panel):
+        """Should handle connection error gracefully."""
+        import requests
+
+        with patch("requests.post", side_effect=requests.exceptions.ConnectionError):
+            result = panel._restore_snapshot_handler("demo_001")
+            assert result["success"] is False
+            assert "unavailable" in result["error"].lower()
+
+    def test_restore_snapshot_empty_id(self, panel):
+        """Should return error for empty snapshot ID."""
+        result = panel._restore_snapshot_handler("")
+        assert result["success"] is False
+        assert "no snapshot id" in result["error"].lower()
+
+    def test_restore_snapshot_none_id(self, panel):
+        """Should return error for None snapshot ID."""
+        result = panel._restore_snapshot_handler(None)
+        assert result["success"] is False
+
+
+# =============================================================================
+# P3-2: Restore Snapshot Layout Tests
+# =============================================================================
+
+
+class TestHDF5SnapshotsRestoreLayout:
+    """Test HDF5SnapshotsPanel restore snapshot layout elements (P3-2)."""
+
+    def test_layout_has_restore_modal(self, panel):
+        """Layout should have restore confirmation modal."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "restore-modal" in layout_str
+
+    def test_layout_has_restore_confirm_button(self, panel):
+        """Layout should have restore confirm button."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "restore-confirm" in layout_str
+
+    def test_layout_has_restore_cancel_button(self, panel):
+        """Layout should have restore cancel button."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "restore-cancel" in layout_str
+
+    def test_layout_has_restore_status(self, panel):
+        """Layout should have restore status area."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "restore-status" in layout_str
+
+    def test_layout_has_restore_pending_id_store(self, panel):
+        """Layout should have restore pending ID store."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "restore-pending-id" in layout_str
+
+
+# =============================================================================
+# P3-3: History Handler Tests
+# =============================================================================
+
+
+class TestHDF5SnapshotsHistoryHandler:
+    """Test HDF5SnapshotsPanel history handler (P3-3)."""
+
+    def test_fetch_history_success(self, panel):
+        """Should return history entries on successful API call."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "history": [
+                {
+                    "action": "create",
+                    "snapshot_id": "snapshot_001",
+                    "timestamp": "2026-01-09T10:30:00Z",
+                    "message": "Created snapshot",
+                },
+                {
+                    "action": "restore",
+                    "snapshot_id": "demo_001",
+                    "timestamp": "2026-01-09T11:00:00Z",
+                    "message": "Restored from snapshot",
+                },
+            ],
+            "total": 2,
+        }
+
+        with patch("requests.get", return_value=mock_response):
+            result = panel._fetch_history_handler()
+            assert len(result["history"]) == 2
+            assert result["total"] == 2
+            assert result["history"][0]["action"] == "create"
+
+    def test_fetch_history_empty(self, panel):
+        """Should handle empty history."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"history": [], "total": 0}
+
+        with patch("requests.get", return_value=mock_response):
+            result = panel._fetch_history_handler()
+            assert result["history"] == []
+            assert result["total"] == 0
+
+    def test_fetch_history_with_limit(self, panel):
+        """Should pass limit parameter to API."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"history": [], "total": 0}
+
+        with patch("requests.get", return_value=mock_response) as mock_get:
+            panel._fetch_history_handler(limit=10)
+            call_kwargs = mock_get.call_args
+            assert call_kwargs.kwargs.get("params", {}).get("limit") == 10
+
+    def test_fetch_history_non_200_status(self, panel):
+        """Should handle non-200 status code."""
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+
+        with patch("requests.get", return_value=mock_response):
+            result = panel._fetch_history_handler()
+            assert result["history"] == []
+            assert "API error" in result.get("message", "")
+
+    def test_fetch_history_timeout(self, panel):
+        """Should handle timeout gracefully."""
+        import requests
+
+        with patch("requests.get", side_effect=requests.exceptions.Timeout):
+            result = panel._fetch_history_handler()
+            assert result["history"] == []
+            assert "timed out" in result["message"].lower()
+
+    def test_fetch_history_connection_error(self, panel):
+        """Should handle connection error gracefully."""
+        import requests
+
+        with patch("requests.get", side_effect=requests.exceptions.ConnectionError):
+            result = panel._fetch_history_handler()
+            assert result["history"] == []
+            assert "unavailable" in result["message"].lower()
+
+
+# =============================================================================
+# P3-3: History Layout Tests
+# =============================================================================
+
+
+class TestHDF5SnapshotsHistoryLayout:
+    """Test HDF5SnapshotsPanel history layout elements (P3-3)."""
+
+    def test_layout_has_history_section(self, panel):
+        """Layout should have history section."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "history-collapse" in layout_str
+
+    def test_layout_has_history_toggle(self, panel):
+        """Layout should have history toggle button."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "history-toggle" in layout_str
+
+    def test_layout_has_history_content(self, panel):
+        """Layout should have history content area."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "history-content" in layout_str
+
+    def test_layout_has_snapshot_history_title(self, panel):
+        """Layout should have 'Snapshot History' in title."""
+        layout = panel.get_layout()
+        layout_str = str(layout)
+        assert "Snapshot History" in layout_str
 
 
 class TestModuleConstants:
