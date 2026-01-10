@@ -973,6 +973,7 @@ class TestCallbackInvocation:
                     simple_topology,  # topology_data
                     "hierarchical",  # layout_type
                     ["show"],  # show_weights
+                    "2d",  # view_mode (P3-5)
                     [],  # metrics_data
                     "light",  # theme
                     [],  # selected_nodes
@@ -1022,6 +1023,7 @@ class TestCallbackInvocation:
                     {"input_units": 0, "hidden_units": 0, "output_units": 0, "connections": []},
                     "hierarchical",
                     [],
+                    "2d",  # view_mode (P3-5)
                     [],
                     "light",
                     [],
@@ -1072,7 +1074,7 @@ class TestCallbackInvocation:
             if callback_key in key:
                 func = callback_info["callback"]
                 result = func.__wrapped__(
-                    simple_topology, "hierarchical", ["show"], metrics_data, "light", [], 0, None, None, None
+                    simple_topology, "hierarchical", ["show"], "2d", metrics_data, "light", [], 0, None, None, None
                 )
                 fig, _, _, _, _, _, new_highlight = result
                 assert isinstance(fig, go.Figure)
@@ -1115,7 +1117,7 @@ class TestCallbackInvocation:
             if callback_key in key:
                 func = callback_info["callback"]
                 result = func.__wrapped__(
-                    simple_topology, "hierarchical", [], [], "light", [], 0, view_state, None, None
+                    simple_topology, "hierarchical", [], "2d", [], "light", [], 0, view_state, None, None
                 )
                 fig, _, _, _, _, _, _ = result
                 assert isinstance(fig, go.Figure)

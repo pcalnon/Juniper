@@ -3,10 +3,11 @@
 **Purpose:** This template defines the required structure, formatting, and organization for all JuniperCanopy security patch release notes.
 
 **Usage:** Copy this template and replace placeholder text (indicated by `[PLACEHOLDER]`) with actual release information.
+**Emoji usage:** Use emoji shortcodes (for example, `:lock:`) instead of raw emoji characters to ensure consistent rendering across Markdown viewers.
 
 ---
 
-# JuniperCanopy v[VERSION] – 🔒 SECURITY PATCH RELEASE
+# JuniperCanopy v[VERSION] – :lock: SECURITY PATCH RELEASE
 
 **Release Date:** [RELEASE_DATE]
 **Release Type:** Security Patch  
@@ -42,7 +43,7 @@ JuniperCanopy is a real-time monitoring and diagnostic frontend for Cascade Corr
 
 JuniperCanopy deployments are affected if **both** of the following are true:
 
-1. They are based on **v[PREVIOUS_VERSION]** (or earlier versions/alpha snapshots that allow `[PACKAGE_NAME]` [VULNERABLE_VERSION] **and**
+1. They are based on **v[PREVIOUS_VERSION]** (or earlier versions/alpha snapshots that allow `[PACKAGE_NAME]` [VULNERABLE_VERSION]) **and**
 2. Their environment resolves `[PACKAGE_NAME]` to **[VULNERABLE_VERSION]** (for example, via `pip`, a requirements file, or a lockfile that includes this version).
 
 Any JuniperCanopy environment that installs `[PACKAGE_NAME]==[VULNERABLE_VERSION]` is potentially vulnerable.

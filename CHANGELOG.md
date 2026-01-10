@@ -5,6 +5,163 @@ All notable changes to the juniper_canopy prototype will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+---
+
+## [0.21.0] - 2026-01-09
+
+### Phase 3 Verification & Coverage Improvements
+
+Verified P3-2 and P3-3 implementations and significantly increased test coverage for frontend components. Fixed bug in `open_restore_modal` callback. Status documented in `docs/phase3/README.md`.
+
+### Added [0.21.0]
+
+- **45 new callback tests** for HDF5SnapshotsPanel
+  - `test_hdf5_callbacks.py`: 39 tests covering all 8 callback functions
+  - Tests for create_snapshot, update_snapshots_table, select_snapshot
+  - Tests for update_detail_panel, open_restore_modal, confirm_restore, toggle_history
+  - Edge case coverage for no-click states, error handling, and fallback paths
+
+- **6 new callback tests** for AboutPanel
+  - Tests for toggle_system_info and update_system_info callbacks
+  - Verifies system information display when collapse is opened
+
+- **Callback function exposure pattern** for unit testing
+  - Added `_cb_*` attributes to expose callback functions after registration
+  - Enables direct unit testing without requiring Dash server
+  - Pattern applied to `HDF5SnapshotsPanel` and `AboutPanel`
+
+### Fixed [0.21.0]
+
+- **Bug: UnboundLocalError in open_restore_modal callback** (`hdf5_snapshots_panel.py`)
+  - `json` import was inside `contextlib.suppress` block but referenced in the `with` statement
+  - Moved import before the `with` statement to fix the error
+  - Lines 893-896 refactored
+
+- **Missing import: contextlib** (`hdf5_snapshots_panel.py`)
+  - Added `import contextlib` to module imports
+
+### Changed [0.21.0]
+
+- **Coverage improved** across frontend components:
+  - `hdf5_snapshots_panel.py`: 54% → 95% (+41%)
+  - `about_panel.py`: 73% → 100% (+27%)
+  - Overall coverage maintained at 93%
+
+- **Test count increased**: 2368 → 2413 tests (+45)
+
+### Test Results [0.21.0]
+
+- **2413 tests passing** (0 failures)
+- **39 skipped** (requires backend/display)
+- **93% overall coverage**
+- All P3-2 and P3-3 verification checkboxes now complete
+
+---
+
+## [0.20.0] - 2026-01-09
+
+### Phase 3 Wave 1 Complete - HDF5 Snapshot Capabilities (P3-1, P3-2, P3-3)
+
+Phase 3 Wave 1 is now complete. All three HDF5 snapshot capability features are implemented: Create, Restore, and History. Status documented in `docs/phase3/README.md`.
+
+### Added [0.20.0]
+
+- **P3-2: HDF5 Tab - Restore from Existing Snapshot**
+  - New `POST /api/v1/snapshots/{snapshot_id}/restore` endpoint
+  - Validates training is paused/stopped before restore
+  - Demo mode simulates restore by resetting training state
+  - Real mode loads from HDF5 file via h5py or cascor_integration
+  - Logs restore activity to `snapshot_history.jsonl`
+  - Broadcasts state change via WebSocket after restore
+  - Tests: 9 new unit tests + 9 new integration tests
+
+- **P3-2 Frontend: Restore Button and Confirmation Dialog**
+  - "🔄 Restore" button added to each snapshot row in table
+  - Confirmation modal with warning about training state requirements
+  - Success/error status display after restore attempt
+  - Triggers table refresh after successful restore
+
+- **P3-3: HDF5 Tab - Show History of Snapshot Activities**
+  - New `GET /api/v1/snapshots/history` endpoint
+  - Reads from `snapshot_history.jsonl` (created by P3-1 infrastructure)
+  - Returns entries in reverse chronological order (newest first)
+  - Supports `limit` parameter (default 50 entries)
+  - Logs create, restore, and delete actions
+
+- **P3-3 Frontend: Collapsible History Section**
+  - New "📜 Snapshot History" collapsible section in HDF5 panel
+  - Toggle button with arrow indicator (▼/▲)
+  - Displays action type with icon and color coding:
+    - 📸 CREATE (green)
+    - 🔄 RESTORE (yellow)
+    - 🗑️ DELETE (red)
+  - Shows snapshot ID, timestamp, and message for each entry
+  - Tests: 6 new unit tests + 10 new integration tests
+
+### Changed [0.20.0]
+
+- **HDF5SnapshotsPanel** now registers 8 callbacks (added restore modal, confirm, history toggle)
+- **main.py** snapshot endpoints reorganized (history before {snapshot_id} for correct routing)
+- Table row now includes both "View Details" and "Restore" buttons
+- Added restore-pending-id Store for modal state management
+
+### Test Results [0.20.0]
+
+- **34 new tests** added for P3-2 and P3-3 (25 unit + 19 integration)
+- **135 tests passing** for snapshot functionality (86 unit + 49 integration)
+- Coverage maintained at 95%+
+- Test file: `test_hdf5_snapshots_panel.py` now has 86 tests
+- Test file: `test_hdf5_snapshots_api.py` now has 51 tests
+
+---
+
+## [0.19.0] - 2026-01-08
+
+### Phase 3 Started - Advanced Features (P3-1 Complete)
+
+Phase 3 focuses on advanced features including HDF5 snapshot operations, visualization enhancements, and infrastructure integrations. P3-1 (Create New Snapshot) is now complete. Status documented in `docs/phase3/README.md`.
+
+### Added [0.19.0]
+
+- **P3-1: HDF5 Tab - Create New Snapshot**
+  - New "Create Snapshot" section in HDF5 Snapshots panel
+  - Name input field (optional, auto-generates timestamp-based name if empty)
+  - Description input field (optional)
+  - "📸 Create Snapshot" button with success/error feedback
+  - Demo mode creates session-persistent mock snapshots
+  - Real mode creates HDF5 files via h5py or cascor_integration
+  - Auto-refresh table after successful creation
+  - New API endpoint: `POST /api/v1/snapshots` (returns 201 Created)
+  - Implementation: `main.py` lines 975-1152, `hdf5_snapshots_panel.py`
+  - Tests: 13 new unit tests + 10 new integration tests
+
+- **Snapshot Activity Logging (P3-3 Preparation)**
+  - Added `_log_snapshot_activity()` helper for history tracking
+  - Logs create/restore/delete operations to `snapshot_history.jsonl`
+  - Prepares infrastructure for P3-3 (Show History of Snapshot Activities)
+
+- **Phase 3 Documentation** (`docs/phase3/README.md`)
+  - Complete implementation plan with 3 waves of features
+  - Detailed solution designs for all P3 items
+  - Effort estimates and coverage impact analysis
+
+### Changed [0.19.0]
+
+- **HDF5SnapshotsPanel** now registers 4 callbacks (added create_snapshot)
+- **main.py** now includes snapshot creation endpoint and session-persistent demo snapshots
+- Updated `get_snapshots()` to return session-created demo snapshots
+- Updated `get_snapshot_detail()` to handle session-created snapshots
+
+### Test Results [0.19.0]
+
+- **23 new tests** added for P3-1 (13 unit + 10 integration)
+- **2270 tests passing** (total), 39 skipped
+- Coverage maintained at 95%+
+- Test file: `test_hdf5_snapshots_panel.py` now has 63 tests
+- Test file: `test_hdf5_snapshots_api.py` now has 32 tests
+
+---
+
 ## [0.18.0] - 2026-01-08
 
 ### Phase 2 Complete - HDF5 Snapshots Tab (P2-4, P2-5)
@@ -146,6 +303,49 @@ All Phase 1 items validated and documented. Phase 1 README created at `docs/phas
 
 - **2134 passed**, 32 skipped
 - All Phase 1 issues validated
+- Coverage maintained at 95%+
+
+---
+
+## [0.15.1] - 2026-01-07
+
+### Security Patch Release (Critical) - urllib3 Decompression Bomb Vulnerability
+
+This release addresses a critical security vulnerability in the `urllib3` dependency. Full details in `notes/RELEASE_NOTES_v0.15.1-alpha.md`.
+
+### Security [0.15.1]
+
+- **urllib3 Dependency Update**: `≤2.6.2 → >=2.6.3`
+  - Addresses decompression bomb vulnerability (CWE-409)
+  - Malicious servers could exploit HTTP redirect handling to cause excessive resource consumption
+  - Attack vector: Malicious HTTP redirect responses with compressed content
+  - Reference: [Dependabot Alert #2](https://github.com/pcalnon/Juniper/security/dependabot/2)
+
+### Added [0.15.1]
+
+- **Security Release Notes** (`notes/RELEASE_NOTES_v0.15.1-alpha.md`)
+  - Complete security advisory documentation
+  - Remediation and upgrade instructions
+  - Follows standardized security release notes format
+
+- **Security Release Notes Template** (`notes/TEMPLATE_SECURITY_RELEASE_NOTES.md`)
+  - Reusable template for future security releases
+  - Defines required structure with 11 sections
+  - Placeholder markers for easy customization
+
+- **AGENTS.md Documentation Standards**
+  - Added "Security Release Notes" section under Documentation File Types
+  - References template as required format for all security releases
+  - Links to example release notes (v0.14.1-alpha, v0.15.1-alpha)
+
+### Changed [0.15.1]
+
+- **conf/requirements.txt**: urllib3 pinned to `~=2.6.3`
+- **.markdownlint.json**: Updated rules for template file compatibility
+
+### Test Results [0.15.1]
+
+- **2247 passed**, 34 skipped
 - Coverage maintained at 95%+
 
 ---
