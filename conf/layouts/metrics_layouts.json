@@ -10,5 +10,101 @@
     "zoom_ranges": {},
     "smoothing_window": 10,
     "hyperparameters": {}
+  },
+  "test_layout": {
+    "name": "test_layout",
+    "created": "2026-01-10T11:32:17.444534+00:00Z",
+    "description": "Test layout",
+    "selected_metrics": [
+      "loss",
+      "accuracy"
+    ],
+    "zoom_ranges": {},
+    "smoothing_window": 10,
+    "hyperparameters": {}
+  },
+  "metrics_test_layout": {
+    "name": "metrics_test_layout",
+    "created": "2026-01-10T11:32:17.458167+00:00Z",
+    "description": "",
+    "selected_metrics": [
+      "loss",
+      "accuracy"
+    ],
+    "zoom_ranges": {},
+    "smoothing_window": 20,
+    "hyperparameters": {}
+  },
+  "get_test_layout": {
+    "name": "get_test_layout",
+    "created": "2026-01-10T11:32:17.469536+00:00Z",
+    "description": "",
+    "selected_metrics": [
+      "loss",
+      "accuracy"
+    ],
+    "zoom_ranges": {},
+    "smoothing_window": 10,
+    "hyperparameters": {}
+  },
+  "hyper_layout": {
+    "name": "hyper_layout",
+    "created": "2026-01-10T11:32:18.507058+00:00Z",
+    "description": "",
+    "selected_metrics": [
+      "loss",
+      "accuracy"
+    ],
+    "zoom_ranges": {},
+    "smoothing_window": 15,
+    "hyperparameters": {}
+  },
+  "smoothing_test_layout": {
+    "name": "smoothing_test_layout",
+    "created": "2026-01-10T11:32:18.518662+00:00Z",
+    "description": "",
+    "selected_metrics": [
+      "loss",
+      "accuracy"
+    ],
+    "zoom_ranges": {},
+    "smoothing_window": 25,
+    "hyperparameters": {}
+  },
+  "first_layout": {
+    "name": "first_layout",
+    "created": "2026-01-10T11:32:18.727556+00:00Z",
+    "description": "",
+    "selected_metrics": [
+      "loss",
+      "accuracy"
+    ],
+    "zoom_ranges": {},
+    "smoothing_window": 10,
+    "hyperparameters": {}
+  },
+  "second_layout": {
+    "name": "second_layout",
+    "created": "2026-01-10T11:32:18.731022+00:00Z",
+    "description": "",
+    "selected_metrics": [
+      "loss",
+      "accuracy"
+    ],
+    "zoom_ranges": {},
+    "smoothing_window": 10,
+    "hyperparameters": {}
+  },
+  "default_metrics_layout": {
+    "name": "default_metrics_layout",
+    "created": "2026-01-10T11:32:18.751644+00:00Z",
+    "description": "",
+    "selected_metrics": [
+      "loss",
+      "accuracy"
+    ],
+    "zoom_ranges": {},
+    "smoothing_window": 10,
+    "hyperparameters": {}
   }
 }
