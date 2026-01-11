@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.24.0] - 2026-01-11
+
+### Post-Refactor Verification & Documentation Templates
+
+Formalized completion and verification of the Juniper Canopy refactor (Phases 0–3) and added standardized documentation templates to support ongoing development and releases.
+
+### Added [0.24.0]
+
+- **Documentation Templates** (`notes/templates/`):
+  - `TEMPLATE_DEVELOPMENT_ROADMAP.md` – Standard structure for roadmap documents with milestones, status tracking, and dependency mapping
+  - `TEMPLATE_ISSUE_TRACKING.md` – Consistent format for bug and issue tracking with severity/priority definitions, root cause analysis, and verification checklists
+  - `TEMPLATE_PULL_REQUEST_DESCRIPTION.md` – Unified PR description template aligned with Keep a Changelog categories and SemVer impact assessment
+  - `TEMPLATE_RELEASE_NOTES.md` – Preformatted template for composing release notes with test results, upgrade notes, and API changes
+
+- **Post-Refactor Verification Report**:
+  - `notes/development/POST_REFACTOR_VERIFICATION_2026-01-10.md` documenting:
+    - Completion of all 34 roadmap items across Phases 0–3 (P0-1 through P3-7)
+    - Test results: 2908 tests passed, 34 skipped (environment-specific)
+    - Coverage: ≥93% across critical components (10 files at 95%+ target)
+    - Overall status: **VERIFICATION PASSED**
+
+- **Metrics Layouts Configuration**:
+  - `conf/layouts/metrics_layouts.json` containing test-generated default layouts for training metrics visualizations
+
+- **Snapshot History Data**:
+  - Updated `src/snapshots/snapshot_history.jsonl` with recent snapshot activity from Phase 3 verification
+
+### Changed [0.24.0]
+
+- Documentation status now reflects that the Juniper Canopy refactor (Phases 0–3) is **complete and fully verified**
+- Minor documentation drift identified in verification report (outdated `IMPLEMENTATION_PLAN.md` metadata, save/load semantics clarifications) - to be addressed in future maintenance
+
+### Technical Notes [0.24.0]
+
+- **SemVer impact:** MINOR – New documentation assets and data artifacts only; no breaking API or behavioral changes
+- Runtime behavior unchanged from v0.23.0
+- Metrics layouts and snapshot history updates are additive and remain compatible with existing consumers
+- All 4 documentation templates follow Keep a Changelog format and project conventions
+
+---
+
 ## [0.23.0] - 2026-01-10
 
 ### Phase 3, Wave 3 Testing & Coverage Improvements
