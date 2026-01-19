@@ -11,7 +11,7 @@
 # File Path:     <Project>/<Sub-Project>/<Application>/util/
 #
 # Date:          2025-10-11
-# Last Modified: 2026-01-02
+# Last Modified: 2026-01-19
 #
 # License:       MIT License
 # Copyright:     Copyright (c) 2024,2025,2026 Paul Calnon
@@ -92,10 +92,7 @@ else
     CASCOR_PIDS=$(pgrep -f "${CASCOR_PROCESS_NAME}" 2>/dev/null)
     log_verbose "Cascor Process Pid: \"${CASCOR_PIDS}\""
 
-    # if [[ "$(pgrep -f "${CASCOR_NAME}" 2>/dev/null)" == "" ]]; then
-    # if [[ "$(pgrep -f "${CASCOR_PROCESS_NAME}" 2>/dev/null)" != "" ]]; then
     if [[ "${CASCOR_PIDS}" != "" ]]; then
-        # PID="$(pgrep -f "bash" | head -1 | awk -F " " '{print $2;}')"
         PID="$(pgrep -f "${CASCOR_PROCESS_NAME}" 2>/dev/null | head -1)"
         log_info "CasCor Backend is already running with pid: ${PID}"
     else
@@ -105,31 +102,6 @@ else
         PID="$!"
         log_info "CasCor Backend was launched with pid: ${PID}"
     fi
-
-
-#####################################################################################################################################################################################################
-# Source the Functions config file
-#
-# TODO:
-#
-#     fix logging format:
-#         (2026-01-18_20:46:17) juniper_canopy_functions.conf:(73): set_language_path:      [DEBUG]     Initial Language Vers: 3.14
-#         (2026-01-18_20:46:17) juniper_canopy_functions.conf:(75): set_language_path:      [DEBUG]     Final Language Vers: 3.14
-#         (2026-01-18_20:46:17) juniper_canopy.conf:(487):   source:                 [VERBOSE]   Language Path: node
-#         (2026-01-18_20:46:17) juniper_canopy.conf:(494):   source:                 [INFO]      Current Validated Project Languages: "python"
-#         (2026-01-18_20:46:17) common.conf:(496):           source:                 [TRACE]     Completed Sourcing Parent Script's Primary config file: "/home/pcalnon/Development/python/Juniper/JuniperCanopy/juniper_canopy/conf/juniper_canopy.conf"
-#         (2026-01-18_20:46:17) common.conf:(498):           source:                 [INFO]      Successfully Sourced Parent Script's Primary config file: "/home/pcalnon/Development/python/Juniper/JuniperCanopy/juniper_canopy/conf/juniper_canopy.conf" (Returned "0")
-#         (2026-01-18_20:46:17) juniper_canopy.bash:(71):    main:                   [INFO]      Validating Environment: Conda Active Env: "JuniperCanopy", Expected Conda Env: "JuniperCanopy"
-#
-# TODO:
-#
-#     Fix call to juniper canopy main.py script.  it's currently calling the cascor main script for some reason???
-#         (2026-01-18_20:46:17) juniper_canopy.bash:(100):   main:                   [INFO]      CasCor Backend is already running with pid: 4081180
-#         (2026-01-18_20:46:17) juniper_canopy.bash:(110):   main:                   [INFO]      Launching JuniperCanopy/juniper_canopy in Main Mode with real CasCor backend
-#         (2026-01-18_20:46:17) juniper_canopy.bash:(111):   main:                   [DEBUG]     /opt/miniforge3/envs/JuniperCanopy/bin/python3.14 "/home/pcalnon/Development/python/Juniper/JuniperCascor/juniper_cascor/src/main.py"
-#
-#####################################################################################################################################################################################################
-
 
     # Launch juniper_canopy main function
     log_info "Launching ${CURRENT_PROJECT} in Main Mode with real CasCor backend"
@@ -141,11 +113,6 @@ else
     log_debug "kill -KILL ${PID} && rm -f nohup.out"
     kill -KILL "${PID}" && rm -f nohup.out
 fi
+
 log_info "Completed Launch of the Juniper Canopy Application Main function"
-
 exit $(( TRUE ))
-
-
-# CASCOR_PROCESS_NAME
-# CASCOR_MAIN_FILE
-# MAIN_FILE
