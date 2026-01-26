@@ -65,9 +65,9 @@ from backend.cascor_integration import CascorIntegration
 # from backend.training_monitor import TrainingMonitor  trunk-ignore(ruff/E402)
 # from backend.data_adapter import DataAdapter  trunk-ignore(ruff/E402)
 from backend.training_monitor import TrainingState
+from canopy_constants import ServerConstants
 from communication.websocket_manager import websocket_manager
 from config_manager import get_config
-from constants import ServerConstants
 from frontend.dashboard_manager import DashboardManager
 from logger.logger import get_system_logger, get_training_logger, get_ui_logger
 

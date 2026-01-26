@@ -14,7 +14,7 @@
 
 import pytest  # noqa: F401 - needed for test fixtures
 
-from constants import DashboardConstants, ServerConstants, TrainingConstants
+from canopy_constants import DashboardConstants, ServerConstants, TrainingConstants
 
 
 class TestTrainingConstants:
@@ -134,7 +134,7 @@ class TestModuleLevelConvenience:
 
     def test_convenience_imports(self):
         """Test that convenience imports match class constants."""
-        from constants import DEFAULT_TRAINING_EPOCHS, MAX_TRAINING_EPOCHS, MIN_TRAINING_EPOCHS
+        from canopy_constants import DEFAULT_TRAINING_EPOCHS, MAX_TRAINING_EPOCHS, MIN_TRAINING_EPOCHS
 
         assert MIN_TRAINING_EPOCHS == TrainingConstants.MIN_TRAINING_EPOCHS
         assert MAX_TRAINING_EPOCHS == TrainingConstants.MAX_TRAINING_EPOCHS

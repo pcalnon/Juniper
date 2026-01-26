@@ -2,7 +2,7 @@
 #####################################################################################################################################################################################################
 # Project:       Juniper
 # Prototype:     Monitoring and Diagnostic Frontend for Cascade Correlation Neural Network
-# File Name:     constants.py
+# File Name:     canopy_constants.py
 # Author:        Paul Calnon
 # Version:       0.1.1
 #

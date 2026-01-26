@@ -170,8 +170,8 @@ class WebSocketManager:
         """Initialize WebSocket manager with config-driven settings."""
         import os
 
+        from canopy_constants import WebSocketConstants
         from config_manager import ConfigManager
-        from constants import WebSocketConstants
 
         self.active_connections: Set[WebSocket] = set()
         self.connection_metadata: Dict[WebSocket, dict] = {}

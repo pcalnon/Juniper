@@ -31,7 +31,7 @@ class TestTrainingParameterConfig:
 
     def test_get_epochs_config(self, config_manager):
         """Test retrieving epochs configuration - validates structure and bounds."""
-        from constants import TrainingConstants
+        from canopy_constants import TrainingConstants
 
         epochs_config = config_manager.get_training_param_config("epochs")
 
@@ -48,7 +48,7 @@ class TestTrainingParameterConfig:
 
     def test_get_learning_rate_config(self, config_manager):
         """Test retrieving learning rate configuration - validates structure and bounds."""
-        from constants import TrainingConstants
+        from canopy_constants import TrainingConstants
 
         lr_config = config_manager.get_training_param_config("learning_rate")
 
@@ -65,7 +65,7 @@ class TestTrainingParameterConfig:
 
     def test_get_hidden_units_config(self, config_manager):
         """Test retrieving hidden units configuration - validates structure and bounds."""
-        from constants import TrainingConstants
+        from canopy_constants import TrainingConstants
 
         hu_config = config_manager.get_training_param_config("hidden_units")
 
@@ -116,7 +116,7 @@ class TestTrainingParameterConfig:
 
     def test_get_training_defaults(self, config_manager):
         """Test retrieving all training defaults - validates structure and types."""
-        from constants import TrainingConstants
+        from canopy_constants import TrainingConstants
 
         defaults = config_manager.get_training_defaults()
 
@@ -190,7 +190,7 @@ class TestConfigConstantsConsistency:
 
     def test_epochs_compatible_with_constants(self, config_manager):
         """Test that epochs config is compatible with TrainingConstants bounds."""
-        from constants import TrainingConstants
+        from canopy_constants import TrainingConstants
 
         epochs_config = config_manager.get_training_param_config("epochs")
 
@@ -203,7 +203,7 @@ class TestConfigConstantsConsistency:
 
     def test_learning_rate_compatible_with_constants(self, config_manager):
         """Test that learning rate config is compatible with TrainingConstants bounds."""
-        from constants import TrainingConstants
+        from canopy_constants import TrainingConstants
 
         lr_config = config_manager.get_training_param_config("learning_rate")
 
@@ -216,7 +216,7 @@ class TestConfigConstantsConsistency:
 
     def test_hidden_units_compatible_with_constants(self, config_manager):
         """Test that hidden units config is compatible with TrainingConstants bounds."""
-        from constants import TrainingConstants
+        from canopy_constants import TrainingConstants
 
         hu_config = config_manager.get_training_param_config("hidden_units")
 
@@ -228,7 +228,7 @@ class TestConfigConstantsConsistency:
 
     def test_defaults_within_valid_bounds(self, config_manager):
         """Test that config defaults are within valid operational bounds."""
-        from constants import TrainingConstants
+        from canopy_constants import TrainingConstants
 
         defaults = config_manager.get_training_defaults()
 

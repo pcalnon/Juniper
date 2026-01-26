@@ -63,8 +63,8 @@ import numpy as np
 import torch
 
 from backend.training_state_machine import Command, TrainingPhase, TrainingStateMachine  # TrainingStatus,
+from canopy_constants import TrainingConstants
 from config_manager import ConfigManager
-from constants import TrainingConstants
 
 # import copy
 

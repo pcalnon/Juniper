@@ -14,8 +14,8 @@
 
 import pytest
 
+from canopy_constants import TrainingConstants
 from config_manager import get_config
-from constants import TrainingConstants
 
 
 @pytest.mark.integration
