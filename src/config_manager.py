@@ -366,7 +366,7 @@ class ConfigManager:
         """
         if constants_class is None:
             try:
-                from constants import TrainingConstants
+                from canopy_constants import TrainingConstants
 
                 constants_class = TrainingConstants
             except ImportError:
@@ -421,7 +421,7 @@ class ConfigManager:
     def skipping_constants_check(self, constants_class: object = None) -> bool:
         try:
             if constants_class is None:
-                from constants import TrainingConstants
+                from canopy_constants import TrainingConstants
 
                 constants_class = TrainingConstants
             return False

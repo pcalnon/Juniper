@@ -9,8 +9,8 @@ from unittest.mock import patch
 
 import pytest
 
+from canopy_constants import ServerConstants, TrainingConstants, WebSocketConstants
 from config_manager import ConfigManager
-from constants import ServerConstants, TrainingConstants, WebSocketConstants
 
 
 class TestEndToEndConfigFlow:

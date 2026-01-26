@@ -46,7 +46,7 @@ import plotly.graph_objects as go
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
 
-from constants import DashboardConstants
+from canopy_constants import DashboardConstants
 
 from ..base_component import BaseComponent
 

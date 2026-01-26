@@ -14,7 +14,7 @@
 
 import pytest
 
-from constants import DashboardConstants, TrainingConstants
+from canopy_constants import DashboardConstants, TrainingConstants
 from frontend.dashboard_manager import DashboardManager
 
 

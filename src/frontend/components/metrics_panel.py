@@ -53,7 +53,7 @@ from config_manager import ConfigManager
 
 from ..base_component import BaseComponent
 
-# from constants import DashboardConstants
+# from canopy_constants import DashboardConstants
 
 
 class MetricsPanel(BaseComponent):

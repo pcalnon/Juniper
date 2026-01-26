@@ -46,8 +46,8 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 from flask import request
 
+from canopy_constants import DashboardConstants, TrainingConstants
 from config_manager import ConfigManager
-from constants import DashboardConstants, TrainingConstants
 
 from .base_component import BaseComponent
 from .callback_context import get_callback_context

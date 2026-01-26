@@ -11,8 +11,8 @@ from unittest.mock import patch
 
 import pytest
 
+from canopy_constants import DashboardConstants, ServerConstants, TrainingConstants, WebSocketConstants
 from config_manager import ConfigManager
-from constants import DashboardConstants, ServerConstants, TrainingConstants, WebSocketConstants
 
 
 class TestServerConfiguration:

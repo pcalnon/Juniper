@@ -516,7 +516,7 @@ class TestP21NewNodeHighlightState:
     def test_highlight_clears_after_fade_duration(self, visualizer):
         """Should clear highlight after 2-second fade completes."""
         # Assume FAST_UPDATE_INTERVAL_MS = 100, so 20 intervals = 2000ms
-        from constants import DashboardConstants
+        from canopy_constants import DashboardConstants
 
         intervals_for_2s = 2000 // DashboardConstants.FAST_UPDATE_INTERVAL_MS
 
@@ -595,7 +595,7 @@ class TestP21HighlightProperties:
 
     def test_calculate_properties_opacity_decreases_when_fading(self, visualizer):
         """Opacity should decrease over time when fading."""
-        from constants import DashboardConstants
+        from canopy_constants import DashboardConstants
 
         highlight = {
             "node_id": "hidden_0",

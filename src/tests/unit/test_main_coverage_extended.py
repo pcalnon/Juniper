@@ -338,7 +338,7 @@ class TestMainFunction:
     @pytest.mark.unit
     def test_main_uses_config_hierarchy(self):
         """Test main uses proper config hierarchy."""
-        from constants import ServerConstants
+        from canopy_constants import ServerConstants
 
         assert hasattr(ServerConstants, "DEFAULT_HOST")
         assert hasattr(ServerConstants, "DEFAULT_PORT")

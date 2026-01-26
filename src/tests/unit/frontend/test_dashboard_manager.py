@@ -272,7 +272,7 @@ class TestDashboardManagerTrainingDefaults:
 
     def test_fallback_to_constants(self, minimal_config, monkeypatch):
         """Test that constants are used as fallback when config is missing keys."""
-        from constants import TrainingConstants
+        from canopy_constants import TrainingConstants
 
         dm = DashboardManager(minimal_config)
         dm.config_mgr.get_training_defaults = MagicMock(return_value={})
