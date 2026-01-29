@@ -198,15 +198,16 @@ jobs:
           python -c "import fastapi; print('fastapi OK')"
           python -c "import dash; print('dash OK')"
 
-      - name: Verify Test Files
+      - name: Verify Test Files and Create Directories
         shell: bash -el {0}
         run: |
           echo "Verifying Test Files..."
-          ls -la src/tests/
-          find src/tests -name "test_*.py" -type f | head -20
-          mkdir -p logs src/logs reports/junit
-          echo "Created logs/, src/logs/, reports/junit/"
-        continue-on-error: true
+          ls -la src/tests/ | head -20
+          # Ensure log directories exist as directories (not files)
+          rm -f logs src/logs 2>/dev/null || true
+          mkdir -p logs src/logs reports/junit reports/coverage
+          echo "Created logs/, src/logs/, reports/junit/, reports/coverage/"
+          ls -la logs/ src/logs/
 
       - name: Run Tests with Coverage
         shell: bash -el {0}
@@ -481,12 +482,15 @@ jobs:
           python -c "import a2wsgi; print('a2wsgi OK')"
           python -c "import fastapi; print('fastapi OK')"
 
-      - name: Verify Test Files
+      - name: Verify Test Files and Create Directories
         shell: bash -el {0}
         run: |
           echo "Verifying Test Files..."
-          ls -la src/tests/
-          mkdir -p logs src/logs reports/junit
+          ls -la src/tests/ | head -20
+          # Ensure log directories exist as directories (not files)
+          rm -f logs src/logs 2>/dev/null || true
+          mkdir -p logs src/logs reports/junit reports/coverage
+          ls -la logs/ src/logs/
 
       - name: Run Integration Tests Only
         shell: bash -el {0}

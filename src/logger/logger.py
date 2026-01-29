@@ -71,6 +71,7 @@ from dataclasses import dataclass
 
 # from datetime import datetime, timedelta
 from datetime import datetime
+from pathlib import Path
 
 # from typing import Dict, Any, List, Optional, Callable, Tuple
 from typing import Any, Dict, List, Optional
@@ -237,7 +238,11 @@ class CascorLogger:
 
     def _config_logging_file(self):
         # Ensure log directory exists
-        os.makedirs(self.log_dir, exist_ok=True)
+        log_path = Path(self.log_dir)
+        if log_path.exists() and not log_path.is_dir():
+            # If it exists but isn't a directory, remove it
+            log_path.unlink()
+        log_path.mkdir(parents=True, exist_ok=True)
 
         # Create rotating file handler
         print(f"Configuring file handler for {self.name}, at log dir: {self.log_dir}")
