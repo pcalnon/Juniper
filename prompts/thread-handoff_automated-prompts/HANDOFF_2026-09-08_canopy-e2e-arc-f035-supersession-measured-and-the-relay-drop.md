@@ -266,7 +266,7 @@ created through the GitHub API (a local commit hangs on a YubiKey touch that nev
   `util/ad-hoc/2026-09-07_f035_callback_lifecycle_probe.py`, `util/ad-hoc/README.md`, `docs/REFERENCE.md`,
   `reports/e2e/CURRENT_RUN_ID`.
 - **added**: 12 instruments under `util/ad-hoc/` (nine `2026-09-08_*`, three `2026-09-09_*`),
-  `reports/e2e/20260908T000000Z/` (3 files), 34 transcripts and 4 screenshots under
+  `reports/e2e/20260908T000000Z/` (3 files), 36 transcripts (31 dated 09-08, 5 added by the validation) and 4 screenshots under
   `reports/e2e-canopy-2026-09-02/`, and this handoff.
 - **the screenshots are Git LFS**: their objects were uploaded with `lfs push --object-id origin <oid>` and the commit
   carries the POINTER text, because an API commit hands GitHub whatever bytes you give it and would otherwise store the

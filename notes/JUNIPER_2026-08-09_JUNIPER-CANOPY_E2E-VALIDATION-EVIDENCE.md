@@ -6757,5 +6757,10 @@ both legs' commits in every artifact, and a dirty-tree tell beside the sha. (9) 
 
 Every artifact of this phase carries **canopy's** serving commit; item 7 is **not** closed (see the correction at the top of
 this phase — the cascor leg's stamp names a commit that is not what ran, and no browser artifact names cascor at all).
-Evidence for this phase:
-`reports/e2e-canopy-2026-09-02/transcripts/2026-09-08_*` and `…/shots/2026-09-08_*`; run dir `reports/e2e/20260908T000000Z/`.
+Evidence for this phase: `reports/e2e-canopy-2026-09-02/transcripts/2026-09-08_*` (31 files) and
+`…/shots/2026-09-08_*` (4 — two more were written and deleted, see F-CANOPY-050); the run dir
+`reports/e2e/20260908T000000Z/`; and the five artifacts round-1 validation added on 2026-09-09 —
+`…/transcripts/2026-09-09_endpoint_evidence.txt` (the six endpoints this phase quotes),
+`…/2026-09-09_cascor_ws_summaries_window3.txt` (the emission summaries behind the A/B and window 3),
+`…/2026-09-09_served_cascor_provenance.txt` (the content-identity proof for the dirty cascor leg), and
+`…/2026-09-09_tab_crosstalk_8052.json` / `…_8051.json` (F-CANOPY-051 on both legs).
