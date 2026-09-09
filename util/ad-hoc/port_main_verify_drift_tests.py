@@ -57,6 +57,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import subprocess  # nosec B404 - runs the pinned `ruff` formatter with a fixed argv
 import sys
 from pathlib import Path
 
@@ -192,6 +193,11 @@ def main() -> int:
     ap.add_argument("--repo-slug", required=True, help="owner/name used by the stubbed gh, e.g. pcalnon/juniper-data")
     ap.add_argument("--project", required=True, help="value for the header's Project: field")
     ap.add_argument("--marker", default=None, help="pytest marker to apply module-wide (use 'unit' for cascor / data)")
+    ap.add_argument(
+        "--ruff-config",
+        default=None,
+        help=("run `ruff format --config <PATH>` over the emitted file. Required for juniper-data, " "which uses RUFF where every other repo uses black. The two disagree on this file: " "black at line-length 512 keeps the stub-gh implicit string concatenation on ONE line, " "ruff-format splits it across fifteen. Neither output satisfies the other, so this is a " "per-repo choice, not a global one."),
+    )
     ap.add_argument("--out", required=True, type=Path)
     args = ap.parse_args()
 
@@ -201,6 +207,19 @@ def main() -> int:
     out = build(args.repo_slug, args.project, args.marker)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(out, encoding="utf-8")
+
+    if args.ruff_config:
+        proc = subprocess.run(  # nosec B603 B607 - fixed argv, operator-supplied config path
+            ["ruff", "format", "--config", args.ruff_config, str(args.out)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if proc.returncode != 0:
+            raise SystemExit(f"ruff format failed: {proc.stderr.strip()[:300]}")
+        out = args.out.read_text(encoding="utf-8")
+        print(f"ruff-formatted with {args.ruff_config}")
+
     print(f"wrote {args.out} ({len(out.splitlines())} lines, marker={args.marker or 'none'})")
     return 0
 
