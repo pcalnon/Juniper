@@ -59,6 +59,26 @@ defect in #1811.)
 The two census copies genuinely partially overlap: neither subsumes the other, so the
 survivor is a union.
 
+CI INTERACTION -- THIS REWRITE MUST BE WAIVED EXPLICITLY
+
+`Sequence Safety` runs `juniper-docs-additions-check`, a deletion-MAGNITUDE screen, and a
+consolidation like this one is exactly the shape it exists to catch: five `heading-deletion`
+findings, 521 deleted lines, whole `##` sections vanishing with nothing added in their
+place. That is indistinguishable, by magnitude alone, from the accidental section loss the
+docs fleet actually shipped -- so the screen is right to stop it and must not be weakened.
+
+The waiver is an `Allow-Docs-Rewrite: docs/REFERENCE.md` **commit trailer** anywhere in the
+PR's base..head range (`docs_additions_check.parse_allow_trailers`). Prefer it over the
+`docs-rewrite` label: the label only demotes the FAIL to a warning for one run, while the
+trailer is recorded in history and names the path it covers, so the waiver stays auditable
+after the run logs expire.
+
+`Sequence Safety` is a REQUIRED status check on this repo, despite the comment in
+`.github/workflows/ci.yml` that calls the job "ADVISORY, NOT required ... deliberately
+ABSENT" from the required list. Verified against the live ruleset
+(`gh api repos/pcalnon/juniper-ml/rulesets/13805432`), which lists it among the seventeen
+required contexts. Read the ruleset, not the comment.
+
 Usage:
     python3 util/ad-hoc/2026-09-08_reconcile_reference_sections.py [--apply]
 """
