@@ -1571,7 +1571,7 @@ jobs:
       # are what a fleet-docs consolidation produces, and neither the link validator above nor
       # markdownlint can see either one.
       #
-      # DELTA, not count: `main` carries 104 such problems across 23 files, so a gate demanding
+      # DELTA, not count: `main` carries 102 such problems across 21 files, so a gate demanding
       # zero would be red on arrival. This compares each markdown file the PR TOUCHES against
       # its own base state. `fetch-depth: 0` is required -- the default shallow clone has no
       # merge-base to compare against.
