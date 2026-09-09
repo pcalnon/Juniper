@@ -133,10 +133,10 @@ all of which read green on a register that reddens CI.
 |---|---|---|
 | **juniper-cascor#633** | MERGED 2026-09-09T17:57:06Z, `44dafe0` | `dataset_shortfall` says WHO accepted: `accepted_by_this_run`, `acceptance_source` ∈ `request_params` / `allow_truncated_datasets` / `producer`, the original field kept with its literal meaning. The refusal keys its remedy off the WIRE stance and opens with `[dataset_shortfall_refused]`. WS misclaim corrected. 28 passed. **It also broke `main` — see §5.3.** |
 | **juniper-canopy#605** | MERGED 2026-09-09T19:25:55Z, `b587e54` | The three-way prompt, hanging off **Start** (§0.4), on both transports; `dataset_shortfall` carried through `normalize_status`; status-bar `· partial data`; Network Info note; `detail_full` on the clientside JS; `PARTIAL_DATA_POLICY_FIELDS` excluded from the form; 3 manifest rows. **27** new test functions (an earlier draft said 24); the new prompt suite alone collects 28 items. |
-| **juniper-data#388** | MERGED 2026-09-09T17:14:32Z, `d7f4be5` | `EquitiesSeqGenerator.bind_deployment_defaults` (its `dataset_id` was IDENTICAL under the env var on and off — proven by execution); the incomplete-data policy shared via `EquitiesGenerator._apply_incomplete_policy`; the seq fixtures' unreachable filings fixed (§5.4); stale comments; the withdrawn JD-PERF-02 precision; the round-37 instruments graduated. **220 passed** across the nine suites (an earlier draft said 228, which no subset can produce). |
-| **juniper-cascor#639** | opened 2026-09-09, auto-merge armed | Repairs the `main` breakage #633 left (§5.3). |
+| **juniper-data#388** | MERGED 2026-09-09T17:14:32Z, `d7f4be5` | `EquitiesSeqGenerator.bind_deployment_defaults` (its `dataset_id` was IDENTICAL under the env var on and off — proven by execution); the incomplete-data policy shared via `EquitiesGenerator._apply_incomplete_policy`; the seq fixtures' unreachable filings fixed (§5.4); stale comments; the round-37 instruments graduated. **220 passed** across the nine suites (an earlier draft said 228, which no subset can produce). |
+| **juniper-cascor#639** | MERGED 2026-09-09T21:03:09Z, `38ca3a5` | Repairs the `main` breakage #633 left (§5.3). `CI — juniper-cascor-model` is green on `main` again, and the two constants copies are byte-identical. |
 | **juniper-cascor (follow-ups)** | in flight at write time | §0.2. Confirm before rebuilding. |
-| **juniper-ml (this PR)** | this document + the register + the reports + the scripts | Bundled for the reason §1 gives. |
+| **juniper-ml#1858** | this document + the register + the reports + the scripts, 30 files | Bundled for the reason §1 gives. |
 
 Auto-merge was armed natively on every PR under the owner's session-wide approval. Verify each with
 `gh pr view <N> --json state,mergedAt,mergeCommit` **and** check the content is on `main` — a MERGED
@@ -342,7 +342,7 @@ whether round 37's own validation rounds ran as it describes (no record exists).
 - [x] juniper-canopy#605 — the three-way prompt — MERGED
 - [x] juniper-data#388 — `equities_seq` binder + incomplete-data policy — MERGED
 - [x] Register: §4.9 filed (16 rows), `APD-DATA-019`'s precision withdrawn, §2 staleness fixed
-- [x] juniper-cascor#639 — repairs the `main` breakage #633 left (§5.3)
+- [x] juniper-cascor#639 — repairs the `main` breakage #633 left (§5.3) — MERGED, drift green on `main`
 - [x] This document validated by three round-2 lanes; both reversals applied (§4)
 - [ ] cascor follow-ups PR — in flight at write time (§0.2)
 - [ ] The two canopy findings filed in the E2E ledger (§0.6)
