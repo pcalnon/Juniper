@@ -13,9 +13,9 @@ twice as well, and §7 says where.
 **A bare "§N" means a section OF this document.** Every reference to another file names it. All
 dates and times UTC.
 
-**Register** (`notes/JUNIPER_2026-08-14_JUNIPER-ECOSYSTEM_DEFECT-REGISTER.md`): **112 rows, 82
-fixed, 30 open** — the 96 primer rows plus **16** filed this round in a new §4.9. Open splits 17
-primer (16 parked, `APD-DATA-019` unparked) + 13 post-primer. **The set of rows a session may
+**Register** (`notes/JUNIPER_2026-08-14_JUNIPER-ECOSYSTEM_DEFECT-REGISTER.md`): **112 rows, 85
+fixed, 27 open** — the 96 primer rows plus **16** filed this round in a new §4.9. Open splits 17
+primer (16 parked, `APD-DATA-019` unparked) + 10 post-primer. **The set of rows a session may
 action without asking the owner first is still empty**; §4.9's rows do not change that, and §0.5
 says why the attempt to claim otherwise was withdrawn.
 
@@ -26,16 +26,26 @@ says why the attempt to claim otherwise was withdrawn.
 1. **Successor, first — validate this document (§7).** Round 2 ran on the corrections and the
    register edit, not on the finished document.
 
-2. **cascor partial-data follow-ups — a PR was in flight when this was written; confirm its state
-   before rebuilding anything.** Scope, all re-confirmed on cascor `main` after `44dafe0`:
+2. **cascor partial-data follow-ups — DONE: juniper-cascor#640, merged 2026-09-09T21:45:03Z as `53c0338`.**
+   Register rows `APD-CASCOR-009` / `-010` / `-012` are closed against it. Left below for the
+   record of what it covered: Scope, all re-confirmed on cascor `main` after `44dafe0`:
    `_auto_start_training` (`src/api/app.py`) fetches the dataset itself and so never sets
    `dataset_shortfall` on its own path, forwards no opt-in, and swallows its failure
    (`except Exception: logger.exception(...)` — service up, healthy, no training);
    `get_metrics()` (`src/api/lifecycle/manager.py`) carries no annotation; no operator-facing doc
    names `JUNIPER_CASCOR_ALLOW_TRUNCATED_DATASETS` (`AGENTS.md`'s env table and `.env.example` are
    the two places — `src/main.py`'s `--help` mentions it, which is not a doc).
-   **Do not include the CLI-flag item**: register row `APD-CASCOR-011` is **parked** as a design
-   question, and an earlier draft of this section told the successor to build it anyway.
+   `APD-CASCOR-011` (the CLI flag) is **still open and still parked**: #640 took a third path —
+   the flag is kept, and its `--help`, a WARNING on use and the operator docs now say what it does
+   and does not affect — so the inertness is no longer silent, but the parked question is *drop it
+   or rewire the path* and that is still owed a ruling.
+   **One correction was needed on review before that PR merged**, and it is the reusable part: the
+   PR explained the flag's inertness by saying `main.py` trains an in-process spiral problem,
+   synthesised locally, that never contacts juniper-data. `main.py` health-checks `/v1/health` and
+   refuses to start when the service is unreachable. The true reason is that the generator is
+   hardcoded `spiral`, which juniper-data always delivers in full and which is not truncatable. A
+   test had pinned the wrong wording by asserting the phrase "two-spiral" appeared in the warning;
+   it now asserts the reason instead. **A test that pins prose pins whatever the prose got wrong.**
 
 3. **`APD-CASCOR-013`, filed this round and unbuilt:** `_dataset_shortfall` is written at exactly
    one line in `src/api/lifecycle/manager.py` and **never cleared**, so a run started through the
@@ -105,7 +115,7 @@ python3 util/ad-hoc/register_status_crosscheck.py
 python3 -m unittest tests/test_thread_handoff_archive.py
 ```
 
-Expected: FIXED rows **82**; **`112 rows | 82 fixed | 30 open`**; cross-check **82 / 82 / 82,
+Expected: FIXED rows **85**; **`112 rows | 85 fixed | 27 open`**; cross-check **85 / 85 / 85,
 AGREE**; the archive test **passes**.
 
 **That last line is not decoration.** The register's §4.9 cites this handoff by filename, and
@@ -135,7 +145,7 @@ all of which read green on a register that reddens CI.
 | **juniper-canopy#605** | MERGED 2026-09-09T19:25:55Z, `b587e54` | The three-way prompt, hanging off **Start** (§0.4), on both transports; `dataset_shortfall` carried through `normalize_status`; status-bar `· partial data`; Network Info note; `detail_full` on the clientside JS; `PARTIAL_DATA_POLICY_FIELDS` excluded from the form; 3 manifest rows. **27** new test functions (an earlier draft said 24); the new prompt suite alone collects 28 items. |
 | **juniper-data#388** | MERGED 2026-09-09T17:14:32Z, `d7f4be5` | `EquitiesSeqGenerator.bind_deployment_defaults` (its `dataset_id` was IDENTICAL under the env var on and off — proven by execution); the incomplete-data policy shared via `EquitiesGenerator._apply_incomplete_policy`; the seq fixtures' unreachable filings fixed (§5.4); stale comments; the round-37 instruments graduated. **220 passed** across the nine suites (an earlier draft said 228, which no subset can produce). |
 | **juniper-cascor#639** | MERGED 2026-09-09T21:03:09Z, `38ca3a5` | Repairs the `main` breakage #633 left (§5.3). `CI — juniper-cascor-model` is green on `main` again, and the two constants copies are byte-identical. |
-| **juniper-cascor (follow-ups)** | in flight at write time | §0.2. Confirm before rebuilding. |
+| **juniper-cascor#640** | MERGED 2026-09-09T21:45:03Z, `53c0338` | The four follow-ups (§0.2): auto-start forwards the stance, annotates and records its failure; `get_metrics()` carries the shortfall; the CLI flag says what it does; the operator docs name the knob. Closes `APD-CASCOR-009` / `-010` / `-012`. |
 | **juniper-ml#1858** | this document + the register + the reports + the scripts, 30 files | Bundled for the reason §1 gives. |
 
 Auto-merge was armed natively on every PR under the owner's session-wide approval. Verify each with
@@ -344,7 +354,7 @@ whether round 37's own validation rounds ran as it describes (no record exists).
 - [x] Register: §4.9 filed (16 rows), `APD-DATA-019`'s precision withdrawn, §2 staleness fixed
 - [x] juniper-cascor#639 — repairs the `main` breakage #633 left (§5.3) — MERGED, drift green on `main`
 - [x] This document validated by three round-2 lanes; both reversals applied (§4)
-- [ ] cascor follow-ups PR — in flight at write time (§0.2)
+- [x] cascor follow-ups PR — juniper-cascor#640, MERGED `53c0338`; three register rows closed (§0.2)
 - [ ] The two canopy findings filed in the E2E ledger (§0.6)
 - [ ] Live E2E of the prompt on equities (§0.4)
 - [ ] Owner decisions (§0.5)
