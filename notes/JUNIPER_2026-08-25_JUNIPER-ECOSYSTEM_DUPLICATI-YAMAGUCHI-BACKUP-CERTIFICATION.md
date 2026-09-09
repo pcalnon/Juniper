@@ -2657,9 +2657,31 @@ happened since; a *stable* census here is the correct reading, not a stale one).
    graphical login had already happened at 23:15:26, ~7.7 h before. It does not matter here, because
    the journal ordering above proves the stronger claim directly and independently of when `post` ran.
 
-**Criterion 5 is not yet CLOSED.** The script's own closing condition is one full *scheduled* run
-completing after the reboot. The next is **2026-09-08T14:00:00Z**. Until it lands, what is
-discharged is *the lane returns unaided*; what is not is *the schedule actually fires*.
+**Criterion 5 is CLOSED — the second half landed the same day.** The script's own closing condition
+is one full *scheduled* run completing after the reboot, and the `2026-09-08T14:00:00Z` run fired
+unattended and clean:
+
+| Evidence | Reading |
+|---|---|
+| Run | `BeginTime=2026-09-08T14:00:00.1952615Z`, `EndTime=…T14:12:09.03Z`, `ParsedResult=**Success**` |
+| Integrity | `Warnings=0 Errors=0`, `Interrupted=False`, `PartialBackup=False`, `NotProcessedFiles=0` |
+| Work done | `ExaminedFiles=979,490`, `AddedFiles=37,846`, `BytesUploaded=299,722,199` |
+| New fileset | `BackupListCount` 8 → **9**; `TargetFilesCount` 848 → **851** |
+| Census | 851 files / 215,653,031,175 B → **AGREE** |
+| Sample verify | `TestResults: Success on 3 file(s)` |
+| Schedule advanced | `ProposedSchedule` job 2 → `2026-09-09T14:00:00Z` |
+
+**A second, independent proof of the linger lane arrived with it**: the *user-scope*
+`yamaguchi-watchdog.timer` fired on its own `OnCalendar=12:00` at **2026-09-08T12:00:13-0500**,
+writing `OK OK backup=2 newest run 2026-09-08T14:00:00.1952615Z ParsedResult=Success age=3.0h`. The
+§8.27.1 `post` run had to *force* the watchdog precisely because a scheduled fire could not yet be
+distinguished from a stale artifact; this one was not forced. A system-scope service and a user-scope
+timer both resumed their own schedules across the reboot, with `duplicati.service` reporting
+`NRestarts=0` since 2026-09-07 23:12:58 — no flapping behind the result.
+
+Both halves are therefore discharged: *the lane returns unaided*, and *the schedule actually fires*.
+**Criterion 5 — the last unexercised acceptance criterion in
+`notes/JUNIPER_2026-08-23_JUNIPER-ECOSYSTEM_DUPLICATI-FRESH-BACKUP-SET-PLAN.md` §7 — is CLOSED.**
 
 #### 8.27.2 sdc4 is DESTROYED, and the retirement tooling provably never ran
 
@@ -2766,7 +2788,11 @@ by `util/ad-hoc/yamaguchi_key_escrow.py` from `/home/pcalnon/.config/duplicati-b
 
 #### 8.27.6 State of the record after this section
 
-**Closed by this section**: escrow printing (§8.27.5); criterion 5's *unaided return* half (§8.27.1).
+**Closed by this section**: escrow printing (§8.27.5); and **criterion 5 in full** (§8.27.1) — both
+its *unaided return* half and its *the schedule actually fires* half, the latter by the
+`2026-09-08T14:00:00Z` scheduled run completing `Success` with 0 warnings and 0 errors. That was the
+**last unexercised acceptance criterion** in
+`notes/JUNIPER_2026-08-23_JUNIPER-ECOSYSTEM_DUPLICATI-FRESH-BACKUP-SET-PLAN.md` §7.
 
 **Open, owner actions, in value order**:
 
@@ -2774,8 +2800,8 @@ by `util/ad-hoc/yamaguchi_key_escrow.py` from `/home/pcalnon/.config/duplicati-b
 2. The read-only loop probe of §8.27.3, then a decision on recovering the 2.3 KB and/or the 196 G copy.
 3. §8.25.3's sdc2 grow — unchanged, still NTFS-on-GPT beside live `/home`, still forced by nothing.
 
-**Open, agent-actionable**: criterion 5's second half (the 2026-09-08T14:00:00Z run); the seven-repo
-drift-guard test port; §8.26.3's frozen evidence mirror; the §8.11.3 removal PR. All enumerated in
+**Open, agent-actionable**: the seven-repo drift-guard test port; §8.26.3's frozen evidence mirror;
+the §8.11.3 removal PR. All enumerated in
 [`prompts/thread-handoff_automated-prompts/HANDOFF_2026-09-07_duplicati-arc-outstanding-work.md`](../prompts/thread-handoff_automated-prompts/HANDOFF_2026-09-07_duplicati-arc-outstanding-work.md).
 
 **Corrections to §8.26 forced by this section**: §8.26.1's row *"sdc4 unmounted — partition **intact**
