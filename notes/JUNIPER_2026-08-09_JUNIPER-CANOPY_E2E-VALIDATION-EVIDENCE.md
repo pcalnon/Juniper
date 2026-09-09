@@ -6663,9 +6663,12 @@ accumulated entries proved the callback had run. Round-1 validation refuted that
 is written by `training_monitor._record_pool_snapshot_locked` from canopy's WS state ingestion, with no
 browser involvement at all. And the benign alternative is not merely open — it is **positively supported**:
 `fetch_training_state` returns `(no_update, no_update)` when `active_tab != "candidates"`, its interval is
-client-gated to that tab, and the run's own archived screenshot named as this entry's evidence
-(`shots/2026-09-08_live52_candidates_end.png`) shows the **Network Topology** tab. F-CANOPY-051 then
-demonstrated the mechanism that put it there.
+client-gated to that tab, and the run's own screenshot named as this entry's evidence
+(`shots/2026-09-08_live52_candidates_end.png`) showed the **Network Topology** tab. That file is **not in
+the archive** — it was byte-identical to `…_live52_metrics_end.png`, both were captures of the topology
+page under two other pages' names, and both were deleted rather than committed as evidence of panels they
+never showed. What the probe wrote is recorded here instead: four screenshots of three pages produced two
+distinct images. F-CANOPY-051 then demonstrated the mechanism that put every page on the same tab.
 
 **What is owed before re-filing**: one growth window driven **one tab at a time**, or three pages in three
 *separate browser contexts*, with each page's own `active_tab` recorded in the artifact. The row it was
