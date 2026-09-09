@@ -16,10 +16,35 @@
 #   header has no separator row. Markdownlint and the doc-link validator see none of them -- a
 #   fence is never "missing", it silently absorbs everything after it.
 #
-#   Wiring that count directly as a gate does not work, and the measurement says so: 104 problems
-#   across 23 files on `main` today, most of them in `notes/legacy/` and `notes/code-review/`. A
-#   gate demanding zero is red on arrival, and the repair campaign it implies is not the thing
-#   anyone asked for.
+#   Wiring that count directly as a gate does not work, and the measurement says so: **102
+#   problems across 21 files** on `main` (re-measured 2026-09-09; the 104/23 this comment
+#   carried was from 2026-09-05). A gate demanding zero is red on arrival, and the repair
+#   campaign it implies is not the thing anyone asked for.
+#
+#   This comment also said the damage was "most of them in `notes/legacy/` and
+#   `notes/code-review/`", and that is FALSE. By file, matching the breakdown #1831 put in
+#   `tests/test_markdown_structure_delta.py`: 11 under `notes/`, 6 under `notes/legacy/`,
+#   3 under `prompts/`, 1 under `notes/code-review/`, and none at all under `docs/`.
+#
+#   By PROBLEM the concentration is sharper still, and it is the more useful cut when
+#   deciding whether to repair rather than delta-scope: `notes/` 62, `notes/legacy/` 20,
+#   `prompts/generated/` 11, `prompts/agent_templates/` 7, `prompts/manual/` 1,
+#   `notes/code-review/` 1. Over half the total sits in three files -- 28 of it in
+#   `notes/JUNIPER_2026-03-12_JUNIPER-ML_PROMPT-ANALYSIS-AND-AUTOMATION-PLAN.md` alone.
+#   So the two directories once named as the bulk are 21 of 102, and the bulk is live `notes/`.
+#
+#   RE-MEASURE BEFORE QUOTING, and delimit the paths properly:
+#
+#       git ls-files -z '*.md' | xargs -0 python3 \
+#           util/ad-hoc/2026-09-05_markdown_structure_check.py
+#
+#   Bare `xargs` splits on WHITESPACE, so a tracked path containing a space becomes two
+#   arguments: the run then reports 1040 paths against 1034 tracked and invents six
+#   "non-markdown" fragments. The totals survive that, the coverage line does not.
+#
+#   The run exits 2, not 0/1: `main` carries ten DANGLING symlinks under `notes/` that the
+#   screen counts as unreadable and refuses to certify around (#1831). 1024 of 1034 paths are
+#   examined, so 102 is a floor over the readable set, not a whole-tree census.
 #
 #   So gate the DELTA, per FILE, over only the files the PR TOUCHES:
 #
