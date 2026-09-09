@@ -506,21 +506,72 @@ class KillResilienceTest(SafeMergeTestBase):
         at juniper-canopy's MEDIAN -- turning roughly half of canopy's healthy merges into
         "checks did not finish" refusals. Fast failure is now expressed per repo, as a ratio
         to that repo's own measured p90, which is what "fast" actually meant.
+
+        BOTH HALVES OF THE SIZING RULE ARE NOW ASSERTED. The rule this test has always
+        described is *"clear the observed max AND stay inside 4x p90"* -- the 2026-09-05
+        revision wrote exactly that in its own comment and then asserted only the p90 half.
+        With a band `(p90, 4*p90]` that is 4x wide, and a p90 that moved 720 -> 739 -> 2121
+        on juniper-cascor purely with sample size, no candidate budget could fail it: 900 s
+        -- the budget whose live refusal of ml#1754 motivated the re-tier -- passed at every
+        sample size. A bound nothing can violate is not a bound.
+
+        The max half binds where the p90 half does not: juniper-cascor's 2400 s budget sits
+        BELOW its own observed max of 2561 s, so a healthy cascor PR at its worst is refused
+        today. The p90 assertion alone reports that as fine (2400 > 770, 2400 <= 3080).
+
+        THESE CONSTANTS WENT STALE IN ONE DAY, AND THAT IS THE POINT. Every pair below was
+        replaced on 2026-09-09, having been measured on 2026-09-08. Two budgets set yesterday
+        no longer cleared their own max today:
+
+            juniper-ml           p90 538 -> 997    max  773 -> 1657    1500 -> 2800
+            juniper-recurrence   p90 258 -> 587    max  352 -> 1666     700 -> 2000
+
+        The two moved for DIFFERENT reasons, and the distinction decides whether a budget
+        should follow:
+
+          * ml's four longest spans are #1828, #1830, #1831 and #1829 -- all merged inside one
+            burst of concurrent sessions. The next longest, #1816 at 773 s, is yesterday's max
+            exactly. This is contention.
+          * recurrence's is not: PRs 152/153/156/159/161 merged since, spanning
+            1666/723/1119/587/403 on the same 10 required contexts. Its CI got heavier.
+
+        Both were still followed, because both are WITHIN-span stretch -- required contexts
+        queueing between first-start and last-end, which `safe_merge` waits through. That is
+        not the pre-start queue `util/safe_merge.py` says never to absorb; the span does not
+        contain that at all. And ml's is not hypothetical: 1500 s refused ml#1828 live, on a
+        PR whose 17 required contexts every one passed.
+
+        So a number here is a SNAPSHOT with a shelf life measured in days. Re-measure and
+        re-write both halves rather than trusting the pair below.
+
+        NUMBERS ARE FROM THE v2 INSTRUMENT, n=30, RE-MEASURED 2026-09-09. v1
+        (`util/ad-hoc/2026-08-20_measure_required_check_span.py`) filtered nothing, so every
+        bot and out-of-band check-run on the head SHA entered the span -- it overstated the
+        observed max by 11x on cascor, 20x on canopy and 70x on cascor-worker. Re-measure
+        with `util/ad-hoc/2026-09-08_measure_required_check_span_v2.py --repo <r> -n 30`,
+        and record `n` alongside any number quoted here: the 2026-09-05 re-tier could not be
+        reproduced because its sample size was never written down.
         """
-        measured_p90 = {
-            # ml re-measured 2026-09-05 (n=12); was 263 on 2026-08-20. The upper bound below
-            # is what forced the new budget to be chosen rather than guessed: it must clear
-            # the observed max (823 s) AND stay inside 4x p90 (1820 s).
-            "juniper-ml": 455,
-            "juniper-data": 1100,
-            "juniper-cascor": 1065,
-            "juniper-canopy": 1371,
-            "juniper-cascor-worker": 1122,
+        # repo -> (p90, observed_max), required contexts only, v2 instrument, n=30.
+        # juniper-cascor-client is deliberately ABSENT -- see the note in safe_merge.py.
+        measured = {
+            "juniper-ml": (997, 1657),
+            "juniper-data": (955, 2126),
+            "juniper-cascor": (1333, 2561),
+            "juniper-canopy": (1837, 2370),
+            "juniper-cascor-worker": (1010, 1283),
+            "juniper-data-client": (896, 1725),
+            "juniper-deploy": (262, 375),
+            "juniper-recurrence": (587, 1666),
         }
-        for repo, p90 in measured_p90.items():
+        for repo, (p90, observed_max) in measured.items():
             with self.subTest(repo=repo):
                 budget = safe_merge.timeout_for(repo)
-                self.assertGreater(budget, p90, f"{repo} would refuse healthy CI")
+                self.assertGreater(
+                    budget,
+                    observed_max,
+                    f"{repo} budget {budget}s does not clear its observed max {observed_max}s -- " f"a healthy PR at its worst is refused",
+                )
                 self.assertLessEqual(budget, 4 * p90, f"{repo} budget is so loose a stuck run looks slow")
         self.assertGreaterEqual(safe_merge.DEFAULT_TIMEOUT, 600)
 

@@ -1058,8 +1058,10 @@ jobs:
           python3 -m unittest -v tests/test_soak_handoff_consensus_checks.py
           # tests/test_x7_offload_census.py: The off-loop census exemption that certified a partial sweep: `census_source` classifies un-offloaded calls from a source string, extracted from `main` so the walk can be tested without canopy's main.py.
           python3 -m unittest -v tests/test_x7_offload_census.py
-          # tests/test_markdown_structure_delta.py: the CI gate for markdown structure. `main` carries 104 structural problems across 23 files (mostly notes/legacy/ and notes/code-review/), so the gate compares PER FILE and PER PR -- an untouched file is not the PR's problem; a touched one must not come out worse; an ADDED one has no before, so its baseline is zero. Also pins the vacuous case: the screen silently skips anything not ending `.md`, so examining zero of N touched files is an ERROR, not a pass.
+          # tests/test_markdown_structure_delta.py: the CI gate for markdown structure. `main` carries 102 structural problems across 21 files (11 files under notes/, 6 under notes/legacy/, 3 under prompts/, 1 under notes/code-review/; ZERO under docs/), so the gate compares PER FILE and PER PR -- an untouched file is not the PR's problem; a touched one must not come out worse; an ADDED one has no before, so its baseline is zero. Also pins the vacuous case: the screen silently skips anything not ending `.md`, so examining zero of N touched files is an ERROR, not a pass.
           python3 -m unittest -v tests/test_markdown_structure_delta.py
+          # tests/test_markdown_structure_screen.py: the SCREEN the delta gate imports and calls per file. Its `main()` selected files with `not p.is_file()`, and `is_file()` FOLLOWS SYMLINKS -- so each of the ten dangling links on `main` (nine under notes/legacy/ -> a `regressions/` dir that is not on main, one under notes/development/) was skipped WITHOUT being counted and scored clean. Pins: an unreadable markdown path exits 2 rather than passing silently; examining ZERO paths exits 2; a clean file still exits 0 and a real structural problem still exits 1; and the delta gate can still import the module and call check().
+          python3 -m unittest -v tests/test_markdown_structure_screen.py
 
       - name: Run bash regression tests
         run: |
@@ -1075,8 +1077,13 @@ jobs:
   # (add-only, path-confined, name-valid, single-purpose). SKIPs (passes) for any PR that does NOT
   # touch notes/releases/, so it never blocks a normal PR. A FAIL merely fails this check -- the PR
   # then falls back to the standard owner gate (plan S7.2); the guard has no side effect. Wired here
-  # as a standalone status check so the owner can later mark it REQUIRED in the branch ruleset (step
-  # 3.3), which is what lets the exempt archive PR auto-merge behind it.
+  # as a standalone status check, and the owner has since marked it REQUIRED in the branch ruleset
+  # (step 3.3), which is what lets the exempt archive PR auto-merge behind it. This sentence used to
+  # say the owner "can later mark it REQUIRED", which the escape-hatch paragraph immediately below
+  # already contradicts with "now that the check is REQUIRED" -- the promotion happened and only the
+  # first half was updated. Verified against the live ruleset
+  # (`gh api repos/pcalnon/juniper-ml/rulesets/13805432`), which lists `Release-Train Archive Guard`
+  # among the required contexts.
   #
   # Escape hatch (the #1003 link-repair class): now that the check is REQUIRED, an intentional
   # in-place correction of an already-archived note carries an `Allow-Archive-Edit: <path>` commit
@@ -1245,13 +1252,21 @@ jobs:
   # are visible AT REVIEW. Uploads both JSON reports as the `sequence-safety-report` artifact a
   # supervisor consumes (P2 G5-vi).
   #
-  # ADVISORY, NOT required (the codeql soak convention): this job is deliberately ABSENT from the
-  # Quality Gate `needs:` -- mirroring the release-train-archive-guard precedent -- for two grounded
-  # reasons. (1) It is pull_request / merge_group-only (skipped on push), and the Quality Gate is
+  # REQUIRED in the branch ruleset, and deliberately ABSENT from the Quality Gate `needs:`.
+  # Those are two different things and this comment used to conflate them: it opened "ADVISORY,
+  # NOT required", which was true during the soak and stopped being true when the job was
+  # promoted -- exactly as the paragraph below prescribes -- without anyone editing the header.
+  # A reader who trusts it takes a red Sequence Safety for non-blocking; it blocks. Verified
+  # against the live ruleset (`gh api repos/pcalnon/juniper-ml/rulesets/13805432`), which lists
+  # `Sequence Safety` among the seventeen required contexts. Read the ruleset, not this comment.
+  #
+  # It stays out of the Quality Gate `needs:` -- mirroring the release-train-archive-guard
+  # precedent -- for two grounded reasons. (1) It is pull_request / merge_group-only (skipped on push), and the Quality Gate is
   # `if: always()` and treats any non-success need as fatal, so folding it into that `needs:` would
-  # fail every push:main. (2) The fleet-tuned false-positive rate is unknown; soak it as its own
-  # advisory status check first, then promote to REQUIRED directly in the branch ruleset (NEVER via
-  # the Quality-Gate `needs:`). Even promoted, the owner + Cursor App always-bypass it, so its
+  # fail every push:main. (2) The fleet-tuned false-positive rate was unknown, so it soaked as its
+  # own advisory status check and was then promoted to REQUIRED directly in the branch ruleset --
+  # which is where that promotion belongs, NEVER via the Quality-Gate `needs:`. That promotion has
+  # HAPPENED; the soak is over. Even promoted, the owner + Cursor App always-bypass it, so its
   # guaranteed value is the visible red at review; enforcement is G3 (main-verify.yml).
   #
   # Label hatch (WARN-only, P2 SF5): the owner-applied `allow-symbol-loss` / `docs-rewrite` PR labels
@@ -1561,7 +1576,7 @@ jobs:
       # are what a fleet-docs consolidation produces, and neither the link validator above nor
       # markdownlint can see either one.
       #
-      # DELTA, not count: `main` carries 104 such problems across 23 files, so a gate demanding
+      # DELTA, not count: `main` carries 102 such problems across 21 files, so a gate demanding
       # zero would be red on arrival. This compares each markdown file the PR TOUCHES against
       # its own base state. `fetch-depth: 0` is required -- the default shallow clone has no
       # merge-base to compare against.
