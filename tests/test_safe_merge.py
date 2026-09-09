@@ -1025,7 +1025,16 @@ class TimeoutSizingTest(unittest.TestCase):
 
     def test_every_repo_budget_clears_its_measured_max(self):
         """Overlaps `KillResilienceTest` on purpose: that test also enforces an UPPER bound
-        (<= 4x p90), and this one must keep passing for a repo excluded from it."""
+        (<= 4x p90), and this one must keep passing for a repo excluded from it.
+
+        This method SHRANK 17 lines -> 10 when its inline `measured_max` dict moved to
+        `MEASURED_SPANS` at module scope, which the sequence-safety symbol screen correctly
+        flags WEAKENED (ratio 0.59). The removal is the entire point of the change -- the
+        duplicated dict is what went stale -- so it is waived by an `Allow-Symbol-Loss:
+        method:TimeoutSizingTest.test_every_repo_budget_clears_its_measured_max` trailer
+        rather than worked around. The ASSERTION is unchanged and now covers eight repos
+        instead of five.
+        """
         for repo, (_p90, observed) in MEASURED_SPANS.items():
             with self.subTest(repo=repo):
                 self.assertGreater(
