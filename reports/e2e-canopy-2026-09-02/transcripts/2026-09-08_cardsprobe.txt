@@ -1,0 +1,18 @@
+[t=    504ms] navigating to http://127.0.0.1:8052
+[t=    520ms]   serving: {"ok": true, "canopy": "http://127.0.0.1:8052", "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded", "build_date": "2026-09-08T12:12:17Z", "version": "0.6.0", "read_at": "2026-09-09T00:08:58Z"}
+[t=  24229ms]   welcome modal dismissed
+[t=  27034ms] STEP cardsprobe -- constructive fallback for M-CANDIDATES-09/-10/-11
+[t=  44593ms]   siblings BEFORE: badge='Inactive' phase='Idle' pool='0' info='No active candidate pool'
+[t=  46066ms]   setProps: {"ok": true, "via": "memoizedProps.setProps", "hops": 30016}
+[t=  69496ms]   siblings +12s: badge='Inactive' phase='Idle' pool='0' info='No active candidate pool'
+[t=  69496ms]   (badge flipped=False -- did the write propagate to ANY consumer?)
+[t= 144308ms]   cards after constructive fill: 0
+[t= 144309ms]   update_pool_history POSTs captured: 65
+[t= 144309ms]     t=135699ms executed with candidate_pool_status=? body[:180]='{"output":"..candidate-metrics-panel-training-state-store.data...candidate-metrics-panel-pool-history-store.data..","outputs":[{"id":"candidate-metrics-panel-training-state-store",'
+[t= 144309ms]     t=137154ms executed with candidate_pool_status=? body[:180]='{"output":"..candidate-metrics-panel-training-state-store.data...candidate-metrics-panel-pool-history-store.data..","outputs":[{"id":"candidate-metrics-panel-training-state-store",'
+[t= 144309ms]     t=139472ms executed with candidate_pool_status=? body[:180]='{"output":"..candidate-metrics-panel-training-state-store.data...candidate-metrics-panel-pool-history-store.data..","outputs":[{"id":"candidate-metrics-panel-training-state-store",'
+[t= 144309ms]     t=140906ms executed with candidate_pool_status=? body[:180]='{"output":"..candidate-metrics-panel-training-state-store.data...candidate-metrics-panel-pool-history-store.data..","outputs":[{"id":"candidate-metrics-panel-training-state-store",'
+[t= 144309ms]     t=142884ms executed with candidate_pool_status=? body[:180]='{"output":"..candidate-metrics-panel-training-state-store.data...candidate-metrics-panel-pool-history-store.data..","outputs":[{"id":"candidate-metrics-panel-training-state-store",'
+[t= 144309ms]     t=144090ms executed with candidate_pool_status=? body[:180]='{"output":"..candidate-metrics-panel-training-state-store.data...candidate-metrics-panel-pool-history-store.data..","outputs":[{"id":"candidate-metrics-panel-training-state-store",'
+[t= 144309ms]   !! no card rendered from the constructive fill either -- update_pool_history/append/render leg broken
+[t= 144309ms] capture summary: 447 requests (446 dash updates, 1 /api)

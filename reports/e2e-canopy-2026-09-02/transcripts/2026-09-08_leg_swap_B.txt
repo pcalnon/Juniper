@@ -1,0 +1,9 @@
+stopped cascor pid 1322854
+launched cascor pid 2830986 on port 8202
+  src     : /home/pcalnon/Development/python/Juniper/worktrees/juniper-cascor--fix--snapshot-restore-seed-numpy-scalar--20260908-0725--d39d5370/src
+  sha     : d39d537e985ba329290142c123f576b4ece9dba3  (also in /tmp/juniper-e2e/cascor-8202.sha)
+  origins : http://127.0.0.1:8051,http://127.0.0.1:8052
+  snaps   : /home/pcalnon/Development/python/Juniper/juniper-cascor/cascor-snapshots
+  log     : /tmp/juniper-e2e/logs/juniper-cascor.log (appended)
+  pid     : /tmp/juniper-e2e/juniper-cascor.pid
+healthy after 3 s

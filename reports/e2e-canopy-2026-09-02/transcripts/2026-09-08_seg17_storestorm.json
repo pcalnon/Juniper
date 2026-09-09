@@ -1,0 +1,16 @@
+{
+  "storestorm": {
+    "writes": 34,
+    "rate_per_s": 0.57,
+    "identical_consecutive": 33,
+    "no_update": 0,
+    "watch_s": 60,
+    "graph_sig": 499383,
+    "counts": {
+      "input": "2",
+      "hidden": "48",
+      "output": "2",
+      "conn": "1324"
+    }
+  }
+}

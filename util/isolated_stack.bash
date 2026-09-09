@@ -47,6 +47,18 @@
 #   JUNIPER_E2E_RUN_DIR        — scratch run dir (venv/logs/data) (default: ${TMPDIR:-/tmp}/juniper-e2e)
 #   JUNIPER_E2E_DATA_EXTRAS    — juniper-data pip extras  (default: api; use api,mnist for the D2/I-5 checks)
 #   JUNIPER_E2E_HEALTH_TIMEOUT — per-service health wait, seconds (default: 60)
+#   JUNIPER_E2E_CASCOR_WS_EXTRA_ORIGINS
+#                              — EXTRA canopy origins cascor's control-WS allowlist admits, CSV
+#                                (default: none). A second canopy beside the trio -- the :8052
+#                                verify leg from 2026-09-04_canopy_verify_instance.bash -- presents
+#                                ITS port as Origin, and cascor admitted only the trio's canopy, so
+#                                every verify leg's control stream 403-looped unnoticed from
+#                                2026-09-04 to 2026-09-08. Pass e.g. http://127.0.0.1:8052.
+#
+# Both service legs also stamp the commit they are launched from into the process env
+# (JUNIPER_CASCOR_GIT_SHA / JUNIPER_CANOPY_GIT_SHA, plus *_BUILD_DATE), which each service
+# reports on /v1/health as git_sha. A driver that records that value records what the leg
+# actually imported -- "a checkout is not a deployment" (2026-09-08; ledger still-owed item 7).
 ###########################################################################################################################################################################################################
 set -euo pipefail
 
@@ -94,6 +106,11 @@ HEALTH_TIMEOUT="${JUNIPER_E2E_HEALTH_TIMEOUT:-60}"
 # The control-WS Origin / allowlist pair: cascor's /ws/control allowlist must admit canopy's
 # presented Origin (both are canopy's own origin). Without the pair: 403 + reconnect churn.
 CANOPY_ORIGIN="http://127.0.0.1:${CANOPY_PORT}"
+
+# cascor's full control-WS allowlist: the trio's canopy, plus any extra canopy that will sit
+# beside it (see JUNIPER_E2E_CASCOR_WS_EXTRA_ORIGINS in the header). cascor's settings
+# validator splits the value on commas.
+CASCOR_WS_ALLOWED_ORIGINS="${CANOPY_ORIGIN}${JUNIPER_E2E_CASCOR_WS_EXTRA_ORIGINS:+,${JUNIPER_E2E_CASCOR_WS_EXTRA_ORIGINS}}"
 
 # Browser-facing WS allowlist (F-E2E-006): canopy's OWN /ws/training + /ws/control gate
 # incoming browser sockets on websocket.allowed_origins, whose default admits only
@@ -281,9 +298,14 @@ data_up() {
 # Bring-up: juniper-cascor (JuniperCascor1), pointed at the isolated juniper-data
 ###########################################################################################################################################################################################################
 cascor_up() {
+    # The commit this leg is launched from, stamped into its env so /v1/health reports it
+    # (api/provenance.py reads JUNIPER_CASCOR_GIT_SHA). Empty when the src dir is not a
+    # git checkout -- the service then reports git_sha: null, which is honest.
+    local cascor_git_sha
+    cascor_git_sha="$(git -C "${CASCOR_SRC_DIR}" rev-parse HEAD 2>/dev/null || true)"
     banner "juniper-cascor  ->  http://127.0.0.1:${CASCOR_PORT}  (${CASCOR_CONDA})"
     announce "conda activate ${CASCOR_CONDA} && cd ${CASCOR_SRC_DIR}"
-    announce "LD_LIBRARY_PATH= JUNIPER_DATA_URL=http://127.0.0.1:${DATA_PORT} JUNIPER_CASCOR_WS_CONTROL_ALLOWED_ORIGINS=${CANOPY_ORIGIN} uvicorn api.app:create_app --factory --host 127.0.0.1 --port ${CASCOR_PORT}   # nohup -> ${LOG_DIR}/juniper-cascor.log"
+    announce "LD_LIBRARY_PATH= JUNIPER_DATA_URL=http://127.0.0.1:${DATA_PORT} JUNIPER_CASCOR_WS_CONTROL_ALLOWED_ORIGINS=${CASCOR_WS_ALLOWED_ORIGINS} JUNIPER_CASCOR_GIT_SHA=${cascor_git_sha} JUNIPER_CASCOR_BUILD_DATE=<utc-now> uvicorn api.app:create_app --factory --host 127.0.0.1 --port ${CASCOR_PORT}   # nohup -> ${LOG_DIR}/juniper-cascor.log"
     if is_dry; then return 0; fi
 
     ensure_dir "${LOG_DIR}"
@@ -293,7 +315,9 @@ cascor_up() {
         cd "${CASCOR_SRC_DIR}"
         LD_LIBRARY_PATH='' \
             JUNIPER_DATA_URL="http://127.0.0.1:${DATA_PORT}" \
-            JUNIPER_CASCOR_WS_CONTROL_ALLOWED_ORIGINS="${CANOPY_ORIGIN}" \
+            JUNIPER_CASCOR_WS_CONTROL_ALLOWED_ORIGINS="${CASCOR_WS_ALLOWED_ORIGINS}" \
+            JUNIPER_CASCOR_GIT_SHA="${cascor_git_sha}" \
+            JUNIPER_CASCOR_BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             nohup uvicorn api.app:create_app --factory --host 127.0.0.1 --port "${CASCOR_PORT}" >"${LOG_DIR}/juniper-cascor.log" 2>&1 &
         echo "$!" >"${RUN_DIR}/juniper-cascor.pid"
     )
@@ -361,9 +385,13 @@ canopy_up() {
         extra_env+=("JUNIPER_CANOPY_RECURRENCE_SERVICE_URL=http://127.0.0.1:${RECURRENCE_PORT}")
     fi
 
+    # The commit this leg is launched from (see cascor_up); canopy's src/provenance.py reads
+    # JUNIPER_CANOPY_GIT_SHA and reports it on /v1/health.
+    local canopy_git_sha
+    canopy_git_sha="$(git -C "${CANOPY_SRC_DIR}" rev-parse HEAD 2>/dev/null || true)"
     banner "juniper-canopy  ->  http://127.0.0.1:${CANOPY_PORT}  (${CANOPY_CONDA}, service mode)"
     announce "conda activate ${CANOPY_CONDA} && cd ${CANOPY_SRC_DIR}"
-    announce "JUNIPER_CANOPY_DEMO_MODE=0 JUNIPER_CANOPY_SERVER__HOST=127.0.0.1 JUNIPER_CANOPY_SERVER__PORT=${CANOPY_PORT} JUNIPER_CANOPY_CASCOR_SERVICE_URL=http://127.0.0.1:${CASCOR_PORT} JUNIPER_CANOPY_JUNIPER_DATA_URL=http://127.0.0.1:${DATA_PORT} JUNIPER_CANOPY_CASCOR_WS_ORIGIN=${CANOPY_ORIGIN} JUNIPER_CANOPY_WEBSOCKET__ALLOWED_ORIGINS=${CANOPY_WS_ALLOWLIST} JUNIPER_CANOPY_SNAPSHOT_DIR=${CANOPY_SNAPSHOT_DIR} ${recurrence_env_announce}python main.py   # nohup -> ${LOG_DIR}/juniper-canopy.log"
+    announce "JUNIPER_CANOPY_DEMO_MODE=0 JUNIPER_CANOPY_SERVER__HOST=127.0.0.1 JUNIPER_CANOPY_SERVER__PORT=${CANOPY_PORT} JUNIPER_CANOPY_CASCOR_SERVICE_URL=http://127.0.0.1:${CASCOR_PORT} JUNIPER_CANOPY_JUNIPER_DATA_URL=http://127.0.0.1:${DATA_PORT} JUNIPER_CANOPY_CASCOR_WS_ORIGIN=${CANOPY_ORIGIN} JUNIPER_CANOPY_WEBSOCKET__ALLOWED_ORIGINS=${CANOPY_WS_ALLOWLIST} JUNIPER_CANOPY_SNAPSHOT_DIR=${CANOPY_SNAPSHOT_DIR} JUNIPER_CANOPY_GIT_SHA=${canopy_git_sha} JUNIPER_CANOPY_BUILD_DATE=<utc-now> ${recurrence_env_announce}python main.py   # nohup -> ${LOG_DIR}/juniper-canopy.log"
     if is_dry; then return 0; fi
 
     ensure_dir "${LOG_DIR}"
@@ -384,6 +412,8 @@ canopy_up() {
             JUNIPER_CANOPY_CASCOR_WS_ORIGIN="${CANOPY_ORIGIN}" \
             JUNIPER_CANOPY_WEBSOCKET__ALLOWED_ORIGINS="${CANOPY_WS_ALLOWLIST}" \
             JUNIPER_CANOPY_SNAPSHOT_DIR="${CANOPY_SNAPSHOT_DIR}" \
+            JUNIPER_CANOPY_GIT_SHA="${canopy_git_sha}" \
+            JUNIPER_CANOPY_BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             "${extra_env[@]}" \
             python main.py >"${LOG_DIR}/juniper-canopy.log" 2>&1 &
         echo "$!" >"${RUN_DIR}/juniper-canopy.pid"

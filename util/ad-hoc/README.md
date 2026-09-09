@@ -259,6 +259,76 @@ No `--base-url`; inherit `JUNIPER_E2E_CANOPY_URL` (default `http://127.0.0.1:805
 
 Operator contract: [`docs/REFERENCE.md` § F-CANOPY-037 Render Census](../../docs/REFERENCE.md#f-canopy-037-render-census).
 
+## F-CANOPY-035 discriminating test, the live-run probe, and the leg tooling (operational, 2026-09-08)
+
+The 2026-09-08 session lost the fixture to a host reboot (`/tmp` is tmpfs; the trio ran under `nohup` from it), restored it from
+`snapshot_20260905T103912Z`, and found that cascor's resume path was itself broken. What it left behind:
+
+- **`2026-09-08_f035_supersession_test.py` is the test that settles F-CANOPY-035's mechanism**, on the model of `e2e_f039_supersession_test.py`: baseline
+  the contended regime, `setProps({disabled: true})` on `fast-update-interval` (which silences the writer's own trigger and the whole fast lane), let
+  in-flight work drain, trigger the writer exactly once through `n_intervals`, watch. Run 1 on the 48-unit fixture: **39 responses carrying 71 rows in
+  30 s with the store at 0, then the store at 71 within 2.9 s of the tick being disabled, and it stayed** → `APPLIED-UNCONTENDED`. That is
+  supersession's own prediction — the last call in a series lands when nothing follows it — observed end to end with one `paths.strs` read per second
+  and no other instrument attached. **Two things it did NOT show**: the single manual `n_intervals` trigger afterwards produced no request at all
+  (recorded, not interpreted), and the *rule* that performs the supersession is still unnamed.
+- **The lifecycle probe does not discriminate.** Its 2026-09-07 control on `network-visualizer-topology-store` had been set aside on a
+  `hidden_units: 0` read taken on the Candidate Metrics tab, where that store's poll is tab-gated off. Re-driven on the **Network Topology** tab for
+  90 s, on a store whose graph paints 48 nodes and whose value the dispatch probe saw dispatched three times, it returned the same
+  `RETIRED-BEFORE-EXECUTION` (19 entries into `watched`, terminal bucket empty). So "never reaches a terminal list" is a property of the sampler, not of
+  the store, and the 09-07 lifecycle verdict is downgraded to a non-discriminating observation. It also **perturbs what it measures**: it
+  `JSON.stringify`s every entry of every list on every Redux notify, and its own independent read of the topology store came back at the mount
+  default after its window. The mechanism claim now rests on the behavioural test above, not on `state.callbacks`.
+- **The dispatch probe's positive control is positive** (`--store network-visualizer-topology-store --tab "Network Topology"`, added 2026-09-08): three
+  `Callbacks.Aggregate` actions carrying the store's dict, independent read `hidden_units: 48`. Its verdict rule was list-only and scored that
+  `DISPATCHED-EMPTY`; the rule now treats a non-null non-list value as carrying. Re-run the control after any change to the rule.
+- **`2026-09-08_live_run_probe.py`** watches one growth run from three tabs at once (Candidate Metrics, Training Metrics, Network Topology — each
+  per-tab poll lane gates on `active_tab`, so a closed tab measures nothing) and scores M-CANDIDATES-09/-10/-11, F-CANOPY-026's mid-run pair and
+  M-TOPOLOGY-16 from rules fixed in its docstring; `--start` presses Start only after the tabs are open. **Its per-sample cost on a 944-connection
+  topology was ~22 s** — the topology page's main thread is saturated and every `evaluate` waits for it — so a 50 s run yields three samples. Sample
+  the topology page less often than the others, or run it in its own process. It records canopy's `/api/state` beside cascor's status so a blank
+  badge can be attributed to the server never learning versus the browser never applying: on 2026-09-08 that attribution pointed at cascor's
+  WebSocket relay, which had dropped both canopy legs at the instant training started (see the ledger, F-CASCOR-003).
+- **`2026-09-08_cascor_ws_drop_probe.py`** is the raw-client reproduction of that drop: connect to `/ws/training`, sit past the 5 s resume handshake,
+  trigger a state broadcast that trains nothing (`POST /v1/snapshots/<id>/resume` of the network the leg already holds), and report whether a
+  `state` frame arrives, a close frame arrives, or nothing at all. Note that the trigger clears cascor's metrics buffer and leaves the FSM at
+  `RESUME_READY`; run the COMPLETED-state instruments first (`2026-09-08_post_growth_sequence.bash` chains them, one browser at a time).
+- **`2026-09-08_replay_block_redrive.py`** drives M-METRICS-11..16/-18 with every prop read through `paths.strs`. All three replay callbacks compute
+  `max_index = len(metrics_data) - 1` from `State(metrics-panel-metrics-store)`, so the index rows are downstream of F-CANOPY-035 and are scored
+  `BLOCKED-BY-F-035` when the store is empty, while the play toggle and the speed buttons are data-independent and are scored on their own merits.
+- **Leg tooling.** `2026-09-04_canopy_verify_instance.bash` now (a) defaults its run dir to the reaper-protected `${JUNIPER_E2E_RUN_DIR:-/tmp/juniper-e2e}` —
+  its old `/tmp/juniper-canopy-verify` was inside neither protected root, so the pid file it wrote protected nothing and its REAPER NOTE was false from
+  2026-09-04 to 2026-09-08; (b) stamps `JUNIPER_CANOPY_GIT_SHA` / `_BUILD_DATE` from the checkout it launches, which canopy reports on `/v1/health` as
+  `git_sha`, and `e2e_w3_params_driver.serving_commit()` reads that back so every driver's transcript carries the SERVING commit (ledger still-owed item 7);
+  (c) lets `JUNIPER_CANOPY_CASCOR_WS_ORIGIN` be overridden, because cascor's control-WS allowlist admitted only the trio's :8051 origin and every :8052
+  verify leg ran with its control stream 403-looping — `util/isolated_stack.bash` gained `JUNIPER_E2E_CASCOR_WS_EXTRA_ORIGINS` for the proper fix.
+  **`2026-09-08_cascor_leg_swap.bash`** restarts the trio's cascor from a worktree by pid (keeping the stack's own pid file), points it at the primary's
+  `cascor-snapshots/` (a worktree-run cascor otherwise resolves its snapshot root inside its own tree and lists nothing), and stamps its SHA the same way.
+  The fixture does not survive a swap; re-`resume` it from its snapshot. **Its control-WS allowlist is `CASCOR_WS_ORIGINS` — a different name from the
+  stack's `JUNIPER_E2E_CASCOR_WS_EXTRA_ORIGINS`, and its default is `http://127.0.0.1:8051` ALONE**, so a hand-run swap silently re-opens F-E2E-008 for the
+  `:8052` verify leg. Pass `CASCOR_WS_ORIGINS=http://127.0.0.1:8051,http://127.0.0.1:8052` whenever both legs are up;
+  `2026-09-08_relay_repair_sequence.bash` already does.
+  **`2026-09-08_relay_repair_sequence.bash`** is the whole repair in one command, and the only script here that both swaps a leg and drives a growth window:
+  (A) the drop probe against the running leg, (B) the swap onto the fix worktree plus a `/resume` and the same probe again, (C) stage the dataset, `PATCH`
+  the cap and `candidate_patience`, run `2026-09-08_live_run_probe.py --start`, then restore `candidate_patience`, (D) snapshot. It writes a step-by-step
+  summary to `${RUN_DIR}/relay_repair_sequence.txt`; read that before the per-step artifacts. `2026-09-08_post_growth_sequence.bash` is the same idea for
+  the idle-fixture instruments (storestorm, dataset seq, cardsprobe, the f035 re-drive, the two probes, supersession run 2).
+- **`2026-09-08_append_signed_commit.py`** is the verb `open_signed_pr.py` refuses by design: one GitHub-signed commit onto an EXISTING branch, pinned to
+  the branch's current head. Built to extend juniper-cascor#632 after the first fix proved incomplete.
+- **`2026-09-09_tab_crosstalk_probe.py`** answers whether two canopy pages in ONE browser context keep the tabs they selected. They do NOT: canopy
+  persists the active tab in `layout-state-store`, a `dcc.Store(storage_type="local")`, and a clientside callback drives `visualization-tabs.active_tab`
+  from it — so localStorage, which every page of one context shares, makes the LAST page to pick a tab move all the others. Verdicts `CROSSTALK` /
+  `INDEPENDENT` / `INDETERMINATE`; reads each page's OWN `active_tab` through `state.paths.strs`, never from a screenshot. Run it before trusting any
+  multi-page probe (it is why `2026-09-08_live_run_probe.py`'s three-tab design is unsound — see F-CANOPY-051).
+- **`2026-09-09_verify_served_cascor_matches_merge.py`** proves what a `git_sha` stamp cannot when a leg runs a DIRTY worktree: it sha256s the served
+  files against the blobs GitHub holds at a merge commit. Written when `/v1/health` on the `:8202` leg was found to report the worktree's BASE commit
+  (a dependency bump containing none of the fix) while the fix rode uncommitted on top.
+- **`2026-09-09_capture_endpoint_evidence.bash`** curls the six endpoints whose values the Phase-5 record cites — canopy and cascor `/v1/health`, the
+  pool-history route, `/v1/metrics/transport`, `/v1/network`, data's `/v1/generators` — into one transcript. Written because four Phase-5 claims had been
+  made from live reads that were never archived, which is the one thing this arc's own validation lanes reliably catch.
+- **`2026-09-08_topology_store_dump.py`** prints the topology store's SHAPE (keys, the `hidden_units` field, node/connection counts) beside the stats bar
+  and the graph, because "the store holds the mount default" and "the store holds a payload whose count field is 0" read identically through a bare
+  `hidden_units` read. On :8052 the store filled ~15 s after the tab opened and the graph painted ~15 s after that.
+
 ---
 
 ## What does NOT belong here

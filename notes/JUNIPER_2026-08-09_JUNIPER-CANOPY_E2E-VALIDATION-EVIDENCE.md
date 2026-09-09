@@ -296,7 +296,7 @@ A fresh dashboard ships S=1, T=1, R=1, so T+R=2≠S and the *first* Apply always
 
 **CLOSED (2026-08-24, canopy#514 `5f2e905`; run `20260825T041134Z`). Root cause was TWO defects.** (1) The gate callback could never win promotion: its `training-status-store` Input is an output the unified-status-bar feeder claims while in flight on every fast tick (the §12.6 claimed-Input race), and the gate is only *useful* during a run — exactly when the feeder's in-flight duty cycle saturates. Measured post-Stage-2: the gate fired at idle mount and **zero times across 80 s of training**; "registered, inputs live, never fires" was promotion starvation, not wiring. Fixed by computing the gate INSIDE `update_unified_status_bar` from the same `/api/status` payload (tuple 10 → 11; the flag rides as `State`, landing within one fast tick; suppressed on no-change). (2) **Every page load clobbered the server-side flag**: the mount reconciliation's *unchanged* toggle write fired the toggle handler — an unchanged write fires every consumer — which POSTed the mount-time value back to cascor, reverting operator changes made since that mount (observed live: a fresh page's echo reset `enabled:true` to `false` within seconds). Fixed with unchanged-write suppression in the reconcile plus an echo guard in the handler (`value == store` ⇒ programmatic write, no POST). **Verified live on the merged content** (tree `c2ec3998` == `5f2e905`): flag ON + run live + fresh mount → `disabled:false` at t+12 s (the arc's first-ever allow-arm observation), the button correctly re-disabling when the run completed; the flag now SURVIVES page attaches; and the enabled button's click opened the Live Switch modal (500×1044) with the full dataset summary — C2.7-10 and C2.10-02 re-scored PASS, W7's UI entry unblocked (C2.10-03, the confirm/swap arm, remains for a W7 drive). Operational note: the flag is cascor-process state — a cascor restart resets it to `false`; that is boot behaviour, not the echo defect.
 
-**F-CANOPY-026 — phase duration is inflated by the host's UTC offset: cascor emits naive LOCAL time, canopy stamps it as UTC (P2, OPEN; segment 15).**
+**F-CANOPY-026 — phase duration is inflated by the host's UTC offset: cascor emits naive LOCAL time, canopy stamps it as UTC (P2, FIXED cascor#594 + canopy#534, verified live 2026-09-08 — closure block at the end of this entry; segment 15).**
 `metrics-panel-phase-duration` read **"Phase Duration: 300m 37s"** on a run that had been alive for 37 seconds. Mechanism, both halves proven in source and live: cascor writes `phase_started_at=datetime.now().isoformat()` — **naive, LOCAL** — at `juniper-cascor/src/api/lifecycle/manager.py:1781` (candidate phase) and `:2326` (output phase); canopy's `_update_phase_duration_handler` (`juniper-canopy/src/frontend/components/metrics_panel.py:1375-1376`) does `if started.tzinfo is None: started = started.replace(tzinfo=timezone.utc)` and then subtracts from `datetime.now(timezone.utc)`. Stamping a local timestamp as UTC shifts it by the host offset, so the displayed elapsed time is inflated by exactly that offset. Measured live: `phase_started_at = 2026-08-20T03:11:17.347900` with the box on CDT (`date +%z` → `-0500`); canopy's arithmetic yields 302m29s where the correct value is 2m29s — **delta exactly 18000 s = 5 h**. The counter ticks correctly at 1 s/s (300m37s → 301m18s across 41 s wall), so this is a pure constant offset, not a broken clock. **Invisible in any UTC-0 environment** (CI, most containers), which is why 14 segments on this dashboard never surfaced it. Matrix row M-METRICS-03 **FAIL**. Fix direction: emit tz-aware UTC from cascor (`datetime.now(timezone.utc).isoformat()`), which also makes canopy's naive branch unreachable; treating a naive value as local on the canopy side would be the compatible stopgap.
 
 > **FIX AUTHORED, BOTH HALVES (2026-08-27; CI green on both, NEITHER merged — entry stays OPEN).**
@@ -315,6 +315,32 @@ A fresh dashboard ships S=1, T=1, R=1, so T+R=2≠S and the *first* Apply always
 > `created` / `creation_timestamp`). Same defect class, different blast radius; the snapshot pair writes a
 > format the in-flight snapshot-integrity work reads, so they are recorded for their own assessment rather
 > than swept in.
+>
+> **2026-09-08 — both halves are LIVE (cascor#594 at `d39d537`, canopy#534 at `eb05021`) and the mid-run
+> sample was attempted in two growth windows; it could not be taken.** `phase_started_at` reaches canopy
+> only over the training WebSocket, and cascor had dropped both relays at training start (F-CASCOR-004),
+> so canopy's `/api/state` held `phase_started_at: ""` through both runs and the phase-duration text was
+> blank. Still OPEN at that point, owed a run with the relay alive.
+>
+> **2026-09-08, later — VERIFIED FIXED in the third window (48 → 52, relay alive on cascor#632's tree).**
+> The readout was **`0m 18s`** mid-candidate-phase, then `0m 49s` and `0m 59s`, against a tz-aware
+> `phase_started_at` (`2026-09-09T00:24:39.406962+00:00`) and a phase of about a minute — tens of seconds
+> where the defect printed **300 minutes**. An 18000 s constant offset cannot survive that, which is why
+> n = 1 closes it.
+>
+> **Four corrections from round-1 validation, all narrowing the claim.** (i) **Only ONE sample is
+> mid-run**: the FSM reached `COMPLETED` at t=70.3 s, so the `0m 49s` and `0m 59s` readings are
+> post-completion, and an earlier draft calling them mid-phase and counting "two post-`COMPLETED` pairs"
+> was wrong — there are three. (ii) The probe's own 20 s rule scored the pairs `STILL-OPEN` (deltas
+> −22.6 … −55.8 s) because it stamps its oracle at the END of a ~25 s sample and reads the text
+> mid-sample; reconstructed against the transcript's timestamps that skew is **16–26 s**, not the
+> "10–20 s" first written. (iii) After removing it the two usable residuals are **−8.7 s and −4.9 s** —
+> inside the probe's own tolerance — so the "10–25 s trailing display" an earlier draft kept on the books
+> is not supported by these samples. (iv) **canopy#534's half was never exercised**: it handles a *naive*
+> timestamp, the probe returns `None` on one, and cascor emitted tz-aware — so what is verified live is
+> **cascor#594 only**. Instrument note: `phase_started_at` was NOT cleared at completion, contrary to the
+> probe's docstring, which is how three post-run pairs entered the scoring at all. Details: Phase 5 —
+> 2026-09-08.
 
 **F-CANOPY-027 — a panel's data store is written repeatedly with changing data and NOTHING downstream of it ever runs, so three panels stay frozen at mount defaults through a whole live run (P0/P1; FIXED canopy#507+#509+#511, all rows re-driven live 2026-08-24 — closure block at the end of this entry; found segment 15; ROOT-CAUSED 2026-08-23 — callback starvation under dash-renderer's hard-coded 12-slot concurrency pool, reproduced in a clean room with a control. Read the `ROOT CAUSE (2026-08-23)` block at the end of this entry FIRST: it supersedes the "broken wiring" framing of every block above it, and those blocks are retained only as the refutation record for twenty mechanisms. FIXED — closure block at the entry's end).**
 Two panels, identical signature: their data store is demonstrably filled on the wire, and the server-side `@app.callback` renderers that take that store as their sole/primary `Input` never emit a single output.
@@ -1173,8 +1199,44 @@ Evidence: `reports/e2e-canopy-2026-09-02/transcripts/2026-09-07_f035_callback_li
 (run 1 is the 60 s pilot that established "never terminal"; runs 2 and 3 are the 90 s replicates that
 add the entry counts).
 
-**F-CANOPY-036 — candidate pool history NEVER accumulates in the live lane: the history-append callback loses its race with its own feeder's repoll, so short-lived pool states are never recorded (P2, OPEN; found during the 2026-08-24 live re-drive).**
+> **2026-09-08 — the write LANDS as soon as the fast lane is removed, and the lifecycle verdict above is
+> withdrawn to "non-discriminating"** (this paragraph corrected 2026-09-09 by round-1 validation).
+> `util/ad-hoc/2026-09-08_f035_supersession_test.py`, the sibling of the F-039 test this entry asked for:
+> a contended baseline in which **39 responses each carried 71 rows while the store stayed at 0**, then
+> **the store at 71 within a few seconds of `fast-update-interval` being disabled**, and holding — twice,
+> `APPLIED-UNCONTENDED`. **What that does NOT settle**: disabling that Interval removes **all ten**
+> fast-lane callbacks, so this cannot separate *supersession of this callback by its own next tick* from
+> *promotion starvation under fast-lane contention* — the very mechanism this repo already documents for
+> F-CANOPY-025. Both point at the same fix, at the **trigger**, which is why the direction is unchanged;
+> only the name of the mechanism is unsettled. And the lifecycle probe, pointed at
+> `network-visualizer-topology-store` with the topology tab open, returned the same
+> `RETIRED-BEFORE-EXECUTION` — though note its own end-of-window read of that store came back at the mount
+> default, so it is disqualified as a *control*, not proven to be measuring a working store. Full record,
+> the controls, the second replicate and what is still not settled: **Phase 5 — 2026-09-08** at the end of
+> this file.
+
+**F-CANOPY-036 — candidate pool history NEVER accumulates in the live lane: the history-append callback loses its race with its own feeder's repoll, so short-lived pool states are never recorded (P2, FIXED canopy#536, verified live 2026-09-08 — closure block at the end of this entry; the panel's rendering is F-CANOPY-050; found during the 2026-08-24 live re-drive).**
 Across five training runs on one bring-up (~20 candidate phases), `candidate-metrics-panel-history-section` never rendered a card — while in the same sessions the SAME store's sibling consumers provably rendered active-pool values (run 5: an in-page 500 ms observer, healthy all run — 8 sampler gaps > 2 s, worst 2.8 s — recorded the badge rendering `Selecting Best` at t+189 s; runs 1/2 rendered pool 40 / `Training` / progress `351/400`). So this is **not** the fixed F-CANOPY-027 store→consumer starvation. Constructive probe on a CALM post-run page: injecting a fully-shaped `candidate_pool_status:"Training"` payload through the store's own `setProps` (the §12.1 idiom, `ok via memoizedProps.setProps`) produced **no card in 100 s**, and the request capture shows `update_pool_history` (output `…-pool-history-store.data`, `candidate_metrics_panel.py:347-381`) **never executed after the injected write** — while the same capture shows it executing normally on an ordinary poll fill (with `candidate_pool_status=Inactive`, i.e. after the transient state was already overwritten). Mechanism family: dash-renderer executes a queued callback with the store's CURRENT value (or supersedes the queued trigger entirely) when the feeder — `fetch_training_state`, polling at ~1 s on the candidates tab — rewrites the store before the append is promoted; any pool state shorter-lived than the promotion delay is unrecordable. The append's design contract (`:344-392`, one snapshot per `current_epoch` while a pool is active) is therefore probabilistic-to-never under load, and zero-across-five-runs in practice. Matrix effect: M-CANDIDATES-09 FAIL (populated arm unreachable, cause re-attributed from F-CANOPY-027 to this finding); M-CANDIDATES-10/-11 remain BLOCKED (their DEAD-EXPECTED click test needs a rendered card; blocker likewise re-attributed). Candidate fixes (owner decision): append server-side (canopy backend accumulates pool history and serves it, removing the client-side race entirely) or make `update_pool_history` clientside so it runs synchronously in the same commit as the store write.
+
+> **2026-09-08 — live verification attempted twice and blocked upstream.** Two growth runs with the
+> Candidate Metrics tab open (40 → 44, 44 → 48): canopy's own `/api/state` never carried a non-Inactive
+> `candidate_pool_status`, because the frames that carry it never arrived — cascor had silently dropped
+> both canopy relays at the instant training started (F-CASCOR-004) and canopy reported the dead stream
+> healthy (F-CANOPY-049). The `cardsprobe` constructive fallback is also obsolete on this build: #536's
+> 1 Hz server-fed rewrite overwrites an injected pool state within a second. Open and unverified at that
+> point; the fix (#536) was live at `eb05021`.
+>
+> **2026-09-08, later — VERIFIED FIXED at the server in the third window (48 → 52, relay alive).** With
+> the frames arriving, canopy's `/api/state` read `candidate_pool_status: Training`, pool 8, mid-phase,
+> and after the run `/api/v1/candidates/pool-history` held **four entries** (epochs 51–54: one at pool
+> size 0 as the phase opened, three at size 8 with top candidate ids 3 / 4 / 3) — short-lived pool states
+> are recorded, which is what this finding said never happened. **The
+> panel still rendered nothing** (cards 0, history store 0, badge `Inactive` at every sample). An earlier
+> draft attributed that to the panel's 1 Hz feeder never applying (F-CANOPY-050); **that entry is
+> withdrawn** — the page was probably not on the Candidate Metrics tab at all (F-CANOPY-051), and the
+> accumulator these four entries came from is fed by canopy's WS ingestion, not by the browser. So
+> M-CANDIDATES-09 stays FAIL and -10/-11 BLOCKED **with no cause established by this run**. Details:
+> Phase 5 — 2026-09-08.
 
 **F-CANOPY-037 — the topology rebuild is still chained off the 1 Hz `metrics-panel-metrics-store`, which rewrites 141 KB of IDENTICAL data ~0.6/s on a COMPLETED run; the graph therefore renders only when it wins the race — 2 of 11 sessions measured (P0/P1; found during the 2026-08-26 §6.3 topology re-drive; mechanism FIXED canopy#531 2026-08-27, verified 2026-08-28; **CLOSED 2026-09-05** — the `ws-cascade-add-buffer` growth trigger the fix created is now driven on a live cascade, twice).**
 Measured live on a fresh isolated trio (data 8101 / cascor 8202 / canopy 8051, service mode; cascor `c6cd2f0`,
@@ -2851,6 +2913,22 @@ and driven with `JUNIPER_E2E_CANOPY_URL`. It fails **identically**: `painted=Fal
 > re-drive, and none of them should be scored from the census alone** — the census measures paint, not
 > each row's contract.
 >
+> **2026-09-08 — M-TOPOLOGY-16 driven live three times: BLOCKED twice with the relay dead, then PASS.**
+> Two real cascade-add sequences (40 → 43 → 44 and 44 → 45 → 48) with the Network Topology tab open: the
+> stats bar followed, **no `New Unit Glow` trace ever**, `metrics-panel-metrics-store` at length 0 at every
+> sample (including during training) and `ws-cascade-add-buffer` `gen` 0 throughout. Not a contradiction
+> of the GLOWPROBE reading above — the store was empty here because the WS relay was dead (F-CASCOR-004 /
+> F-CANOPY-049) and the REST poll was being superseded (F-CANOPY-035). **The third window (48 → 52), on a
+> cascor leg whose restore leaves Python scalars (cascor#632's tree) so the relay survived training start,
+> produced the glow:** at t=89 s the graph carried 55 `New Unit Edges` traces and one `New Unit Glow`
+> trace, the new unit ringed at the top of the layout, stats bar 52 / 1538
+> (`shots/2026-09-08_live52_glow_first_seen.png`); the metrics store advanced 53 → 59 → 63 (which writer
+> moved it is not established — see Phase 5) and `ws-cascade-add-buffer` `gen` went 0 → 6 → 8. **Row →
+> PASS for the active half of its contract**, with three limits recorded on the row: the active → fading
+> transition on selecting another node was not driven, the glow was first observed **18.8 s after the run
+> reached `COMPLETED`** at a 19–27 s sampling period, and the row's "time-based" half was not measured.
+> Details: Phase 5 — 2026-09-08.
+>
 > **Two cascor fixture traps, both of which silently produced the wrong network** (found while building
 > the growth arm; each cost a census run):
 >
@@ -3661,6 +3739,11 @@ the warning exists only in the cascor log. **Scope widened later in the segment:
 on the **replay** load path too (cascor log, `20:45:31` and `20:51:19`, both `POST …/replay` starts), so
 this is not restore-specific — it is every snapshot load path that reaches
 `_load_optimizer_state_from_hdf5_helper`.
+
+> **2026-09-08 — sibling filed: F-CASCOR-003** (every scalar HDF5 attribute restored as a NumPy scalar;
+> `/resume` and `/retrain` died at the first candidate phase; FIXED by juniper-cascor#632) and
+> **F-CASCOR-004** (the broadcast that could not serialise those values dropped every WebSocket subscriber
+> silently). Same load path, same save/load-asymmetry class as this entry. See Phase 5 — 2026-09-08.
 
 ### Observations (segment 6, non-finding)
 
@@ -6216,3 +6299,460 @@ waiting for. F-CANOPY-038's re-measure is now cheap — the stack is up and `--s
 command. F-CANOPY-036's fix (canopy#536) needs a live run with the Candidate Metrics tab open. And the
 F-CANOPY-026 live confirmation needs a **mid-run** sample: `phase_started_at` is cleared once a run
 completes, so a post-run probe reads `None` and proves nothing.
+
+## Phase 5 — 2026-09-08: the fixture lost and recovered, F-CANOPY-035's mechanism settled by test, and the relay found dead
+
+The session that inherited the 2026-09-07 handoff (`prompts/thread-handoff_automated-prompts/HANDOFF_2026-09-07_canopy-e2e-arc-f035-cause-found-and-outstanding-work.md`,
+juniper-ml#1812) found none of the legs it described. The host had rebooted at 2026-09-07 23:12 local
+(`uptime -s`); `/tmp` is tmpfs, `util/isolated_stack.bash` runs every leg under `nohup` from
+`/tmp/juniper-e2e`, and cascor's network lives in its process — so the trio, the `:8052` verify leg and the
+**48-unit fixture** were all gone. The only copy on disk was `snapshot_20260905T103912Z.h5` (the 40-unit
+pre-growth state); the 48-unit state had never been snapshotted. It is now: **`snapshot_20260908T123427Z`**,
+taken at `COMPLETED` 48/48 after the re-growth below. Snapshot after every growth.
+
+Stack for this phase: `util/isolated_stack.bash --up` with `JUNIPER_E2E_DATA_EXTRAS=api,equities` (data
+0.13.0 on 8101, canopy 0.6.0 on 8051 from the primary checkout at **`eb05021`**, cascor 0.9.0 on 8202 —
+replaced mid-session, see F-CASCOR-003); a dedicated `:8052` canopy from a detached worktree at
+**`eb05021d`**, which is also `origin/main` throughout. Every instrument run this phase records the commit
+the leg **reports on `/v1/health`** (`git_sha`), because the leg launchers now stamp it — the ledger's
+still-owed item 7.
+
+> **CORRECTED 2026-09-09 by round-1 validation, and item 7 STAYS OPEN.** Two holes. **(a) The stamp can
+> name code that is not running.** The `:8202` leg runs a worktree whose fix was *uncommitted on top of
+> its base*, and the stamp is `rev-parse HEAD` — so `/v1/health` reports `d39d537e…`, which is
+> `deps: bump readme-renderer from 45.0 to 46.0 (#628)` and contains **none** of F-CASCOR-003's fix. A
+> dirty tree defeats a commit stamp entirely. The proof that does hold is content: the three served files
+> are **byte-identical** to what merged in juniper-cascor#632 (`5eb6f144`), checked against GitHub's blobs
+> by `util/ad-hoc/2026-09-09_verify_served_cascor_matches_merge.py` (`…_served_cascor_provenance.txt`).
+> **(b) The browser instruments record only the CANOPY leg.** `live_run_52.json`'s `serving` block, and
+> every driver's `serving:` line, carry canopy's `git_sha` and nothing for cascor — so the artifact behind
+> M-TOPOLOGY-16, F-CANOPY-026 and F-CANOPY-036 does not name the cascor build it measured. Item 7 needs
+> both legs in the artifact, and a dirty-tree tell beside the sha. **All timestamps in this phase's artifacts fall in two windows**: 12:0x–12:4xZ, and
+23:5xZ onward — the session was idle for eleven hours between them with every leg left running.
+
+### The fixture: restored with its identity, then re-grown twice
+
+`POST /v1/snapshots/snapshot_20260905T103912Z/resume` returned the network with **uuid `1cd15120…`,
+40 hidden units, epochs 0–41** and the FSM at `RESUME_READY` (canopy's `/resume` keeps history; `/restore`
+lands in `Investigating`, which rejects `start`). The dataset had to be re-staged
+(`POST /v1/training/dataset`, `spirals/1000/0.25/1.5/2` — canopy's defaults) and the cap raised by PATCH.
+The first `start` **failed at 22 s** — F-CASCOR-003 below. On the fixed tree the growth ran **40 → 43 → 44
+in ~50 s** and, after a second PATCH, **44 → 45 → 48 in ~46 s** (`candidate_patience` was 2000 for that
+window and is back at 50). The fixture is **2/48/2/1324** again: same uuid, same topology counts, new
+weights for the eight re-grown units — a *re-grown* fixture, and every reading below says so.
+
+**F-CASCOR-003 — a network restored through `/resume` or `/retrain` dies at its first candidate phase, because the serializer hands back every HDF5 attribute as a NumPy scalar (P1, cascor repo; found 2026-09-08 on the re-grow; FIXED by juniper-cascor#632).**
+`snapshot_serializer.py::_load_random_state` did `network.random_seed = random_group.attrs.get("seed", …)`,
+and h5py returns `np.int64(42)` — which `random.Random()` rejects on Python ≥ 3.12 (*"The only supported
+seed types are: None, int, float, str, bytes, and bytearray"*) inside `_generate_candidate_tasks`
+(`cascade_correlation.py:2390`). cascor reports `training_started`, runs the output pass, and flips
+`STARTED -> Failed` when the first candidate phase begins. **Every snapshot ever written by this serializer
+stores the seed that way** (checked on disk: `random.attrs['seed'] = np.int64(42)`), so every resume on
+Python ≥ 3.12 fails identically. Two more symptoms of the same root cause were found while the fix was
+being verified live: `_load_config_to_network` restored all **thirteen runtime tunables** with a bare
+`setattr` from attrs, after which `_execute_parallel_training`'s `(a, b)[process_count < 1]` raised
+`TypeError: tuple indices must be integers or slices, not numpy.bool` on **every** candidate phase
+(8 of 8 across the two growth runs; training silently fell back), and the `state` WebSocket frame carrying
+`learning_rate` / `max_epochs` could not be serialised by Starlette's stdlib `send_json` — which is where
+F-CASCOR-004 starts. The existing round-trip test compared by value and `np.int64(42) == 42`, so it passed
+for the whole life of the defect. Fix: a `read_scalar_attr` helper applied at every scalar read on the load
+path (random, config, multiprocessing, architecture, unit count); regression tests assert the **type** and
+exercise the three uses. **Verified live**: the same resume + PATCH + start that failed at 22 s on `main`
+grew the network 40 → 48 on the fix tree. Sibling: F-CASCOR-002 (restore drops optimizer state).
+Evidence: `reports/e2e-canopy-2026-09-02/transcripts/2026-09-08_live_run_44_FAILED.json` (the failed run,
+`STARTED -> FAILED` at t=22.5 s) and `…_live_run_44b.json` / `…_live_run_48.json` (the two growth runs).
+
+**F-CASCOR-004 — cascor drops every training-stream subscriber the moment a broadcast cannot be serialised, silently and without closing the socket (P1, cascor repo, OPEN; found 2026-09-08).**
+`manager._send_json` catches every exception with `return False` and no log; `broadcast` then calls
+`disconnect()` on that client, which **removes it from the manager's sets and never closes the socket**.
+cascor's own log has the sequence: both canopy relays `promoted to active` at 07:25:36/39, then
+`disconnected (1 active, 0 pending)` and `(0 active, 0 pending)` at **07:26:41.941 / .943 — one to three
+milliseconds after `State transition: ResumeReady -> Started`** — and every per-minute
+`WS emission summary` for the rest of both growth runs reads **`0 active connections`**. The payload that
+failed was the state frame carrying the NumPy-typed tunables of F-CASCOR-003, so #632 removes *this*
+trigger; the swallow-and-forget stays. It is a P1 on its own because the failure is invisible from both
+sides: cascor logs nothing at the send, and canopy (F-CANOPY-049) reports the dead stream healthy. Any
+future non-serialisable value in any broadcast reproduces it. Reproduction without training:
+`util/ad-hoc/2026-09-08_cascor_ws_drop_probe.py` connects a raw client and triggers a state broadcast via
+`/resume` of the network the leg already holds.
+
+**F-CANOPY-049 — the cascor metrics relay reports `status=healthy` for a socket the server has forgotten, indefinitely (P2, canopy repo, OPEN; found 2026-09-08).**
+After F-CASCOR-004 dropped both legs, `juniper-canopy-8052.log` kept printing `Metrics relay summary:
+0 frame(s) in last 60s … status=healthy; last-frame-age=13.6s; reconnects=2` **every minute for ten
+minutes** — the age frozen at the value it had when frames stopped, the reconnect count unchanged — and the
+`:8051` leg the same with `4.0s`. Because the server never sent a close frame, the client's `recv()` never
+raised and the liveness mixin never saw a dead peer. Nothing downstream can tell: `/api/state` kept
+`candidate_pool_status: Inactive` and `phase_started_at: ""` through a live candidate phase while cascor's
+own status showed both; in the browser `ws-metrics-buffer` `gen` stayed 0 and `ws-liveness-store` read
+`metrics_live: false` for the whole run, so the WS-primary append path never engaged and the REST poll
+(F-CANOPY-035's subject) was the store's only feeder. **This is why the 2026-09-08 growth windows could
+not verify F-CANOPY-036 or F-CANOPY-026 and why `ws-cascade-add-buffer` never advanced** (M-TOPOLOGY-16
+below). A relay whose liveness is "the socket has not raised" is not measuring liveness; the server's
+per-endpoint active-connection gauge (`cascor_ws_connections_active{endpoint="training"}`) is the number
+that told the truth. Evidence: `…_live_run_48.json` (`ws_metrics_gen` / `ws_metrics_live` /
+`canopy_state` per sample) and the two leg logs archived as `…_relay_summaries_8051_8052.txt`.
+
+### F-CANOPY-035 — the discriminating test, and what it did to the 09-07 chain
+
+The handoff's single named next action was to run the supersession test that already existed for
+F-CANOPY-039, pointed at the metrics store. That instrument is hard-wired to F-039's components, so
+`util/ad-hoc/2026-09-08_f035_supersession_test.py` is its sibling: same `setProps` idiom, same logic —
+baseline the contended regime, disable `fast-update-interval` (the writer's own trigger and the whole fast
+lane), let in-flight work drain, trigger once through `n_intervals`, watch. Run 1, `:8052` at `eb05021d`,
+fixture `COMPLETED` at 48 with 71 history rows, Candidate Metrics tab:
+
+| phase | store | wire |
+|---|---|---|
+| baseline, 30 s, contended | `0 → 0` | **39** responses naming the store, **every one carrying 71 rows**, 0 omitted |
+| tick disabled, 20 s settle | **`0 → 71` at 2.9 s** | 1 response, 71 rows — the last in-flight call, landing with nothing behind it |
+| one manual trigger, 60 s watch | `71`, unchanged | 0 responses (recorded, not interpreted — see below) |
+
+> **`APPLIED-UNCONTENDED`.** The write path works the moment nothing supersedes it, and the value
+> **stays** (no revert in 60 s). That is supersession's own prediction — the last call of a series lands
+> when no successor displaces it — observed end to end, with one `paths.strs` read per second and no other
+> instrument on the page. The mechanism named in the 09-07 handoff and then withdrawn to a hypothesis by
+> its Lane B review **now has a behavioural measurement behind it**, on a different fixture, a different
+> row count (71, not 500) and a different day. Replicate 2 is in the post-growth sequence below.
+
+**Replicate 2, same leg, eleven and a half hours later** (`read_at` 12:34:46Z then 00:17:25Z — the idle gap
+above, not "an hour of instruments"): baseline 40 responses × 71 rows, store 0; tick disabled → **store
+0 → 71 by the sampler's second reading** — nominally 2.9 s in both runs, but the sampler is a
+`wait_for_timeout(1000)` loop whose iterations cost ~1.5 s, so both fills land in one bucket rather than
+agreeing to the tenth — and the value held for the watch
+with, again, no request after the manual trigger. `APPLIED-UNCONTENDED` twice; n = 2, and the two agree
+exactly (`…_f035_supersession_run{1,2}.json`).
+
+Two honest limits. The manual `n_intervals` trigger after the settle produced **no request at all** — the
+store already held 71, so nothing distinguishes "the callback ran and `no_update`d" from "a `setProps` on
+a disabled Interval does not dispatch"; it is recorded and not read. And the test still does not name
+*which* renderer rule performs the supersession; it does establish that the fix belongs at the
+**trigger** (its own Interval, or clientside gating — never `FAST_UPDATE_INTERVAL_MS`, per the cautions
+already in this entry) and not in the handler.
+
+**The 09-07 lifecycle verdict is withdrawn to "non-discriminating".** The handoff's §11 asked for a real
+control. `util/ad-hoc/2026-09-07_f035_callback_lifecycle_probe.py --store network-visualizer-topology-store
+--tab "Network Topology" --window 90` — a store whose graph paints 48 nodes on this leg and whose value the
+dispatch probe saw dispatched — returned **the same `RETIRED-BEFORE-EXECUTION`**: 19 entries into
+`watched`, terminal bucket empty, `stored` holding 34 entries none of which names the store as an output.
+The 09-07 control had been set aside on a `hidden_units: 0` read taken on the Candidate Metrics tab, where
+the topology poll is tab-gated off; with the tab open the verdict does not change, so "never reaches a
+terminal list" is a property of the sampler, not of the store. It also perturbs what it measures — it
+`JSON.stringify`s every entry of every list on every Redux notify — and its own end-of-window read of the
+topology store came back at the mount default (`hidden_units: 0`), where a plain read
+(`2026-09-08_topology_store_dump.py`, no hook) showed the store filled ~15 s after the tab opened and the
+graph painted ~15 s after that. The F-035 entry above that rests on `state.callbacks` should be read as
+resting on the supersession test instead; the entry counts (23/26 per 90 s) remain a real observation of
+a real series, but they do not, on their own, separate a broken store from a working one.
+
+**The dispatch probe's control is positive.** `--store network-visualizer-topology-store` (a flag added
+today): **3 `Callbacks.Aggregate` dispatches carrying the store's value** in 60 s, independent read
+`hidden_units: 48`. So its zero against the metrics store is a measurement, not a structural blind spot —
+§11 item 1 closed **on the dispatch count, which is a direct observation**; the *verdict strings* are not.
+The rule scored the control `DISPATCHED-EMPTY` because it only understood list values; the rule now treats
+a non-null non-list value as carrying, and the re-run then scored the same data `APPLIED-THEN-LOST`. Both
+strings are artifacts of a rule that changed after the run — `-1` is the hook's sentinel for "a dict", not
+a measured length — so the archive holds two contradictory verdicts for one phenomenon and neither should
+be quoted. What is measured: 3 dispatches naming the store, independent read `hidden_units: 48`. A run
+under a rule fixed BEFORE it is still-owed item 6.
+
+### The replay block: driven, and dead in its own right
+
+`util/ad-hoc/2026-09-08_replay_block_redrive.py` drove M-METRICS-11..16 and -18 on the Training Metrics
+tab with the fixture `COMPLETED`, every prop read through `paths.strs`. The source reading first: all three
+replay callbacks compute `max_index = len(metrics_data) - 1 if metrics_data else 0` from
+`State(metrics-panel-metrics-store)` (`metrics_panel.py:1013/1060/1088`), so the *index* rows are
+downstream of F-CANOPY-035 — the "third face of F-CANOPY-027 or its own defect" question from segment 15
+has that half of its answer. But the play toggle and the speed buttons are data-independent, and **they did
+nothing either**:
+
+| control | before → after | requests in the 4 s window |
+|---|---|---|
+| ▶ play (M-METRICS-13) | `▶`, `disabled=True`, `mode=stopped` → identical | 40, of which 2 named replay |
+| ▶ again | identical | 49 / 2 |
+| 2x · 4x · 1x (M-METRICS-16) | `interval=1000` → `1000` each time | 51/3 · 43/2 · 48/3 |
+| step-forward · step-back · end · start (M-METRICS-14/-12/-15/-11) | `mode=stopped`, `current_index=0` → identical | 40–54 / 2–3 |
+| slider, handle focused, 10 × ArrowRight (M-METRICS-18) | `value` **0 → 10**, position `0 / 0` → `0 / 0` | 2 named replay |
+
+**F-CANOPY-048 — the replay controls never apply: `handle_replay_controls`' output is retired every time, including the data-independent play toggle and the speed buttons (P2, canopy repo, OPEN; found 2026-09-08; supersedes the BLOCKED reading of M-METRICS-11..16/-18).**
+Nine Inputs feed `handle_replay_controls`, one of them `replay-slider.value`; `update_replay_ui` rewrites
+`replay-slider.value` on **every** write of `metrics-panel-metrics-store` — the 1 Hz fast-lane rewrite that
+F-CANOPY-035 is about — and reads `replay-state` as an Input in turn. So the replay panel sits in a 1 Hz
+loop (`metrics-store` → `update_replay_ui` → `slider.value` → `handle_replay_controls` → `replay-state` →
+`update_replay_ui`), every invocation of the controls callback is displaced by the next tick's before its
+response applies, and a click's invocation is just one more casualty — the same class as F-035, one panel
+over. The slider's own `value` did change (a clientside prop write), which shows the click reached the
+component; what never landed was the server response. This is the segment-15 "zero wire output across 196
+responses" reading, now with the mechanism. Matrix: M-METRICS-11/-12/-13/-14/-15/-16 → **FAIL**
+(driven, no effect); M-METRICS-18 stays **BLOCKED** (its observable is the index, clamped by F-035).
+Evidence: `…_replay_block.json`.
+
+### M-TOPOLOGY-16 and the two growth windows, honestly
+
+`util/ad-hoc/2026-09-08_live_run_probe.py` watched both windows from three tabs at once. What it saw:
+server growth `40 → 43 → 44` and `44 → 45 → 48`; the stats bar following (`'0' → '44'`, `'0' → '44' →
+'48'`); **no `New Unit Glow` trace at any sample**; `metrics-panel-metrics-store` at length **0 at every
+sample of both runs, including during training**; `ws-cascade-add-buffer` `gen` **0 throughout**. The glow
+detector reads `hidden_units` deltas out of the metrics store (`network_visualizer.py:562-568`), and the
+2026-08-31 GLOWPROBE record above measured that store at 4 and 23 rows in the detector's own arguments on
+the trio — so an empty store here is **not** a structural rule about the detector; it is what this leg
+saw while the relay was dead (F-CANOPY-049: no WS metrics, no cascade-add frames) and the REST poll was
+being superseded (F-035). After these two windows M-TOPOLOGY-16 was **still BLOCKED**, its blocker
+re-attributed from "needs a live cascade-add" to **F-CASCOR-004 / F-CANOPY-049 upstream and F-CANOPY-035
+at the store** — a live cascade-add was produced twice and could not reach the detector. The third window,
+with the relay repaired, turned it **PASS** (below). The probe's per-sample cost on the topology tab was
+~22 s (every `evaluate` waits on a saturated main thread), so each window yielded three to six samples;
+that is enough to see growth and the absence of the glow, not enough to time anything.
+
+**M-CANDIDATES-09 stays FAIL and F-CANOPY-036 stays OPEN, unverified** — canopy's `/api/state` never
+carried a non-Inactive `candidate_pool_status` because the frames that carry it never arrived
+(F-CANOPY-049), so the server-side accumulator of canopy#536 had nothing to record. **F-CANOPY-026 stays
+OPEN, unsampled** — `phase_started_at` reaches canopy only over the same frames, and the phase-duration
+text is blank on an empty field. Both fixes are live in the served commits (cascor#594, canopy#534,
+canopy#536 — all merged 2026-08-28 and present at `d39d537` / `eb05021`); what is missing is a run with the
+relay alive, which is what F-CASCOR-004's fix makes possible — and which the third window below supplied:
+F-036 verified at the server, F-026 verified, M-CANDIDATES-09 still FAIL for a newly named reason
+(F-CANOPY-050).
+
+**The `cardsprobe` constructive fallback is obsolete since canopy#536.** `e2e_f027_redrive.py --step
+cardsprobe` pushed its shaped `candidate_pool_status: "Training"` payload through the training-state
+store's own `setProps` (`ok via memoizedProps.setProps`) and **no sibling consumer ever showed it** — badge
+`Inactive`, phase `Idle`, pool `0` at +12 s, exactly as before the fix. That is not F-036 recurring: #536
+made `fetch_training_state` rewrite `-training-state-store` from `/api/state` on every 1 Hz tick and feed
+`-pool-history-store` from the server's accumulator, so an injected client-side value is overwritten within
+a second and can no longer seed a card. The fallback that discharged M-CANDIDATES-10/-11's click test on
+2026-08-24 cannot do so on this build; those rows now need a **live** candidate phase reaching canopy's
+server — which is F-CASCOR-004's fix, not a driver change. Both stay **BLOCKED**.
+
+### F-CANOPY-038 re-measured, and the dataset block's real blocker
+
+`e2e_seg17_topology_driver.py --step storestorm` (the one-command re-measure the still-owed list named):
+**`metrics-panel-metrics-store` writes: 34 in 60 s (0.57/s); identical-to-previous: 33; no_update: 0.**
+The Stage-2 no-op-write rule is present in the topology handler (`_suppress_if_unchanged`, F-CANOPY-039's
+fix) and absent from `_update_metrics_store_handler`, which returns the fetched list every tick whether or
+not it equals the store's `State`. That is F-CANOPY-038 as filed, now with a number on this fixture, and it
+sits one inch from F-CANOPY-035: 33 byte-identical 71-row writes a minute are what re-fire every consumer
+of the store and displace each other. Note the interplay before assuming an identity guard alone would
+close F-035 — the guard compares against the store's server-side `State`, which is `[]` for as long as no
+write has ever landed, so it suppresses nothing until the first uncontended landing; the trigger-side fix
+is still the one that creates that landing. Evidence: `…_seg17_storestorm.json`.
+
+`e2e_seg16_dataset_driver.py --step seq` (M-DATASET-17..26) against the data leg brought up with the
+`equities` extra: `/v1/generators` now reports `equities` and `equities_seq` **`available: true`**, and
+every sequence control is present in the DOM — inside `dataset-plotter-seq-controls`, which is
+`display:none` because the loaded dataset is the 2-D spirals the fixture trains on. The rows need a
+sequence dataset **loaded**, and which arm loads it (the live `/api/stage_dataset` path, or the demo lane)
+is the owner question the 2026-09-07 handoff recorded as unanswered. So the block's blocker is no longer
+"the extra is missing" — that half is closed — and it stays **BLOCKED on the owner decision**, with the
+denominator expected to grow if the both-arms answer is chosen. Evidence: the step's transcript,
+`…_dataset_seq.txt`.
+
+### The verify leg, and two harness defects it hid
+
+**F-E2E-008 — the `:8052` verify leg ran with its control stream 403-looping from 2026-09-04 to 2026-09-08, and its pid file protected nothing (stack harness; FIXED in this PR).**
+Two independent faults in `util/ad-hoc/2026-09-04_canopy_verify_instance.bash`. (1) It presented its own
+port as `JUNIPER_CANOPY_CASCOR_WS_ORIGIN`, and cascor's control-WS allowlist held only the trio's `:8051`
+origin — `control_security: origin 'http://127.0.0.1:8052' not in allowlist — rejecting`, every 30 s,
+every leg. The control stream carries only hot `set_params` traffic, so the F-035 data paths were not
+affected, but the Parameters tab's hot-apply path was dead on every verify leg this arc stood up. (2) Its
+default run dir, `/tmp/juniper-canopy-verify`, is inside **neither** of the orphan reaper's protected
+roots (`reap_pytest_orphans.bash:88-103` scans `JUNIPER_EXP_RUN_ROOT` and `JUNIPER_E2E_RUN_DIR` only), so
+the "REAPER NOTE" in its own header was false and every verify leg was reapable. Fixed: the run dir defaults
+to `${JUNIPER_E2E_RUN_DIR:-/tmp/juniper-e2e}`, the presented origin is overridable, and
+`util/isolated_stack.bash` gained `JUNIPER_E2E_CASCOR_WS_EXTRA_ORIGINS` so the trio's cascor can admit a
+second canopy properly (pinned in `tests/test_isolated_stack_script.py`). Both legs now also stamp
+`JUNIPER_{CASCOR,CANOPY}_GIT_SHA` / `_BUILD_DATE` at launch, which the services report on `/v1/health`;
+`e2e_w3_params_driver.serving_commit()` reads it back into every driver's transcript.
+
+### The drop reproduced, the leg swapped, and one more growth window
+
+`util/ad-hoc/2026-09-08_cascor_ws_drop_probe.py` connects a raw `websockets` client to `/ws/training`, sits
+past the 5 s resume handshake (so it is promoted and receives the `connection_established` /
+`initial_metrics` burst), triggers `POST /v1/snapshots/snapshot_20260908T123427Z/resume` — a reload of the
+network the leg already holds, which calls `_broadcast_training_state(force=True)` and trains nothing —
+and watches for 45 s. The A/B, one process apart:
+
+| | leg | after the trigger | cascor's own count |
+|---|---|---|---|
+| **A** | the running leg: first #632 commit only, so the thirteen tunables are still NumPy scalars in memory | **no `state` frame**; one `ping` at +26 s; socket open; our `send` still succeeds | `WS emission summary … (0 active connections)` six seconds after the resume |
+| **B** | `2026-09-08_cascor_leg_swap.bash` onto the extended fix, then the same resume, then the same probe | **`state` frame received** (`STATE-RECEIVED`) | `/v1/metrics/transport`: `state: 8` sent, `send_failures: 0`, `active_connections: 3` (two canopy relays + the probe) |
+
+Two things this settles. The ping in A **is not a sign of life**: cascor's ping is sent by each handler's
+own task, which keeps running after `broadcast` has forgotten the socket, and the probe's first verdict
+rule read it as "indeterminate" for exactly that reason (the rule now reads `/v1/metrics/transport`'s
+`send_failures` / `active_connections` deltas, which is what the manager actually knows). And the state
+frame **does** serialise once the tunables are Python types — so #632's second commit removes the trigger
+that dropped both relays at training start, and F-CASCOR-004 is left with exactly what it says: a failed
+send is swallowed and the client forgotten rather than closed. The canopy relays reconnected to the new
+process on their own (the restart resets TCP, so `recv()` finally raised — the one path F-CANOPY-049 can
+see). Evidence: `…_ws_drop_A.json` / `…_ws_drop_B.json`, `…_leg_swap_B.txt`.
+
+**Window 3 — 48 → 52 with the relay alive.** The same three-tab probe, the same recipe (dataset re-staged,
+`PATCH max_hidden_units: 52`, `candidate_patience` 2000 for the window and 50 after), on the fixed leg with
+cascor's summaries reading **`2 active connections`** throughout (19:24:01 through 19:29:01) and, in the
+run's own minute, `candidate_progress=1065, cascade_add=8, event=2, metrics=14, ping=9, state=40,
+topology=2` — the archived log, `…_cascor_ws_summaries_window3.txt`. (An earlier draft quoted
+`2839 / 118 / 72` from a live read that was never captured; those numbers match no archived window and are
+withdrawn.) What changed, all at once:
+
+- canopy's **server** saw the pool: `/api/state` read `status: Started, phase: candidate,
+  candidate_pool_status: Training, candidate_pool_size: 8, phase_started_at: 2026-09-09T00:24:39…` mid-run,
+  and after the run `/api/v1/candidates/pool-history` held **four entries** (epochs 51–54: the first at
+  pool size 0 as the phase opened, then three at size 8 with top candidate ids 3 / 4 / 3 and scores
+  0.259 / 0.167 / 0.146) — **F-CANOPY-036's fix works at the server** once the frames arrive.
+- the browser's `metrics-panel-metrics-store` **advanced during training: 53 → 59 → 63**, on the topology
+  page. **Which writer moved it is NOT established, and the "F-035 is the REST-poll regime's defect"
+  reframe an earlier draft built on it is WITHDRAWN** (round-1 validation). Both writers were live:
+  `ws-metrics-buffer` `gen` went 3 → 5 → 9, and `ws_liveness_store.metrics_live` read **`False` at four of
+  the five samples** — and the poll is demoted only while that flag is true, so the REST poll was the
+  un-demoted owner across the very interval (59 → 63) the draft credited to the WS appender. The store also
+  plateaus at 63 while cascor's own history reached 66. Two writers, one Output, nothing in the artifact
+  attributing an increment to either. What survives: the store is **not** frozen at 0 during a live run
+  with the relay up, which is what the 2026-08-31 GLOWPROBE also saw (4 and 23 rows in the detector's
+  arguments, live). Separating the writers needs a run with one of them disabled.
+- **the glow fired.** Server growth `48 → 50 → 52`; at t=89 s the graph carried the `New Unit Edges`
+  highlight traces (one per input edge of the new unit) and the new unit itself ringed at the top of the
+  layout — `shots/2026-09-08_live52_glow_first_seen.png`, stats bar 52 hidden / 1538 connections.
+  **M-TOPOLOGY-16 → PASS** for the *active* half of its contract (detected and highlighted, on a real
+  cascade-add). Three limits on that PASS, all on the row: the active → fading transition on selecting
+  another node was **not driven**; the glow was **first observed at t=89.1 s, 18.8 s AFTER the run reached
+  `COMPLETED`**, and the tab's sampler period is 19–27 s, so an earlier onset is neither shown nor
+  excluded; and the screenshot behind it reads `Status: Stopped` / `WS: Reconnecting`. The row's contract
+  also calls the glow "time-based", and nothing about its timing was measured.
+- **the Candidate Metrics tab rendered none of it — and round-1 validation showed the run cannot say
+  why.** Five samples, one mid-candidate-phase: history cards **0**, `-pool-history-store` **0**, badge
+  **`Inactive`** at every one, while canopy's own `/api/state` read `Training` / pool 8 in the same sample.
+  An earlier draft called the panel's feeder "demonstrably invoked" because "its server side is what
+  appends to the accumulator". **That is false.** `_fetch_pool_history` is a plain GET of
+  `/api/v1/candidates/pool-history`, and that route is a pure read of `get_pool_history()`; the accumulator
+  is written by `training_monitor._record_pool_snapshot_locked`, off canopy's **WS state ingestion**. The
+  four entries therefore say nothing about whether the browser callback ever ran — and it very likely did
+  not, because the page was **not on the Candidate Metrics tab**: see F-CANOPY-051. What is left is the
+  F-035 / F-048 signature, one panel over, filed below as **F-CANOPY-050**. F-CANOPY-036's fix holds at
+  the server, and the click test (M-CANDIDATES-10/-11) still has no card to click. Three victims of one
+  class now sit in three panels; the topology store escapes only because its poll is 5 s.
+- **F-CANOPY-026's UTC-offset inflation is gone.** Mid-candidate-phase the phase-duration text read
+  **`0m 18s`**, later `0m 49s`, and it settled at **`0m 59s`** after the run — against a
+  `phase_started_at` that now arrives tz-aware (`2026-09-09T00:24:39.406962+00:00`) and a phase that ran
+  about a minute. The pre-fix defect printed *300 minutes* on a 37-second run. The probe's own rule scored
+  it `STILL-OPEN` (deltas −22.6 … −55.8 s against a 20 s tolerance), and that rule is not the finding's
+  contract: its oracle subtraction runs at the *end* of each ~25 s sample, after the topology page's
+  blocking evaluate, while the text is read mid-sample, so 10–20 s of every delta is the probe's own skew;
+  and its two post-`COMPLETED` pairs compare a frozen readout with a still-running clock, which are not
+  pairs at all. What remains after the skew is a display that trails the phase clock by some 10–25 s
+  mid-run and stops at a value consistent with the phase's real length — the renderer-contention class
+  again, not the offset. **FIXED for what the finding names** (cascor#594 + canopy#534, verified live);
+  the trailing display is recorded as an observation, not root-caused and not closed.
+- **a side observation, recorded and not chased:** `ws-liveness-store.metrics_live` read `False` at every
+  sample after the first while `ws-metrics-buffer`'s `gen` advanced 3 → 5 → 9 and the metrics store grew —
+  the liveness flag and the stream it describes disagreed in the *other* direction from F-CANOPY-049.
+  Whatever that flag reads, it is not frame arrival.
+
+The fixture is now **2/52/2/1538** — grown, never rebuilt, uuid `1cd15120…` throughout — and snapshotted as
+**`snapshot_20260909T002658Z`**. Evidence: `…_live_run_52.json` / `.txt`, `…_relay_repair_sequence.txt`,
+`shots/2026-09-08_live52_{glow_first_seen,candidates_end,metrics_end}.png`.
+
+**F-CANOPY-050 — WITHDRAWN THE DAY IT WAS FILED (2026-09-08 → 2026-09-09). The Candidate Metrics panel rendered nothing through a live candidate phase, but the run cannot distinguish "the 1 Hz feeder's response never lands" from "the feeder never ran because the page was on another tab" (was P2, canopy repo; filed 2026-09-08, WITHDRAWN 2026-09-09 by round-1 validation; superseded by F-CANOPY-051).**
+**The observation stands**: five samples of window 3, history cards **0**, `-pool-history-store` **0**,
+badge **`Inactive`**, against `/api/state` reading `Training` / pool 8 at the same instant
+(`…_live_run_52.json`, the t=43 s sample).
+
+**The attribution does not.** It was filed as the third instance of the F-CANOPY-035 class on one stated
+proof — that `fetch_training_state`'s server side appends to the pool-history accumulator, so the four
+accumulated entries proved the callback had run. Round-1 validation refuted that at source:
+`_fetch_pool_history` GETs `/api/v1/candidates/pool-history`, whose route is a pure read; the accumulator
+is written by `training_monitor._record_pool_snapshot_locked` from canopy's WS state ingestion, with no
+browser involvement at all. And the benign alternative is not merely open — it is **positively supported**:
+`fetch_training_state` returns `(no_update, no_update)` when `active_tab != "candidates"`, its interval is
+client-gated to that tab, and the run's own archived screenshot named as this entry's evidence
+(`shots/2026-09-08_live52_candidates_end.png`) shows the **Network Topology** tab. F-CANOPY-051 then
+demonstrated the mechanism that put it there.
+
+**What is owed before re-filing**: one growth window driven **one tab at a time**, or three pages in three
+*separate browser contexts*, with each page's own `active_tab` recorded in the artifact. The row it was
+minted for, M-CANDIDATES-09, was already FAIL on its own long history and stays FAIL — with **no cause
+established by this run**. Kept as a withdrawn entry rather than deleted, because the observation is real
+and the next attempt must not re-derive the same false proof.
+
+**F-CANOPY-051 — canopy's persisted active tab is browser-GLOBAL, so one page's tab selection silently moves every other page on the same browser: a multi-page probe measures whichever tab was selected LAST (P2/P3, canopy repo, OPEN; found 2026-09-09 while validating this phase).**
+canopy persists the active tab in `layout-state-store`, a `dcc.Store(storage_type="local")`, and a
+clientside callback drives `Output("visualization-tabs", "active_tab")` from `Input("layout-state-store",
+"data")` behind an equality guard. `storage_type="local"` is **localStorage**, which every page of one
+origin shares, and `dcc.Store` propagates a cross-page `storage` event — so page B selecting a tab rewrites
+page A's store, A's guard sees a difference, and A switches. Measured, not inferred
+(`util/ad-hoc/2026-09-09_tab_crosstalk_probe.py`): page A selects Candidate Metrics and reads
+`active_tab: "candidates"`; page B then selects Network Topology; 14 s later **A reads
+`active_tab: "topology"`**. `CROSSTALK` on both legs — the `:8052` worktree build at `eb05021d` that every
+window-3 instrument drove, and the `:8051` trio at 0.4.0 (`…_tab_crosstalk_8052.json`, `…_8051.json`).
+
+**Why it matters beyond the tab.** Every per-tab poll lane in canopy gates on `active_tab`, so a page that
+drifts stops driving the lane its operator believes it is driving — silently, with the components still in
+the DOM and still readable at their mount defaults. That is exactly the reading window 3 produced for the
+Candidate Metrics panel, and it is why **F-CANOPY-050 is withdrawn** and why
+`util/ad-hoc/2026-09-08_live_run_probe.py`'s three-page design is unsound as written: it opens three pages
+on ONE Playwright context, so at most the last one selected is on the tab it thinks it is. The probe also
+never verified `page_c`'s tab (it discards `open_tab`'s return) and its four end-of-run screenshots are
+**two** distinct images — `candidates_end` byte-identical to `metrics_end`, `glow_first_seen` to
+`topology_end`, all four showing the topology tab.
+
+**Whether it is a product defect is a judgement the arc should not make alone.** Cross-tab persistence of a
+layout preference is a defensible feature; *live* propagation into an open second page, mid-session, is
+the part that surprises. For the arc it is unambiguously a **harness hazard**, and it is recorded as one.
+Fix for the instruments: one browser context per page (`browser.new_context()`), or drive one tab at a
+time. Evidence: `…_tab_crosstalk_8052.json`, `…_tab_crosstalk_8051.json`.
+
+### Round-1 consensus validation: what it refuted
+
+This phase was validated before it was committed, per
+`notes/JUNIPER_2026-08-30_JUNIPER-ECOSYSTEM_INDEPENDENT-AGENT-CONSENSUS-PROCEDURE.md` §3 — three Lane A
+readers at distinct entry points (the handoff; the raw artifacts; the code and tests) and two Lane B
+opposing briefs (that the record overstates closure; that its mechanism claims would mislead). **It failed
+round 1**, and the failures are worth more than the passes:
+
+| refuted / downgraded | was | is |
+|---|---|---|
+| F-CANOPY-050's proof of invocation | "its server side appends to the accumulator" | false at source; entry **withdrawn** |
+| F-CANOPY-035's mechanism | "supersession, MEASURED" | fast-lane contention; supersession vs promotion starvation **not separated** |
+| the store's growth in window 3 | "the WS append path lands" | writer **unattributed**; `metrics_live` false at 4 of 5 samples |
+| F-CANOPY-049's mechanism | "the socket never raised, so liveness never saw a dead peer" | the relay **synthesises** activity from cascor's pings every 30 s |
+| F-CANOPY-048's mechanism | a 1 Hz value-rewrite loop | a **claimed-Input promotion block**; the store never wrote during the run |
+| the drop probe's verdict | `DROPPED-SILENT` | the artifact says `INDETERMINATE`; the counters came from cascor's log |
+| still-owed item 7 | "closed" | **open**: a dirty tree defeats the stamp, and no artifact names the cascor leg |
+| four cited numbers | quoted live | now archived (`…_endpoint_evidence.txt`, `…_cascor_ws_summaries_window3.txt`) |
+
+What survived every lane: the F-035 falsification branches (only two callbacks Output that store, neither
+can blank it, `omitted: 0`, and a second observable — the loss figure's trace count — moved 0 → 1 with the
+fill); F-CASCOR-004's source reading and its millisecond-exact drop timeline; the replay-block request
+census; storestorm's 34 / 33 / 0; M-TOPOLOGY-16's 55 + 1 traces; and every count, snapshot id, uuid and
+file inventory in the phase.
+
+### Matrix effect, counts, and what is still owed
+
+Matrix: **M-METRICS-11/-12/-13/-14/-15/-16 BLOCKED → FAIL** (F-CANOPY-048); M-METRICS-18 stays BLOCKED (index clamped by
+F-035, controls retired by F-048); **M-TOPOLOGY-16 BLOCKED → PASS** (active half only, window 3, with the three limits above);
+M-CANDIDATES-09 stays FAIL **with no cause established by this run** (F-036 is fixed at the server, F-050 is withdrawn, and
+F-051 says the page was probably on the wrong tab); M-CANDIDATES-10/-11 stay BLOCKED (no card to click); M-DATASET-17..26 stay
+BLOCKED on the owner's arm decision (the extra is no longer the blocker). Run dir `reports/e2e/20260908T000000Z/`;
+`CURRENT_RUN_ID` bumped. **BLOCKED cells: 28 → 21** — count them with a pattern that also catches the annotated form, because
+C2.10-03 reads `BLOCKED (F-CANOPY-025)` and a bare `| BLOCKED |` grep misses it and reports 27 → 20.
+
+Findings: filed F-CASCOR-003 (FIXED, cascor#632), F-CASCOR-004, F-CANOPY-048, F-CANOPY-049, F-CANOPY-050 (all OPEN) and
+F-E2E-008 (FIXED); F-CANOPY-026 and F-CANOPY-036 → FIXED by live verification. Ledger after this phase (`e2e_finding_triage.py`):
+**61 findings — 41 fixed / 1 accepted / 1 withdrawn / 18 open (0 P0, 4 P1, 14 P2)**; the 2026-09-05 state was 55 / 37 / 1 / 1 / 16.
+The one new P1 that is open is F-CASCOR-004; the other three open P1s are unchanged from 09-05.
+
+Still owed, in order: (1) the F-CANOPY-035 fix at the trigger — two named victims (F-035, F-048), with
+`2026-09-08_f035_supersession_test.py`'s baseline as the before/after; before that fix is designed, **one run that separates
+supersession from fast-lane promotion starvation**, since disabling the Interval removes all ten fast-lane callbacks at once.
+(2) F-CASCOR-004 (log the send failure, **close** the dropped client) and F-CANOPY-049 — whose fix is NOT "a rule that reads
+frame arrival", because the relay already has a 60 s stale rule and defeats it by synthesising activity from cascor's pings
+every 30 s; the fix must distinguish a heartbeat from a payload without re-breaking the idle-stream case that call was added
+for. (3) A growth window driven **one tab at a time** (or one browser context per page), recording each page's own
+`active_tab`: that is what M-CANDIDATES-09/-10/-11 need, and what a re-filed F-050 would need. (4) F-CANOPY-048's promotion
+block. (5) The owner's arm decision for M-DATASET-17..26. (6) A dispatch-probe control run under a rule fixed before it.
+(7) F-CANOPY-038's identity guard, noting it suppresses nothing until a first write lands. (8) Still-owed item 7 re-opened:
+both legs' commits in every artifact, and a dirty-tree tell beside the sha. (9) The fade half of M-TOPOLOGY-16.
+
+Every artifact of this phase carries **canopy's** serving commit; item 7 is **not** closed (see the correction at the top of
+this phase — the cascor leg's stamp names a commit that is not what ran, and no browser artifact names cascor at all).
+Evidence for this phase:
+`reports/e2e-canopy-2026-09-02/transcripts/2026-09-08_*` and `…/shots/2026-09-08_*`; run dir `reports/e2e/20260908T000000Z/`.

@@ -1,0 +1,25 @@
+post-growth sequence start 2026-09-09T00:06:31Z against http://127.0.0.1:8052
+=== storestorm  (00:06:31Z) ===
+    rc=0 in 98s -> /tmp/juniper-e2e/storestorm.log
+    [t=  98412ms] results -> /tmp/juniper-e2e/seg17_storestorm.json
+=== dataset_seq  (00:08:09Z) ===
+    rc=0 in 48s -> /tmp/juniper-e2e/dataset_seq.log
+=== cardsprobe  (00:08:57Z) ===
+    rc=0 in 145s -> /tmp/juniper-e2e/cardsprobe.log
+=== f035_redrive  (00:11:22Z) ===
+    rc=0 in 139s -> /tmp/juniper-e2e/f035_redrive.log
+    [t=  91874ms]   ws-metrics-buffer AFTER: gen 0 -> 0  => ws appender fired: False
+    [t= 139189ms] results -> /tmp/juniper-e2e/f035_redrive_2026-09-08.json
+=== dispatch_control  (00:13:41Z) ===
+    rc=0 in 93s -> /tmp/juniper-e2e/dispatch_control.log
+    [t=  92765ms]   => VERDICT: APPLIED-THEN-LOST
+    [t=  92765ms] results -> /tmp/juniper-e2e/f035_renderer_CONTROL_topology-store_v2.json
+=== lifecycle_subject  (00:15:14Z) ===
+    rc=0 in 131s -> /tmp/juniper-e2e/lifecycle_subject.log
+    [t= 130589ms]   => VERDICT: RETIRED-BEFORE-EXECUTION
+    [t= 130589ms] results -> /tmp/juniper-e2e/f035_lifecycle_subject_2026-09-08.json
+=== supersession_run2  (00:17:25Z) ===
+    rc=0 in 215s -> /tmp/juniper-e2e/supersession_run2.log
+    [t= 215682ms]   => VERDICT: APPLIED-UNCONTENDED
+    [t= 215682ms] results -> /tmp/juniper-e2e/f035_supersession_run2.json
+post-growth sequence end 2026-09-09T00:21:00Z

@@ -1,0 +1,17 @@
+served tree : /home/pcalnon/Development/python/Juniper/worktrees/juniper-cascor--fix--snapshot-restore-seed-numpy-scalar--20260908-0725--d39d5370
+merge commit: 5eb6f14497b332b0c7d473aba557a5b6d8d5f8a6
+the sha /v1/health reports (d39d537e985b…) is: 'deps: bump readme-renderer from 45.0 to 46.0 (#628)'
+
+MATCH   src/snapshots/snapshot_common.py
+         served 57af718a197c8677abe62022b86748c872d22b51200b631abe5e8188bf5f5a77
+         merged 57af718a197c8677abe62022b86748c872d22b51200b631abe5e8188bf5f5a77
+MATCH   src/snapshots/snapshot_serializer.py
+         served db83d35ae5d0bd8ec0bb791b0fea1c93166b3a869a4e2f408e9f36664886575b
+         merged db83d35ae5d0bd8ec0bb791b0fea1c93166b3a869a4e2f408e9f36664886575b
+MATCH   src/tests/unit/test_snapshot_serializer.py
+         served c8048a93149cf0136cc0e008a0e72dd92633ff41310d7bc198f7f3c98b022edc
+         merged c8048a93149cf0136cc0e008a0e72dd92633ff41310d7bc198f7f3c98b022edc
+
+VERDICT: the running leg's fix files are BYTE-IDENTICAL to what merged in #632.
+         The /v1/health git_sha does NOT prove this and names a commit without the fix;
+         this content comparison is the provenance record for window 3.

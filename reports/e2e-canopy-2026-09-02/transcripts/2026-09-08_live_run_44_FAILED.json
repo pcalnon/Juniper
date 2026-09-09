@@ -1,0 +1,218 @@
+{
+  "canopy": "http://127.0.0.1:8052",
+  "cascor": "http://127.0.0.1:8202",
+  "serving": {
+    "ok": true,
+    "canopy": "http://127.0.0.1:8052",
+    "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded",
+    "build_date": "2026-09-08T12:12:17Z",
+    "version": "0.6.0",
+    "read_at": "2026-09-08T12:16:34Z"
+  },
+  "started_at": "2026-09-08T12:16:34Z",
+  "start_hidden": 40,
+  "samples": [
+    {
+      "t": 0.0,
+      "cascor": {
+        "ok": true,
+        "fsm": "STARTED",
+        "phase": "Output",
+        "status": "Started",
+        "phase_started_at": "2026-09-08T12:17:27.089078+00:00",
+        "hidden": 0,
+        "epoch": 41,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 0
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "",
+      "dom_hidden": "0",
+      "glow": {
+        "present": true,
+        "n_traces": 0,
+        "glow": []
+      },
+      "buffer_gen": 0,
+      "metrics_store_len": 0
+    },
+    {
+      "t": 22.5,
+      "cascor": {
+        "ok": true,
+        "fsm": "FAILED",
+        "phase": "Idle",
+        "status": "Failed",
+        "phase_started_at": "2026-09-08T12:17:27.089078+00:00",
+        "hidden": 40,
+        "epoch": 41,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 0
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "",
+      "dom_hidden": "0",
+      "glow": {
+        "present": true,
+        "n_traces": 1891,
+        "glow": []
+      },
+      "buffer_gen": 0,
+      "metrics_store_len": 0
+    },
+    {
+      "t": 40.3,
+      "cascor": {
+        "ok": true,
+        "fsm": "FAILED",
+        "phase": "Idle",
+        "status": "Failed",
+        "phase_started_at": "2026-09-08T12:17:27.089078+00:00",
+        "hidden": 40,
+        "epoch": 41,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 0
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "",
+      "dom_hidden": "40",
+      "glow": {
+        "present": true,
+        "n_traces": 1891,
+        "glow": []
+      },
+      "buffer_gen": 0,
+      "metrics_store_len": 0
+    },
+    {
+      "t": 53.7,
+      "cascor": {
+        "ok": true,
+        "fsm": "FAILED",
+        "phase": "Idle",
+        "status": "Failed",
+        "phase_started_at": "2026-09-08T12:17:27.089078+00:00",
+        "hidden": 40,
+        "epoch": 41,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 0
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "",
+      "dom_hidden": "40",
+      "glow": {
+        "present": true,
+        "n_traces": 1891,
+        "glow": []
+      },
+      "buffer_gen": 0,
+      "metrics_store_len": 0
+    },
+    {
+      "t": 67.3,
+      "cascor": {
+        "ok": true,
+        "fsm": "FAILED",
+        "phase": "Idle",
+        "status": "Failed",
+        "phase_started_at": "2026-09-08T12:17:27.089078+00:00",
+        "hidden": 40,
+        "epoch": 41,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 0
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "",
+      "dom_hidden": "40",
+      "glow": {
+        "present": true,
+        "n_traces": 1891,
+        "glow": []
+      },
+      "buffer_gen": 0,
+      "metrics_store_len": 0
+    }
+  ],
+  "events": [
+    {
+      "t": 0.0,
+      "what": "fsm None -> STARTED"
+    },
+    {
+      "t": 0.0,
+      "what": "phase None -> Output"
+    },
+    {
+      "t": 22.5,
+      "what": "fsm STARTED -> FAILED"
+    },
+    {
+      "t": 22.5,
+      "what": "phase Output -> Idle"
+    }
+  ],
+  "f026_samples": [],
+  "glow_first_seen": null,
+  "cards_first_seen": null,
+  "server_growth": [],
+  "dom_growth": [
+    {
+      "t": 0.0,
+      "hidden": "0"
+    },
+    {
+      "t": 40.3,
+      "hidden": "40"
+    }
+  ],
+  "store_len_seq": [
+    {
+      "t": 0.0,
+      "from": null,
+      "to": 0
+    }
+  ],
+  "start_response": {
+    "http": 200,
+    "body": "{\"status\":\"success\",\"data\":{\"status\":\"training_started\",\"timestamp\":1788869847.0885837},\"meta\":{\"timestamp\":1788869847.0886145,\"version\":\"0.6.0\"}}"
+  },
+  "end_hidden": 40,
+  "end_status": {
+    "ok": true,
+    "fsm": "FAILED",
+    "phase": "Idle",
+    "status": "Failed",
+    "phase_started_at": "2026-09-08T12:17:27.089078+00:00",
+    "hidden": 40,
+    "epoch": 41,
+    "cand_epoch": 0,
+    "cand_total": 0,
+    "candidates_trained": 0
+  },
+  "end_cards": 0,
+  "header_click": {
+    "attempted": false
+  },
+  "verdicts": {
+    "M-CANDIDATES-09": "BLOCKED (no candidate phase observed)",
+    "M-CANDIDATES-10": "BLOCKED (no card to click)",
+    "M-CANDIDATES-11": "BLOCKED (no card to click)",
+    "F-CANOPY-026": "NOT-SAMPLED (no mid-run pair)",
+    "M-TOPOLOGY-16": "BLOCKED (the server never grew during the window)"
+  }
+}

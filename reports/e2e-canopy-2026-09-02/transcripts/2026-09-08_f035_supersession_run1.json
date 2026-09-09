@@ -1,0 +1,132 @@
+{
+  "canopy": "http://127.0.0.1:8052",
+  "serving": {
+    "ok": true,
+    "canopy": "http://127.0.0.1:8052",
+    "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded",
+    "build_date": "2026-09-08T12:12:17Z",
+    "version": "0.6.0",
+    "read_at": "2026-09-08T12:34:46Z"
+  },
+  "store": "metrics-panel-metrics-store",
+  "interval": "fast-update-interval",
+  "args": {
+    "baseline": 30.0,
+    "settle": 20.0,
+    "watch": 60.0,
+    "tab": "Candidate Metrics"
+  },
+  "phases": {
+    "baseline": {
+      "seconds": 30.0,
+      "store_before": 0,
+      "store_after": 0,
+      "store_seq": [
+        [
+          0.0,
+          0
+        ]
+      ],
+      "responses_naming_store": 39,
+      "wrote": [
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71,
+        71
+      ],
+      "omitted": 0,
+      "console": [],
+      "n_intervals": 58,
+      "loss_fig_traces": 0
+    },
+    "disable": {
+      "ok": true,
+      "via": "memoizedProps.setProps",
+      "hops": 510
+    },
+    "settle": {
+      "seconds": 20.0,
+      "store_seq": [
+        [
+          0.0,
+          0
+        ],
+        [
+          2.9,
+          71
+        ]
+      ],
+      "n_intervals_start": 59,
+      "n_intervals_end": 59,
+      "tick_stopped": true,
+      "responses_naming_store": 1,
+      "wrote": [
+        71
+      ]
+    },
+    "trigger": {
+      "setprops": {
+        "ok": true,
+        "via": "memoizedProps.setProps",
+        "hops": 510
+      },
+      "n_intervals": 60
+    },
+    "watch": {
+      "seconds": 60.0,
+      "store_seq": [
+        [
+          0.0,
+          71
+        ]
+      ],
+      "applied_at_s": null,
+      "responses_naming_store": 0,
+      "events": [],
+      "wrote": [],
+      "console_after_trigger": [],
+      "n_intervals_end": 60,
+      "loss_fig_traces": 1,
+      "independent_read": 71
+    }
+  },
+  "result": {
+    "verdict": "APPLIED-UNCONTENDED",
+    "why": "the store advanced to a non-empty length during settle, before any new trigger, with the fast lane disabled and at most one call in flight. The write path works when nothing supersedes it: SUPERSESSION is the mechanism, and the fix belongs at the trigger (its own Interval, or clientside gating), not in the handler."
+  }
+}

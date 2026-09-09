@@ -1,0 +1,88 @@
+{
+  "cascor": "http://127.0.0.1:8202",
+  "ws_url": "ws://127.0.0.1:8202/ws/training",
+  "snapshot": "snapshot_20260908T123427Z",
+  "frames_before": [
+    {
+      "t": 0.0,
+      "type": "connection_established"
+    },
+    {
+      "t": 5.0,
+      "type": "initial_status"
+    },
+    {
+      "t": 5.0,
+      "type": "state"
+    },
+    {
+      "t": 5.0,
+      "type": "initial_metrics"
+    }
+  ],
+  "frames_after": [
+    {
+      "t": 0.44,
+      "type": "state"
+    },
+    {
+      "t": 26.0,
+      "type": "ping"
+    }
+  ],
+  "close": null,
+  "cascor_git_sha": "d39d537e985ba329290142c123f576b4ece9dba3",
+  "trigger": {
+    "http": 200,
+    "body": {
+      "status": "success",
+      "data": {
+        "snapshot_id": "snapshot_20260908T123427Z",
+        "operation": "resume",
+        "fsm_state": "RESUME_READY",
+        "time_index": {
+          "default": "end",
+          "snapshot_window": {
+            "start_epoch": 0,
+            "end_epoch": 51
+          }
+        },
+        "training_params": {
+          "learning_rate": 0.01,
+          "candidate_learning_rate": 0.005,
+          "max_hidden_units": 48,
+          "epochs_max": 145225,
+          "max_iterations": 1000,
+          "patience": 50,
+          "candidate_pool_size": 8,
+          "correlation_threshold": 0.01,
+          "convergence_threshold": 0.001,
+          "candidate_patience": 50,
+          "candidate_convergence_threshold": 0.001,
+          "candidate_epochs": 3000,
+          "output_epochs": 25,
+          "init_output_weights": "zero",
+          "optimizer_type": "Adam",
+          "activation_function_name": "Tanh",
+          "auto_snap_best": false,
+          "auto_snap_min_epochs": 50,
+          "multi_candidate": false,
+          "candidate_selection": "top",
+          "selected_candidates": 1,
+          "top_candidates": 1,
+          "random_candidates": 0
+        },
+        "status": "ready",
+        "resume_point_epoch": 51
+      },
+      "meta": {
+        "timestamp": 1788913365.9371426,
+        "version": "0.6.0"
+      }
+    }
+  },
+  "socket_open_at_end": true,
+  "send_after_trigger_ok": true,
+  "verdict": "STATE-RECEIVED",
+  "why": "frames after the trigger: ['state', 'ping']. No drop on this transition."
+}

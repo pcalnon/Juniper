@@ -1,0 +1,334 @@
+{
+  "canopy": "http://127.0.0.1:8052",
+  "cascor": "http://127.0.0.1:8202",
+  "serving": {
+    "ok": true,
+    "canopy": "http://127.0.0.1:8052",
+    "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded",
+    "build_date": "2026-09-08T12:12:17Z",
+    "version": "0.6.0",
+    "read_at": "2026-09-08T12:31:22Z"
+  },
+  "started_at": "2026-09-08T12:31:22Z",
+  "start_hidden": 44,
+  "samples": [
+    {
+      "t": 0.0,
+      "cascor": {
+        "ok": true,
+        "fsm": "STARTED",
+        "phase": "Output",
+        "status": "Started",
+        "phase_started_at": "2026-09-08T12:32:13.255520+00:00",
+        "hidden": 44,
+        "epoch": 46,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 8
+      },
+      "canopy_state": {
+        "status": "Started",
+        "phase": "output",
+        "candidate_pool_status": "Inactive",
+        "candidate_pool_phase": "Idle",
+        "candidate_pool_size": 0,
+        "phase_started_at": "",
+        "current_epoch": 0,
+        "is_running": null
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "",
+      "dom_hidden": "0",
+      "glow": {
+        "present": true,
+        "n_traces": 0,
+        "glow": []
+      },
+      "buffer_gen": 0,
+      "metrics_store_len": 0,
+      "ws_metrics_gen": 0,
+      "ws_metrics_live": false
+    },
+    {
+      "t": 24.1,
+      "cascor": {
+        "ok": true,
+        "fsm": "STARTED",
+        "phase": "Candidate",
+        "status": "Started",
+        "phase_started_at": "2026-09-08T12:32:32.986817+00:00",
+        "hidden": 45,
+        "epoch": 47,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 8
+      },
+      "canopy_state": {
+        "status": "Started",
+        "phase": "candidate",
+        "candidate_pool_status": "Inactive",
+        "candidate_pool_phase": "Idle",
+        "candidate_pool_size": 0,
+        "phase_started_at": "",
+        "current_epoch": 47,
+        "is_running": null
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "",
+      "dom_hidden": "44",
+      "glow": {
+        "present": true,
+        "n_traces": 2255,
+        "glow": []
+      },
+      "buffer_gen": 0,
+      "metrics_store_len": 0,
+      "ws_metrics_gen": 0,
+      "ws_metrics_live": false
+    },
+    {
+      "t": 46.2,
+      "cascor": {
+        "ok": true,
+        "fsm": "COMPLETED",
+        "phase": "Idle",
+        "status": "Completed",
+        "phase_started_at": "2026-09-08T12:32:32.986817+00:00",
+        "hidden": 48,
+        "epoch": 51,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 8
+      },
+      "canopy_state": {
+        "status": "Completed",
+        "phase": "output",
+        "candidate_pool_status": "Inactive",
+        "candidate_pool_phase": "Idle",
+        "candidate_pool_size": 0,
+        "phase_started_at": "",
+        "current_epoch": 51,
+        "is_running": null
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "",
+      "dom_hidden": "48",
+      "glow": {
+        "present": true,
+        "n_traces": 2651,
+        "glow": []
+      },
+      "buffer_gen": 0,
+      "metrics_store_len": 0,
+      "ws_metrics_gen": 0,
+      "ws_metrics_live": false
+    },
+    {
+      "t": 67.7,
+      "cascor": {
+        "ok": true,
+        "fsm": "COMPLETED",
+        "phase": "Idle",
+        "status": "Completed",
+        "phase_started_at": "2026-09-08T12:32:32.986817+00:00",
+        "hidden": 48,
+        "epoch": 51,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 8
+      },
+      "canopy_state": {
+        "status": "Completed",
+        "phase": "output",
+        "candidate_pool_status": "Inactive",
+        "candidate_pool_phase": "Idle",
+        "candidate_pool_size": 0,
+        "phase_started_at": "",
+        "current_epoch": 51,
+        "is_running": null
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "",
+      "dom_hidden": "48",
+      "glow": {
+        "present": true,
+        "n_traces": 2651,
+        "glow": []
+      },
+      "buffer_gen": 0,
+      "metrics_store_len": 0,
+      "ws_metrics_gen": 0,
+      "ws_metrics_live": false
+    },
+    {
+      "t": 83.1,
+      "cascor": {
+        "ok": true,
+        "fsm": "COMPLETED",
+        "phase": "Idle",
+        "status": "Completed",
+        "phase_started_at": "2026-09-08T12:32:32.986817+00:00",
+        "hidden": 48,
+        "epoch": 51,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 8
+      },
+      "canopy_state": {
+        "status": "Completed",
+        "phase": "output",
+        "candidate_pool_status": "Inactive",
+        "candidate_pool_phase": "Idle",
+        "candidate_pool_size": 0,
+        "phase_started_at": "",
+        "current_epoch": 51,
+        "is_running": null
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "",
+      "dom_hidden": "48",
+      "glow": {
+        "present": true,
+        "n_traces": 2651,
+        "glow": []
+      },
+      "buffer_gen": 0,
+      "metrics_store_len": 0,
+      "ws_metrics_gen": 0,
+      "ws_metrics_live": false
+    },
+    {
+      "t": 100.3,
+      "cascor": {
+        "ok": true,
+        "fsm": "COMPLETED",
+        "phase": "Idle",
+        "status": "Completed",
+        "phase_started_at": "2026-09-08T12:32:32.986817+00:00",
+        "hidden": 48,
+        "epoch": 51,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 8
+      },
+      "canopy_state": {
+        "status": "Completed",
+        "phase": "output",
+        "candidate_pool_status": "Inactive",
+        "candidate_pool_phase": "Idle",
+        "candidate_pool_size": 0,
+        "phase_started_at": "",
+        "current_epoch": 51,
+        "is_running": null
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "",
+      "dom_hidden": "48",
+      "glow": {
+        "present": true,
+        "n_traces": 2651,
+        "glow": []
+      },
+      "buffer_gen": 0,
+      "metrics_store_len": 0,
+      "ws_metrics_gen": 0,
+      "ws_metrics_live": false
+    }
+  ],
+  "events": [
+    {
+      "t": 0.0,
+      "what": "fsm None -> STARTED"
+    },
+    {
+      "t": 0.0,
+      "what": "phase None -> Output"
+    },
+    {
+      "t": 24.1,
+      "what": "phase Output -> Candidate"
+    },
+    {
+      "t": 46.2,
+      "what": "fsm STARTED -> COMPLETED"
+    },
+    {
+      "t": 46.2,
+      "what": "phase Candidate -> Idle"
+    }
+  ],
+  "f026_samples": [],
+  "glow_first_seen": null,
+  "cards_first_seen": null,
+  "server_growth": [
+    {
+      "t": 0.0,
+      "hidden": 45
+    },
+    {
+      "t": 24.1,
+      "hidden": 48
+    }
+  ],
+  "dom_growth": [
+    {
+      "t": 0.0,
+      "hidden": "0"
+    },
+    {
+      "t": 24.1,
+      "hidden": "44"
+    },
+    {
+      "t": 46.2,
+      "hidden": "48"
+    }
+  ],
+  "store_len_seq": [
+    {
+      "t": 0.0,
+      "from": null,
+      "to": 0
+    }
+  ],
+  "start_response": {
+    "http": 200,
+    "body": "{\"status\":\"success\",\"data\":{\"status\":\"training_started\",\"timestamp\":1788870733.253205},\"meta\":{\"timestamp\":1788870733.2532227,\"version\":\"0.6.0\"}}"
+  },
+  "end_hidden": 48,
+  "end_status": {
+    "ok": true,
+    "fsm": "COMPLETED",
+    "phase": "Idle",
+    "status": "Completed",
+    "phase_started_at": "2026-09-08T12:32:32.986817+00:00",
+    "hidden": 48,
+    "epoch": 51,
+    "cand_epoch": 0,
+    "cand_total": 0,
+    "candidates_trained": 8
+  },
+  "end_cards": 0,
+  "header_click": {
+    "attempted": false
+  },
+  "verdicts": {
+    "M-CANDIDATES-09": "FAIL",
+    "M-CANDIDATES-10": "BLOCKED (no card to click)",
+    "M-CANDIDATES-11": "BLOCKED (no card to click)",
+    "F-CANOPY-026": "NOT-SAMPLED (no mid-run pair)",
+    "M-TOPOLOGY-16": "BLOCKED-BY-F-035 (server grew 44 -> 45 -> 48, DOM followed=True, no glow trace ever; the detector reads hidden-unit deltas out of metrics-panel-metrics-store, whose length stayed [0])"
+  }
+}

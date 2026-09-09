@@ -1,0 +1,34 @@
+relay repair sequence start 2026-09-09T00:21:03Z
+cascor before: COMPLETED hidden 48 epoch 51 metrics 71
+=== (A) drop probe against the running leg (first #632 commit only) ===
+    rc=0 [19:21:58]   => VERDICT: INDETERMINATE
+    cascor: RESUME_READY hidden 48 epoch 51 metrics 71   2026-09-08 19:21:34,455 - juniper_cascor.api.websocket - INFO - WS emission summary (last 60s): connection_established=1, initial_metrics=1,
+=== (B) swap the cascor leg onto the extended fix, resume, probe again ===
+    swap rc=0   sha     : d39d537e985ba329290142c123f576b4ece9dba3  (also in /tmp/juniper-e2e/cascor-8202.sha) healthy after 3 s 
+{"status":"success","data":{"snapshot_id":"snapshot_20260908T123427Z","operation":"resume","fsm_state":"RESUME_READY","time_index":{"default":"end","snapshot_wi
+
+    cascor after resume: RESUME_READY hidden 0 epoch 51 metrics 0   2026-09-08 19:21:34,455 - juniper_cascor.api.websocket - INFO - WS emission summary (last 60s): connection_established=1, initial_metrics=1,
+    rc=0 [19:23:30]   => VERDICT: STATE-RECEIVED
+    cascor: RESUME_READY hidden 0 epoch 51 metrics 0   2026-09-08 19:23:01,397 - juniper_cascor.api.websocket - INFO - WS emission summary (last 60s): connection_established=3, initial_metrics=3,
+=== (C) grow 48 -> 52 with the relay alive, three tabs open ===
+{"status":"success","data":{"status":"staged","config":{"dataset_type":"spirals","n_samples":1000,"noise":0.25,"rotation
+
+{"status":"success","data":{"learning_rate":0.01,"candidate_learning_rate":0.005,"max_hidden_units":52,"epochs_max":1573
+
+    cascor before start: RESUME_READY hidden 0 epoch 51 metrics 0
+    rc=0
+    [t= 207495ms]   server growth : 48 -> 52 via [50, 52]
+    [t= 207495ms]   cards         : first at t=Nones, end=0
+    [t= 207495ms]   glow          : first at t=89.1s
+    [t= 207495ms]   metrics store : [(None, 53), (53, 59), (59, 63)]
+    [t= 207495ms]   F-026 samples : 4  deltas=[-34.8, -22.6, -32.4, -55.8]
+    [t= 207495ms]   => M-CANDIDATES-09: FAIL
+    [t= 207495ms]   => M-CANDIDATES-10: BLOCKED (no card to click)
+    [t= 207495ms]   => M-CANDIDATES-11: BLOCKED (no card to click)
+    [t= 207495ms]   => F-CANOPY-026: STILL-OPEN (worst |delta| 55.8s over 4 samples)
+    [t= 207495ms]   => M-TOPOLOGY-16: PASS (glow trace at t=89.1s)
+    cascor after: COMPLETED hidden 52 epoch 56 metrics 66   2026-09-08 19:26:01,535 - juniper_cascor.api.websocket - INFO - WS emission summary (last 60s): candidate_progress=1065, cascade_add=8, even
+=== (D) snapshot ===
+{"status":"success","data":{"id":"snapshot_20260909T002658Z","path":"/home/pcalnon/Development/python/Juniper/juniper-cascor/cascor-snapshots/snapshot_20260909T002658Z.h5","timestamp":"20260909T002658
+
+relay repair sequence end 2026-09-09T00:26:58Z

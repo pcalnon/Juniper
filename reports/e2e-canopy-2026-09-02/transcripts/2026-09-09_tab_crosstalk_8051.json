@@ -1,0 +1,27 @@
+{
+  "canopy": "http://127.0.0.1:8051",
+  "serving": {
+    "ok": true,
+    "canopy": "http://127.0.0.1:8051",
+    "git_sha": null,
+    "build_date": null,
+    "version": "0.4.0",
+    "read_at": "2026-09-09T23:04:49Z"
+  },
+  "settle_s": 12.0,
+  "started_at": "2026-09-09T23:04:49Z",
+  "A_after_own_selection": {
+    "active_tab": "candidates",
+    "localStorage": "{\"active_tab\":\"candidates\"}"
+  },
+  "A_after_B_selection": {
+    "active_tab": "topology",
+    "localStorage": "{\"active_tab\":\"topology\"}"
+  },
+  "B_after_B_selection": {
+    "active_tab": "topology",
+    "localStorage": "{\"active_tab\":\"topology\"}"
+  },
+  "verdict": "CROSSTALK",
+  "why": "page A selected 'candidates', page B then selected 'topology', and A now reports 'topology': one page's tab selection moves every other page in the same browser context. Any row scored from a page that was not the last to select a tab is unsound."
+}

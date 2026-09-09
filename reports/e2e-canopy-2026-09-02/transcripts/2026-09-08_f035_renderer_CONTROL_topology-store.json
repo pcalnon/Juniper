@@ -1,0 +1,68 @@
+{
+  "canopy": "http://127.0.0.1:8052",
+  "store": "network-visualizer-topology-store",
+  "window_s": 60.0,
+  "tab": "Network Topology",
+  "serving": {
+    "ok": true,
+    "canopy": "http://127.0.0.1:8052",
+    "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded",
+    "build_date": "2026-09-08T12:12:17Z",
+    "version": "0.6.0",
+    "read_at": "2026-09-08T23:49:05Z"
+  },
+  "reloaded": true,
+  "armed": true,
+  "dispatches": [
+    {
+      "t": 1788911390334,
+      "type": "Callbacks.Aggregate",
+      "len": -1
+    },
+    {
+      "t": 1788911390335,
+      "type": "Callbacks.Aggregate",
+      "len": -1
+    },
+    {
+      "t": 1788911390335,
+      "type": "Callbacks.Aggregate",
+      "len": -1
+    }
+  ],
+  "transitions": [
+    {
+      "t": 1788911353218,
+      "from": null,
+      "to": null,
+      "note": "initial"
+    },
+    {
+      "t": 1788911353267,
+      "from": null,
+      "to": -1
+    }
+  ],
+  "actionTypes": {
+    "IsLoading.Set": 1,
+    "<thunk>": 844,
+    "RESET_COMPONENT_STATE": 5455,
+    "Callbacks.Aggregate": 3339,
+    "LOADING": 512,
+    "LOADED": 504,
+    "SET_PATHS": 101
+  },
+  "totalDispatches": 10756,
+  "totalNotifies": 10898,
+  "errors": [],
+  "independent_read": {
+    "ok": true,
+    "via": "paths.strs",
+    "len": null,
+    "hidden_units": 48
+  },
+  "result": {
+    "verdict": "DISPATCHED-EMPTY",
+    "why": "actions naming the store were dispatched but every one carried an empty or non-list value, while the wire carries 500 rows. What is dispatched is not what was received."
+  }
+}
