@@ -1247,13 +1247,21 @@ jobs:
   # are visible AT REVIEW. Uploads both JSON reports as the `sequence-safety-report` artifact a
   # supervisor consumes (P2 G5-vi).
   #
-  # ADVISORY, NOT required (the codeql soak convention): this job is deliberately ABSENT from the
-  # Quality Gate `needs:` -- mirroring the release-train-archive-guard precedent -- for two grounded
-  # reasons. (1) It is pull_request / merge_group-only (skipped on push), and the Quality Gate is
+  # REQUIRED in the branch ruleset, and deliberately ABSENT from the Quality Gate `needs:`.
+  # Those are two different things and this comment used to conflate them: it opened "ADVISORY,
+  # NOT required", which was true during the soak and stopped being true when the job was
+  # promoted -- exactly as the paragraph below prescribes -- without anyone editing the header.
+  # A reader who trusts it takes a red Sequence Safety for non-blocking; it blocks. Verified
+  # against the live ruleset (`gh api repos/pcalnon/juniper-ml/rulesets/13805432`), which lists
+  # `Sequence Safety` among the seventeen required contexts. Read the ruleset, not this comment.
+  #
+  # It stays out of the Quality Gate `needs:` -- mirroring the release-train-archive-guard
+  # precedent -- for two grounded reasons. (1) It is pull_request / merge_group-only (skipped on push), and the Quality Gate is
   # `if: always()` and treats any non-success need as fatal, so folding it into that `needs:` would
-  # fail every push:main. (2) The fleet-tuned false-positive rate is unknown; soak it as its own
-  # advisory status check first, then promote to REQUIRED directly in the branch ruleset (NEVER via
-  # the Quality-Gate `needs:`). Even promoted, the owner + Cursor App always-bypass it, so its
+  # fail every push:main. (2) The fleet-tuned false-positive rate was unknown, so it soaked as its
+  # own advisory status check and was then promoted to REQUIRED directly in the branch ruleset --
+  # which is where that promotion belongs, NEVER via the Quality-Gate `needs:`. That promotion has
+  # HAPPENED; the soak is over. Even promoted, the owner + Cursor App always-bypass it, so its
   # guaranteed value is the visible red at review; enforcement is G3 (main-verify.yml).
   #
   # Label hatch (WARN-only, P2 SF5): the owner-applied `allow-symbol-loss` / `docs-rewrite` PR labels
