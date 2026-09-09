@@ -4,7 +4,7 @@
 **Worktree**: `/home/pcalnon/Development/python/Juniper/juniper-ml/.claude/worktrees/hashed-enchanting-puddle`
 **Branch**: `docs/canopy-e2e-2026-09-08-f035-measured` — **created at commit time**; while this document was
 being written the work lived uncommitted in the worktree named above, on `worktree-hashed-enchanting-puddle`.
-juniper-ml PR `<<PENDING-PR>>`
+juniper-ml PR **#1861**
 
 **Documents REFERENCED** (the ecosystem convention in `/home/pcalnon/Development/python/Juniper/AGENTS.md`
 § Cross-Project Conventions requires the filename on every citation, because more than one document is cited):
@@ -133,7 +133,7 @@ a payload without re-breaking the idle-stream case that call was added for.
 | cascor fixture | uuid `1cd15120…`, **2/52/2/1538**, `COMPLETED`, epoch 56, 66 metrics rows; snapshots `snapshot_20260905T103912Z` (40), `snapshot_20260908T123427Z` (48), `snapshot_20260909T002658Z` (52) |
 | Services | `:8051` canopy (trio, `eb05021`, git_sha null, **version 0.4.0**) · `:8052` canopy (worktree, `eb05021d`, 0.6.0 — **the leg every 09-08 measurement used**) · `:8101` data 0.13.0 · `:8202` cascor from the #632 worktree, **dirty**: `/v1/health` reports its BASE `d39d537` (a readme-renderer bump) while the merged fix rides uncommitted on top — content proven identical to `5eb6f144` by `util/ad-hoc/2026-09-09_verify_served_cascor_matches_merge.py` · `:8050`/`:8201`/`:8211` Docker deploy stack — do not touch |
 | Run dir | `/tmp/juniper-e2e` (tmpfs — gone on reboot); pid files there are the reaper's protection key |
-| PRs | juniper-cascor#632 **MERGED** (`5eb6f144`, 2026-09-09T01:24Z); juniper-ml `<<PENDING-PR>>` |
+| PRs | juniper-cascor#632 **MERGED** (`5eb6f144`, 2026-09-09T01:24Z); juniper-ml **#1861** (signed commit `6efcce7d`) |
 | Product code changed | juniper-cascor only (#632). No canopy code. |
 
 ---
@@ -207,7 +207,7 @@ Changed: `2026-09-04_canopy_verify_instance.bash` (protected run dir, SHA stamp,
 
 ## 5. Verify the starting state
 
-**These numbers are the state AFTER `<<PENDING-PR>>` merges.** Until then `main` still reads 55 / 37 / 1 / 1 / 16 and 27
+**These numbers are the state AFTER juniper-ml#1861 merges.** Until then `main` still reads 55 / 37 / 1 / 1 / 16 and 27
 BLOCKED — if you see those, the record has not landed yet, not been reverted.
 
 ```bash
