@@ -4,9 +4,7 @@
 **Worktree**: `/home/pcalnon/Development/python/Juniper/juniper-ml/.claude/worktrees/functional-crafting-metcalfe`
 **Branch**: `docs/f035-supersession-mechanism` (juniper-ml#1812, armed, awaiting checks at time of writing)
 
-**Documents REFERENCED** (the ecosystem convention in
-`/home/pcalnon/Development/python/Juniper/AGENTS.md` § Cross-Project Conventions requires the filename
-on every citation, because more than one document is cited):
+**Documents REFERENCED** (the ecosystem convention in `/home/pcalnon/Development/python/Juniper/AGENTS.md` § Cross-Project Conventions requires the filename on every citation, because more than one document is cited):
 
 - `notes/JUNIPER_2026-08-09_JUNIPER-CANOPY_E2E-VALIDATION-EVIDENCE.md` — the finding ledger, the arc's document of record
 - `notes/JUNIPER_2026-08-08_JUNIPER-CANOPY_E2E-CLICK-BY-CLICK-TEST-MATRIX.md` — the row matrix; its §4 scripts are canonical for step detail
@@ -16,20 +14,15 @@ on every citation, because more than one document is cited):
 - `notes/JUNIPER_2026-08-27_JUNIPER-CANOPY_WS-MIGRATION-PLAN-JR-CAN-PERF-004.md` — its Phase 2 must **not** run concurrently with F-CANOPY-036's verification (§7)
 - `util/ad-hoc/README.md` — the ad-hoc header convention and the arc's instrument traps
 
-Two session memories are cited by name in §1 rather than by allusion:
-`feedback_e2e_finding_mechanisms_are_unreliable.md` and `reference_dash_renderer_12_slot_starvation.md`.
+Two session memories are cited by name in §1 rather than by allusion: `feedback_e2e_finding_mechanisms_are_unreliable.md` and `reference_dash_renderer_12_slot_starvation.md`.
 
 **Documents CHANGED by the session this hands off from**: `notes/JUNIPER_2026-08-09_JUNIPER-CANOPY_E2E-VALIDATION-EVIDENCE.md`,
 `util/ad-hoc/README.md`, and this file. **Added**: `util/ad-hoc/2026-09-05_dash_layout_id_census.py`,
 `util/ad-hoc/2026-09-05_f035_store_write_latency_probe.py`,
 `util/ad-hoc/2026-09-07_f035_renderer_dispatch_probe.py`,
-`util/ad-hoc/2026-09-07_f035_callback_lifecycle_probe.py`, and **22** evidence files under
-`reports/e2e-canopy-2026-09-02/transcripts/` — 8 landed by juniper-ml#1790, 8 by **#1810**, 6 on the
-#1812 branch. One **pre-existing** instrument was also modified, behaviourally:
-`util/ad-hoc/2026-09-04_f035_candidate_loss_redrive.py` (+33/−2, detaches its response listener so a
-census stops counting when its window closes). The lifecycle probe is **new in #1812** — it gained
-`--store`, the list inventory and the shape census in a later commit *within the same PR*, which is
-invisible to any `--name-status` check, so it appears only in the Added list (§3.3, §9).
+`util/ad-hoc/2026-09-07_f035_callback_lifecycle_probe.py`, and **22** evidence files under `reports/e2e-canopy-2026-09-02/transcripts/` — 8 landed by juniper-ml#1790, 8 by **#1810**, 6 on the #1812 branch.
+One **pre-existing** instrument was also modified, behaviourally: `util/ad-hoc/2026-09-04_f035_candidate_loss_redrive.py` (+33/−2, detaches its response listener so a census stops counting when its window closes).
+The lifecycle probe is **new in #1812** — it gained `--store`, the list inventory and the shape census in a later commit *within the same PR*, which is invisible to any `--name-status` check, so it appears only in the Added list (§3.3, §9).
 
 ---
 
@@ -142,8 +135,8 @@ nothing to revert, and no half-applied state to inherit.
 *Every number below is a 2026-09-07 snapshot. §10 re-derives the findings and fixture rows; the
 M-TOPOLOGY counts, the PR table and the service map have no tool — recount them before relying on them.*
 
-| | |
-|---|---|
+| Category | Status |
+| --- | --- |
 | Findings ledger | 55 total / 37 fixed / 1 accepted / 1 withdrawn / **16 open** (3 P1, 13 P2), **zero P0** |
 | Matrix rows | 298 total, **296 verdicted**, 2 remaining (`M-PARAMETERS-02`, `M-PARAMETERS-03`) |
 | M-TOPOLOGY section | **16 PASS / 0 FAIL / 2 BLOCKED** (`-11` select-drag, `-16` cascade-add glow) |
@@ -165,11 +158,11 @@ F-CANOPY-035 entry; this is the short form with the numbers that matter.
 store writes off `/_dash-update-component`. **The write count is run- and window-specific, not a
 constant of the instrument** — quote the run, never the instrument:
 
-| run | artifact | writes × 500 rows | `omitted` / `unparsed` | store before → after |
-|---|---|---|---|---|
-| 2026-09-05 #1 | `…_redrive.txt` (30 s) / `.json` (lifetime) | **17** in 30 s — the `.json` says 46 | 0 / 0 in 30 s; **7** unparsed over the lifetime | 0 → 0 |
-| 2026-09-05 #2 | `…_redrive_v2.json` | 14 (30 s window) | 0 / 0 | 0 → 0 |
-| 2026-09-07 | `…_redrive_v3.json` | 18 (30 s window) | 0 / 0 | 0 → 0 |
+| run           | artifact                                    | writes × 500 rows                    | `omitted` / `unparsed`                          | store before → after |
+|---------------|---------------------------------------------|--------------------------------------|-------------------------------------------------|----------------------|
+| 2026-09-05 #1 | `…_redrive.txt` (30 s) / `.json` (lifetime) | **17** in 30 s — the `.json` says 46 | 0 / 0 in 30 s; **7** unparsed over the lifetime | 0 → 0                |
+| 2026-09-05 #2 | `…_redrive_v2.json`                         | 14 (30 s window)                     | 0 / 0                                           | 0 → 0                |
+| 2026-09-07    | `…_redrive_v3.json`                         | 18 (30 s window)                     | 0 / 0                                           | 0 → 0                |
 
 The invariant across all three is the last column: **the store reads `len=0` before and after, every
 time.** **The comparable 30 s figure for run 1 is 17, not 46** — its censuses had not yet been fixed to
@@ -219,12 +212,12 @@ bookkeeping out of the same Redux store (`state.callbacks`: `requested` / `prior
 `executing` / `watched` / `executed` / `stored`). Two 90 s replicates, ~3,000 Redux notifies each,
 counting only callbacks with the store **as an output**:
 
-| | run 2 | run 3 |
-|---|---|---|
-| present in `watched` | 2,344 | 2,731 |
-| present in `executed` / `stored` | **0** | **0** |
+|                                     | run 2  | run 3  |
+|-------------------------------------|--------|--------|
+| present in `watched`                | 2,344  | 2,731  |
+| present in `executed` / `stored`    | **0**  | **0**  |
 | **distinct entries into `watched`** | **23** | **26** |
-| store length throughout | `0` | `0` |
+| store length throughout             | `0`    | `0`    |
 
 **The entry count is the load-bearing number.** "Present for 2,344 notifies" is satisfied by two
 mechanisms needing *opposite* fixes — a series of calls each superseded, or one call whose promise
@@ -360,7 +353,7 @@ Per the matrix's own §7 contract, `BLOCKED` is an input to the remediation back
 state.
 
 | block | rows | real state, per the ledger |
-|---|---|---|
+| --- | --- | --- |
 | `M-METRICS-11..16, -18` | 7 | Replay transport. Controls *do* reveal at `COMPLETED`, but `metrics-panel-replay-position` stays `0 / 0` so `max_index=0` clamps every transition. **`M-METRICS-13` is the discriminator to re-drive first** — data-independent, and it failed with zero wire output across 196 responses. Whether this is a third face of F-CANOPY-027 or its own defect is **not established and no finding is filed**. Drivable today on the `COMPLETED` fixture. |
 | `M-DATASET-17..26` | 10 | Sequence (3-D) controls. **Not a defect** (owner decision 4): `equities`/`equities_seq` read `available:false` because the data leg lacked the optional extra. Recipe: bring the stack up with `JUNIPER_E2E_DATA_EXTRAS=api,equities`. The remaining half is an **unanswered owner question** — should the live 3-D arm drive `/api/stage_dataset`, or be re-scoped to the demo lane? The both-arms answer **needs new matrix rows**, so the 298 denominator is expected to grow. |
 | `M-CANDIDATES-10/-11` | 2 | Dead-click `DEAD-EXPECTED`. The test is **ready in the driver** (`util/ad-hoc/e2e_f027_redrive.py --step cardsprobe`) and was waiting on F-CANOPY-036's fix — **which shipped as canopy#536**. One command; also unblocks the `M-CANDIDATES-09` FAIL. |
@@ -488,7 +481,7 @@ session. **Read this list first, and grep `util/ad-hoc/` before writing anything
 first, or pass `--url` / `JUNIPER_E2E_CANOPY_URL`.
 
 | instrument | what it answers | revert needed? |
-|---|---|---|
+| --- | --- | --- |
 | `util/ad-hoc/e2e_finding_triage.py` | finding counts and dispositions | no |
 | `util/ad-hoc/e2e_row_coverage.py` | which matrix rows lack a verdict | no |
 | `util/ad-hoc/e2e_append_statuses.py` | append verdicts to the matrix | no |

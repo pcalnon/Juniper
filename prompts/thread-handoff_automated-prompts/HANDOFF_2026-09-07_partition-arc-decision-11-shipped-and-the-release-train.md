@@ -79,15 +79,15 @@ one** (§4), **nine straggler sites** (§3), **five carried-forward risks and tw
 **Merged and verified on `main`** — each checked by reading the file on `origin/main`, never the
 MERGED badge:
 
-| repo | PR | merged (UTC) | what landed |
-| --- | --- | --- | --- |
-| juniper-ml | #1585 | 09-03 00:58 | design doc only — the decision itself, no code |
-| juniper-data-client | #187, **#190** | 09-05 12:37 | `NPZ_SPLITS = ("train","val","test")` (`constants.py:437`) |
-| juniper-canopy | #586, **#589** | 09-05 19:55 | validation ladder → `_VALIDATED_PARTITIONS` |
-| juniper-recurrence | **#150** | 09-06 00:34 | `derive_full_split` (`…-model/…/data.py:67`) |
-| juniper-cascor | **#625** | 09-06 00:45 | `required_keys` relaxed (`data_provider.py:219`), tuple 4→3 (`:255`) |
-| juniper-data | **#369** | 09-06 10:37 | producer stops emitting; 16 generators → `VERSION 3.0.0` |
-| juniper-ml | **#1805** | 09-06 10:50 | `_whole_dataset` (`snapshot_attribute.py:291`, called in-try `:342`) |
+| repo                | PR             | merged (UTC) | what landed                                                          |
+|---------------------|----------------|--------------|----------------------------------------------------------------------|
+| juniper-ml          | #1585          | 09-03 00:58  | design doc only — the decision itself, no code                       |
+| juniper-data-client | #187, **#190** | 09-05 12:37  | `NPZ_SPLITS = ("train","val","test")` (`constants.py:437`)           |
+| juniper-canopy      | #586, **#589** | 09-05 19:55  | validation ladder → `_VALIDATED_PARTITIONS`                          |
+| juniper-recurrence  | **#150**       | 09-06 00:34  | `derive_full_split` (`…-model/…/data.py:67`)                         |
+| juniper-cascor      | **#625**       | 09-06 00:45  | `required_keys` relaxed (`data_provider.py:219`), tuple 4→3 (`:255`) |
+| juniper-data        | **#369**       | 09-06 10:37  | producer stops emitting; 16 generators → `VERSION 3.0.0`             |
+| juniper-ml          | **#1805**      | 09-06 10:50  | `_whole_dataset` (`snapshot_attribute.py:291`, called in-try `:342`) |
 
 **Required-fix 0 (design §9.5.4) is CLOSED, all four**, each verified in the sibling repo:
 (1) `n_samples = n_train + n_val + n_test` — `juniper_data/core/meta.py:66`; (2) canopy
@@ -161,7 +161,7 @@ does — gets different folds. But the reconstructions differ in a way that matt
 `util/ad-hoc/2026-09-05_census_full_family_v2.py` (11 scopes incl. the ecosystem root, 8 file types,
 `git ls-files`). Current totals — PRODUCE / CONSUME / ASSERT / PROV / files:
 
-```
+```bash
 juniper-data 8/92/487/21/77 · juniper-data-client 1/15/33/1/13 · juniper-cascor 0/25/78/24/20
 juniper-canopy 0/17/74/4/22 · juniper-recurrence 0/52/44/1/13 · juniper-deploy 0/6/0/0/1
 juniper-ml 0/41/9/513/101 · <ecosystem root> 0/12/0/0/2 · cascor-client/worker/slacker all zero
@@ -196,16 +196,16 @@ pinned — the tier where §2's row-order exception actually lives.
 Measured 2026-09-07 (`gh api repos/O/R/compare/<tag>...main --jq .ahead_by`). **Decision 11 is in
 ZERO published releases.**
 
-| package | latest release | ahead | current version file | target | carries |
-| --- | --- | --- | --- | --- | --- |
-| juniper-data | `v0.13.0` (09-05) | **12** | `pyproject.toml` = `0.13.0` | **0.14.0** (breaking) | #369 |
-| juniper-cascor | `v0.10.0` (08-30) | **25** | `pyproject.toml` = `0.10.0` | **0.11.0** (breaking) | #625 |
-| juniper-data-client | `v0.4.2` (06-18) | **96** | `pyproject.toml` = `0.4.2` | **0.5.0** | #187, #190 |
-| juniper-canopy | `v0.6.0` | **116** | — | — | #586, #589 |
-| juniper-recurrence-model | `-model-v0.2.0` (07-29) | **52** | `_version.py` = `0.2.0` | **0.2.1/0.3.0** | **#150 — the crossval fix** |
-| juniper-recurrence (app) | `-v0.4.0` (08-09) | **37** | `_version.py` = `0.4.0` | — | the crossval router |
-| juniper-recurrence-client | `-client-v0.2.0` | **136** | `_version.py` = `0.2.0` | — | S-5c |
-| juniper-ml (meta) | `v0.7.1` | **677** | — | — | #1761, #1805 |
+| package                   | latest release          | ahead   | current version file        | target                | carries                     |
+|---------------------------|-------------------------|---------|-----------------------------|-----------------------|-----------------------------|
+| juniper-data              | `v0.13.0` (09-05)       | **12**  | `pyproject.toml` = `0.13.0` | **0.14.0** (breaking) | #369                        |
+| juniper-cascor            | `v0.10.0` (08-30)       | **25**  | `pyproject.toml` = `0.10.0` | **0.11.0** (breaking) | #625                        |
+| juniper-data-client       | `v0.4.2` (06-18)        | **96**  | `pyproject.toml` = `0.4.2`  | **0.5.0**             | #187, #190                  |
+| juniper-canopy            | `v0.6.0`                | **116** | —                           | —                     | #586, #589                  |
+| juniper-recurrence-model  | `-model-v0.2.0` (07-29) | **52**  | `_version.py` = `0.2.0`     | **0.2.1/0.3.0**       | **#150 — the crossval fix** |
+| juniper-recurrence (app)  | `-v0.4.0` (08-09)       | **37**  | `_version.py` = `0.4.0`     | —                     | the crossval router         |
+| juniper-recurrence-client | `-client-v0.2.0`        | **136** | `_version.py` = `0.2.0`     | —                     | S-5c                        |
+| juniper-ml (meta)         | `v0.7.1`                | **677** | —                           | —                     | #1761, #1805                |
 
 **Traps in this table.**
 
@@ -276,7 +276,7 @@ current and §§2–7 are pre-review.
 
 ## 6. Traps
 
-**Merge / CI**
+**Merge / CI:**
 
 - **An unresolved CodeQL thread blocks a merge while every check reads green.** Fingerprint:
   `BLOCKED` + `MERGEABLE` + all required contexts green. `gh pr checks` cannot see it; query
@@ -302,7 +302,7 @@ current and §§2–7 are pre-review.
   on that line — a reason is parsed as symbol names. (The "last paragraph" rule is real but belongs
   to *git's* trailer parser, `%(trailers:key=X)` — a different mechanism this tool never consults.)
 
-**Release-specific**
+**Release-specific:**
 
 - **`juniper-cascor-model/` drift guard**: edits to `src/{candidate_unit,utils,log_config,cascor_constants}`
   must be mirrored byte-for-byte; `test_drift.py` catches it only in CI. A release-prep edit trips it.
@@ -314,7 +314,7 @@ current and §§2–7 are pre-review.
 - **AGENTS.md edits require today's UTC date** where `agents-md-touch-up.yml` runs (juniper-data,
   juniper-ml); juniper-ml also gates AGENTS.md size — `python3 util/memory_budget_check.py`.
 
-**Search / shell**
+**Search / shell:**
 
 - **A sweep reuses its own pattern.** Three sweeps this session missed sites: `head -40` truncated a
   census; `_, _, _ = result` did not match a `(x_full, y_full)` pattern; `return_value=` was
@@ -387,7 +387,7 @@ records why it cannot even be linked.
 after confirming their only ignored content was build caches. Three remain from earlier sessions and
 were left alone — another session may hold them:
 
-```
+```bash
 worktrees/juniper-canopy--feature--drop-full-family--20260905-1300--c2c3cb7f
 worktrees/juniper-data--feature--drop-full-family--20260905-1330--cc15640c
 worktrees/juniper-data-client--feature--drop-full-family--20260905-1215--7d5b2f60

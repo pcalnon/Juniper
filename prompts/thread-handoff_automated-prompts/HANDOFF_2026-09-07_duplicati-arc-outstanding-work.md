@@ -20,33 +20,33 @@ the §8.x record.
 
 ## §0 — Verified 2026-09-07, and what is CLOSED
 
-| Fact | Value |
-|---|---|
-| Backup | `LastRun=2026-09-07T14:00:00Z`, `ProgramState=Running`, census **848 files / 215,353,308,976 B → AGREE** |
-| sda1 | 398 G / 12 % |
-| **sdc4** | **EXISTS (1.8 T ext4, start 3813408768) but UNMOUNTED** — retired from service, **not destroyed** |
-| Frozen set | `/mnt/Backups/Ubuntu/_yamaguchi_frozen_20260826/` (811 files) + sibling `_yamaguchi_frozen_20260826.README.md` |
-| dlist 2nd copy | `~/.local/state/yamaguchi-old-archive-dlists/` — 10 files, 934 MB |
-| Escrow sheet | `~/.cache/yamaguchi-key-escrow-sheet.txt` present ⇒ **print still owed** |
-| `main-verify` | green on all 9 repos; tier-1 resolver present in all 9 |
+| Fact           | Value                                                                                                          |
+|----------------|----------------------------------------------------------------------------------------------------------------|
+| Backup         | `LastRun=2026-09-07T14:00:00Z`, `ProgramState=Running`, census **848 files / 215,353,308,976 B → AGREE**       |
+| sda1           | 398 G / 12 %                                                                                                   |
+| **sdc4**       | **EXISTS (1.8 T ext4, start 3813408768) but UNMOUNTED** — retired from service, **not destroyed**              |
+| Frozen set     | `/mnt/Backups/Ubuntu/_yamaguchi_frozen_20260826/` (811 files) + sibling `_yamaguchi_frozen_20260826.README.md` |
+| dlist 2nd copy | `~/.local/state/yamaguchi-old-archive-dlists/` — 10 files, 934 MB                                              |
+| Escrow sheet   | `~/.cache/yamaguchi-key-escrow-sheet.txt` present ⇒ **print still owed**                                       |
+| `main-verify`  | green on all 9 repos; tier-1 resolver present in all 9                                                         |
 
 **Closed, with the residual each closure left behind** — a section being closed does *not*
 close what that section itself recorded as open:
 
-| Closed | Residual that survives it |
-|---|---|
-| §8.21 harness de-drift + zero-volume vacuous pass | §8.21.5 residuals 2 & 3 (§1 item 8) |
-| §8.22 the 42.6 h paused-server outage | §8.22.5's "the reboot gains a precondition" |
-| §8.23 the reboot **hazard** (see §1 item 2 for its limits) | §8.23.3's *proactive* `paused-until` sample |
-| §8.24 escrow interim + sdc4 scoping | §8.24.3 item 4's "re-verify after each move" rule |
-| §8.25 three-lane consensus clearing sdc4 | §8.25.6 — **`sda` drive health never verified** |
-| SCREENED-not-GREEN fan-out (ml#1291 → 8 repos) | drift-guard tests absent in 7 (§1 item 4) |
+| Closed                                                     | Residual that survives it                         |
+|------------------------------------------------------------|---------------------------------------------------|
+| §8.21 harness de-drift + zero-volume vacuous pass          | §8.21.5 residuals 2 & 3 (§1 item 8)               |
+| §8.22 the 42.6 h paused-server outage                      | §8.22.5's "the reboot gains a precondition"       |
+| §8.23 the reboot **hazard** (see §1 item 2 for its limits) | §8.23.3's *proactive* `paused-until` sample       |
+| §8.24 escrow interim + sdc4 scoping                        | §8.24.3 item 4's "re-verify after each move" rule |
+| §8.25 three-lane consensus clearing sdc4                   | §8.25.6 — **`sda` drive health never verified**   |
+| SCREENED-not-GREEN fan-out (ml#1291 → 8 repos)             | drift-guard tests absent in 7 (§1 item 4)         |
 
 ---
 
 ## §1 — Outstanding work, severity order
 
-### 1. Criterion 5 — logout/login + reboot survival. NEVER EXERCISED.
+### 1. Criterion 5 — logout/login + reboot survival. NEVER EXERCISED
 
 **The arc's last unexercised acceptance criterion**
 (`notes/JUNIPER_2026-08-23_JUNIPER-ECOSYSTEM_DUPLICATI-FRESH-BACKUP-SET-PLAN.md` §7; the only
@@ -135,13 +135,13 @@ one unique test is the screened-tier-over-legacy ordering assertion. **Port the 
 
 **Per-repo blockers — path selection is NOT the main one:**
 
-| Repo | Blocker (verify each yourself) |
-|---|---|
-| cascor-client, data-client | **no PyYAML in `pyproject.toml`** — `import yaml` is a collection error, i.e. red CI, until added to the test extra |
-| deploy | PyYAML also **absent from `pyproject.toml`** (an agent claimed otherwise — check the dev/test requirements path before trusting either reading) |
-| cascor-worker | PyYAML present |
-| cascor, data | CI filters `-m "unit and not slow"` with `--strict-markers` and no auto-marking conftest — an unmarked file is **deselected**; cascor has no `src/tests/regression/` at all |
-| recurrence | app lane is path-filter gated on `^juniper-recurrence/`, so a PR touching only `.github/workflows/main-verify.yml` **skips the test job** — vacuous against its own threat model |
+| Repo                       | Blocker (verify each yourself)                                                                                                                                                   |
+|----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| cascor-client, data-client | **no PyYAML in `pyproject.toml`** — `import yaml` is a collection error, i.e. red CI, until added to the test extra                                                              |
+| deploy                     | PyYAML also **absent from `pyproject.toml`** (an agent claimed otherwise — check the dev/test requirements path before trusting either reading)                                  |
+| cascor-worker              | PyYAML present                                                                                                                                                                   |
+| cascor, data               | CI filters `-m "unit and not slow"` with `--strict-markers` and no auto-marking conftest — an unmarked file is **deselected**; cascor has no `src/tests/regression/` at all      |
+| recurrence                 | app lane is path-filter gated on `^juniper-recurrence/`, so a PR touching only `.github/workflows/main-verify.yml` **skips the test job** — vacuous against its own threat model |
 
 **The reference test raises `SkipTest`, not a failure, when misplaced — a bad port is
 silently green.** Prove it ran by reading the CI log for the test name, never by a green

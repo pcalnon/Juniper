@@ -35,7 +35,7 @@ pull-the-published-images integration test is green.
 `ghcr.io/pcalnon/juniper-cascor-worker:dispatch-3d81f2c` exists as a genuine multi-arch OCI
 index and is **PUBLIC — anonymously pullable, no login required**:
 
-```
+```bash
 mediaType: application/vnd.oci.image.index.v1+json
   linux/amd64      sha256:e619b1ec012e4724c4b5a12f69b89a74f3276d611bbaa93b5a01038c0e30ee6a
   linux/arm64      sha256:1bb497cdce41da7f9038e0433644033a831764c49ec691c822c132876ca514b9
@@ -138,17 +138,17 @@ gh api repos/pcalnon/juniper-cascor-worker/contents/.github/workflows/publish-im
 and already correct everywhere; what changes is the *local smoke tag* `worker-smoke:<arch>`
 (two places). Per-repo, the following also change:
 
-| | juniper-cascor | juniper-canopy | juniper-data | juniper-recurrence |
-| --- | --- | --- | --- | --- |
-| Release-tag guard | **REQUIRED** `v` | none | none | **REQUIRED** `juniper-recurrence-v` |
-| `pull_request: paths:` src | `src/**` | **`src/**` AND `juniper_canopy/**`** | `juniper_data/**` | `juniper_recurrence/**` |
-| Lock file in `paths:` | `requirements.lock` | `requirements.lock` | `requirements.lock` | **none exists** |
-| Build context | repo root | repo root | repo root | **`juniper-recurrence/juniper-recurrence`** |
-| `pyproject.toml` path | root | root | root | **nested — see below** |
-| Base image | 3.14-slim | 3.14-slim | 3.14-slim | **3.13-slim** |
-| ENTRYPOINT? | **no, CMD only** | **no, CMD only** | **no, CMD only** | yes |
-| Actual `CMD` | `python src/server.py` | `python src/main.py` | `python -m juniper_data` | `serve` (after ENTRYPOINT) |
-| Torch-bearing? | yes | **no** | **no** | check |
+|                            | juniper-cascor         | juniper-canopy                       | juniper-data             | juniper-recurrence                          |
+|----------------------------|------------------------|--------------------------------------|--------------------------|---------------------------------------------|
+| Release-tag guard          | **REQUIRED** `v`       | none                                 | none                     | **REQUIRED** `juniper-recurrence-v`         |
+| `pull_request: paths:` src | `src/**`               | **`src/**` AND `juniper_canopy/**`** | `juniper_data/**`        | `juniper_recurrence/**`                     |
+| Lock file in `paths:`      | `requirements.lock`    | `requirements.lock`                  | `requirements.lock`      | **none exists**                             |
+| Build context              | repo root              | repo root                            | repo root                | **`juniper-recurrence/juniper-recurrence`** |
+| `pyproject.toml` path      | root                   | root                                 | root                     | **nested — see below**                      |
+| Base image                 | 3.14-slim              | 3.14-slim                            | 3.14-slim                | **3.13-slim**                               |
+| ENTRYPOINT?                | **no, CMD only**       | **no, CMD only**                     | **no, CMD only**         | yes                                         |
+| Actual `CMD`               | `python src/server.py` | `python src/main.py`                 | `python -m juniper_data` | `serve` (after ENTRYPOINT)                  |
+| Torch-bearing?             | yes                    | **no**                               | **no**                   | check                                       |
 
 - **The tag guard is not optional and its absence is destructive.** `juniper-cascor` and
   `juniper-recurrence` are multi-package repos cutting several tag families. The worker
@@ -349,12 +349,12 @@ This handoff lives at
 and was landed by its own PR; if you are reading it from a checkout that predates that
 merge, `git pull --ff-only` in juniper-ml.
 
-| Repo | PRs merged |
-| --- | --- |
-| juniper-cascor-client | #155 (0.8.0 bump), #156 (notes finalized), #157 (CHANGELOG order) |
-| juniper-canopy | #582 (demo-mode honesty), #584 (cap `<0.9.0`), #591 (floor `>=0.8.0`) |
-| juniper-cascor-worker | #172 (publish-image.yml), #173 (digest/tags fix) |
-| juniper-ml | #1779, #1788 (release-notes archive), #1792 (ad-hoc tool), #1802 (design of record) |
+| Repo                  | PRs merged                                                                          |
+|-----------------------|-------------------------------------------------------------------------------------|
+| juniper-cascor-client | #155 (0.8.0 bump), #156 (notes finalized), #157 (CHANGELOG order)                   |
+| juniper-canopy        | #582 (demo-mode honesty), #584 (cap `<0.9.0`), #591 (floor `>=0.8.0`)               |
+| juniper-cascor-worker | #172 (publish-image.yml), #173 (digest/tags fix)                                    |
+| juniper-ml            | #1779, #1788 (release-notes archive), #1792 (ad-hoc tool), #1802 (design of record) |
 
 `juniper-cascor-client 0.8.0` is on PyPI. **`juniper-cascor-worker` main is `777e657`**
 (#174, a dependabot bump, merged after this arc); `3d81f2c` is its parent and is the commit
@@ -368,7 +368,7 @@ pre-#173 workflow**, which will mislead anyone reading it directly. `git fetch` 
 worktrees remain (all clean, all with merged PRs), plus two older worker worktrees from
 earlier arcs (`--docs--handoff-word-count--…`, `--fix--mv-screened-base--…`).
 
-```
+```bash
 worktrees/juniper-cascor-worker--feat--publish-container-image--20260905-1846--1080015f   [fix/publish-image-digest-tags]
 worktrees/juniper-cascor-client--docs--changelog-section-order--20260905-1523--714e544a   [docs/changelog-0.8.0-section-order]
 worktrees/juniper-canopy--chore--pin-cascor-client-floor--20260905-1441--482281ac         [chore/pin-cascor-client-floor-0.8.0]

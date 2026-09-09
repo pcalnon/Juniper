@@ -75,15 +75,15 @@ unless stated otherwise.**
 Each row was confirmed with `gh pr list --head <branch> --state all` — the form that distinguishes
 "never opened" from "already merged".
 
-| PR | merged | what |
-|---|---|---|
-| `ml#1758` | 2026-09-05T13:14:39Z | P4 operator surface was **stale, not missing**; six closed defects were listed as open |
-| `ml#1767` | 2026-09-05T18:16:08Z | work contract in all 3 gate tools predated its own precondition |
-| `ml#1762` | 2026-09-05T19:31:14Z | P2 plan + P1 design banners; iteration-cap mechanism **withdrawn** |
-| `ml#1765` | 2026-09-05T22:08:30Z | drift-band **and** C4 refutations; handoff §7.1 decision record |
-| `ml#1786` | 2026-09-07T12:54:47Z | item **3.3 discharged**; 2.1 re-survey; 2.2 deferral |
-| `cascor#629` | merged 2026-09-07 | `xor-staged.yaml` sets both epoch keys to 200 |
-| **`ml#1811`** | **OPEN at hand-off** | three owner decisions + Wave 0 close |
+| PR            | merged               | what                                                                                   |
+|---------------|----------------------|----------------------------------------------------------------------------------------|
+| `ml#1758`     | 2026-09-05T13:14:39Z | P4 operator surface was **stale, not missing**; six closed defects were listed as open |
+| `ml#1767`     | 2026-09-05T18:16:08Z | work contract in all 3 gate tools predated its own precondition                        |
+| `ml#1762`     | 2026-09-05T19:31:14Z | P2 plan + P1 design banners; iteration-cap mechanism **withdrawn**                     |
+| `ml#1765`     | 2026-09-05T22:08:30Z | drift-band **and** C4 refutations; handoff §7.1 decision record                        |
+| `ml#1786`     | 2026-09-07T12:54:47Z | item **3.3 discharged**; 2.1 re-survey; 2.2 deferral                                   |
+| `cascor#629`  | merged 2026-09-07    | `xor-staged.yaml` sets both epoch keys to 200                                          |
+| **`ml#1811`** | **OPEN at hand-off** | three owner decisions + Wave 0 close                                                   |
 
 **`ml#1811` is described in the present tense deliberately.** It had not merged when this was
 written. Do not assume it landed; check.
@@ -145,11 +145,11 @@ Both failed the same way: **the claim about the numbers was checked; the numbers
 **(a) The drift band.** §9 said the quiet floor is `15.0-20.5%` and that `13-20.5%` "mixes two
 normalizations". Recomputed from the six source values in §5 / §8.4 of the sweep note:
 
-| quantity | runs | `max/min − 1` | `(max−min)/max` |
-|---|---|---|---|
-| two quiet 20 s runs (18.42 → 20.81 ms) | quiet | **12.98% → the 13.0%** | 11.48% |
-| three quiet sweep blocks (18.282 / 22.024 / 18.663) | quiet | **20.47% → the 20.5%** | 16.99% |
-| `modest load 4/16` (18.42 → 21.18 ms) | **LOADED** | 14.98% → the 15.0% | — |
+| quantity                                            | runs       | `max/min − 1`          | `(max−min)/max` |
+|-----------------------------------------------------|------------|------------------------|-----------------|
+| two quiet 20 s runs (18.42 → 20.81 ms)              | quiet      | **12.98% → the 13.0%** | 11.48%          |
+| three quiet sweep blocks (18.282 / 22.024 / 18.663) | quiet      | **20.47% → the 20.5%** | 16.99%          |
+| `modest load 4/16` (18.42 → 21.18 ms)               | **LOADED** | 14.98% → the 15.0%     | —               |
 
 Both endpoints are already `max/min − 1` over **quiet** runs. **15.0% is the loaded run** — §4 of the
 sweep note labels it `bridged quiet → modest load (4/16)`. Adopting it folds a load effect into the
@@ -224,11 +224,11 @@ pinned next to the numbers in the sweep note.
 Re-surveyed 2026-09-07 against the resolved base config. **Two of the three concerns in the
 predecessor's item 6 are DISCHARGED:**
 
-| concern | finding |
-|---|---|
+| concern                                                                     | finding                                                                                                                                                                                             |
+|-----------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | *"declares only `per_run_timeout_seconds`, not `outputs.max_wall_seconds`"* | True of the suite file — but `spiral-smoke.yaml` supplies `max_wall_seconds: 600`, and **600 < 2400**, so the driver budget binds first. §4 ordering **satisfied**. PF-1 is identical (1200 / 600). |
-| epoch split | **Closed** — `cascor#618` gave the base config both keys; PF-2 inherits `max_epochs: 50` *and* `output_epochs: 50`. |
-| duration | **STANDS** — native `(2,2)`/50 runs **15.09 s**, short of PF-1's ~60 s. |
+| epoch split                                                                 | **Closed** — `cascor#618` gave the base config both keys; PF-2 inherits `max_epochs: 50` *and* `output_epochs: 50`.                                                                                 |
+| duration                                                                    | **STANDS** — native `(2,2)`/50 runs **15.09 s**, short of PF-1's ~60 s.                                                                                                                             |
 
 **The PF-1 template you are copying is thinner than it looks** — carried from the predecessor's §9,
 recoverable from no other document: the 50-epoch anchor is a **cross-suite n=2 mean with 26% internal
@@ -269,7 +269,7 @@ python3 util/experiments/compare_baseline.py --baseline pf1-2026-09-04b \
 ```
 
 | command | expected |
-|---|---|
+| --- | --- |
 | three gate suites | **118 OK** (33 reader + 30 baseline + 55 comparator). **Not 91** — see below. |
 | the four *other* gate suites | **46 OK.** These are CI-wired and were omitted from every prior handoff's verification block. |
 | schema suite, CI mode | **OK, 4 skipped** — the cross-repo walk skips; siblings are not cloned |
@@ -438,7 +438,7 @@ amputation + executability). Verdicts: A1 **FAIL**, A2 PASS w/ findings, A3 PASS
 **The draft failed, and the failures were in the two classes this procedure exists to catch.**
 
 | # | finding | lane | disposition |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 1 | "91 OK" — actual **118**, stale ~38 h; grown by 7 peer PRs in no handoff's table | A1, A2, B2 | fixed; §5 now says run the command, never add a delta |
 | 2 | Four CI-wired gate suites (**46 tests**) omitted from every prior verification block, incl. the one pinning §3.4's census | B2 | fixed |
 | 3 | `PENDING_EPOCH_SPLIT_DECISIONS` "is now empty" — non-empty on `main`; empty only in unmerged `ml#1811` | A1 | fixed; scoped to `#1811` |

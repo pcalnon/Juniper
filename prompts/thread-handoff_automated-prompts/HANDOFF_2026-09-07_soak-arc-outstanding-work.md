@@ -60,16 +60,16 @@ those are settled, this order is defensible and costs no sessions:
 
 ## 2. State, verified 2026-09-07
 
-| fact | value |
-|---|---|
-| ledger | 64 records → **49 observations / 43 valid** (6 invalidate, 9 rescore) |
-| verdict (pooled) | `BET-FAILING`, exit **1** |
-| verdict (post-intervention only) | `IN-PROGRESS seeded=8/35 rate=25.0%`, exit **0** — but see §3.B, this is an n-gate |
-| newest observation | `2026-09-04T09:55:27Z` (P21) — **no probe has run since** |
-| post-intervention coverage | 8 runs over **7 of 15** probes; **8 probes have zero**: P07, P08, P16, P18, P20, P22, **P24**, P25 |
-| open PRs touching soak | none |
-| soak test suites | **12**, all wired into `.github/workflows/ci.yml`; 272 tests green |
-| `MEMORY.md` | **169 rows / 170 lines**, 21,024 B; headroom **3,976 B**, runway **5.4 days** (`util/memory_index_check.py`). It moved 20,852 → 21,024 B *during the writing of this handoff* — quote the tool, never this row |
+| fact                             | value                                                                                                                                                                                                          |
+|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ledger                           | 64 records → **49 observations / 43 valid** (6 invalidate, 9 rescore)                                                                                                                                          |
+| verdict (pooled)                 | `BET-FAILING`, exit **1**                                                                                                                                                                                      |
+| verdict (post-intervention only) | `IN-PROGRESS seeded=8/35 rate=25.0%`, exit **0** — but see §3.B, this is an n-gate                                                                                                                             |
+| newest observation               | `2026-09-04T09:55:27Z` (P21) — **no probe has run since**                                                                                                                                                      |
+| post-intervention coverage       | 8 runs over **7 of 15** probes; **8 probes have zero**: P07, P08, P16, P18, P20, P22, **P24**, P25                                                                                                             |
+| open PRs touching soak           | none                                                                                                                                                                                                           |
+| soak test suites                 | **12**, all wired into `.github/workflows/ci.yml`; 272 tests green                                                                                                                                             |
+| `MEMORY.md`                      | **169 rows / 170 lines**, 21,024 B; headroom **3,976 B**, runway **5.4 days** (`util/memory_index_check.py`). It moved 20,852 → 21,024 B *during the writing of this handoff* — quote the tool, never this row |
 
 ## 3. Open work
 
@@ -109,10 +109,10 @@ invert the pins.
 **The one control that discriminates** — use a **readable but EMPTY** ledger (verdict
 `NO-DATA`), not an unreadable one:
 
-| ledger | correct fix | ml#1690 bug |
-|---|---|---|
-| readable, empty (`NO-DATA`) | `--dry-run` rc **0** | rc **2, empty stdout** |
-| unreadable (e.g. a directory) | rc 1 | rc 2 |
+| ledger                        | correct fix          | ml#1690 bug            |
+|-------------------------------|----------------------|------------------------|
+| readable, empty (`NO-DATA`)   | `--dry-run` rc **0** | rc **2, empty stdout** |
+| unreadable (e.g. a directory) | rc 1                 | rc 2                   |
 
 An earlier draft of this handoff said to use the *unreadable* case and assert rc 0. **That is
 wrong**: the correct fix returns 1 there, because the guard exempts the dry run and then
@@ -279,12 +279,12 @@ patches the first hit leaves a live one behind. (The dry-run claim at `:955` app
 Recovered from Claude Code session transcripts (the memory directory is not
 version-controlled, so this is the only history that exists):
 
-| when | rows | bytes | hookless |
-|---|---|---|---|
-| 2026-09-04T21:45Z | 149 | 24,622 | 0 |
-| **2026-09-05T08:48Z** | **151** | **25,306** | 0 |
-| 2026-09-05T18:26Z | 163 | 17,454 | **48** |
-| now | 170 | 20,852 | 48 |
+| when                  | rows    | bytes      | hookless |
+|-----------------------|---------|------------|----------|
+| 2026-09-04T21:45Z     | 149     | 24,622     | 0        |
+| **2026-09-05T08:48Z** | **151** | **25,306** | 0        |
+| 2026-09-05T18:26Z     | 163     | 17,454     | **48**   |
+| now                   | 170     | 20,852     | 48       |
 
 **The file crossed the 25,000-byte cap before the prune.** The prune was a *recovery*, not a
 gratuitous trade — the first draft got this backwards. It happened in a nine-minute window on
@@ -294,11 +294,11 @@ It cost hook text on **48 of 170 rows**, and rewrote some row titles (several ab
 hook's content). Three of the four rung-1 rows — the facts this soak measures — lost hook
 text, two entirely:
 
-| row | before (09-05T18:17Z) | after (18:26Z) |
-|---|---|---|
+| row                   | before (09-05T18:17Z)                          | after (18:26Z)                  |
+|-----------------------|------------------------------------------------|---------------------------------|
 | Port check fail-opens | `— missing \`ss\` reads "free"; clean ≠ proof` | `— missing \`ss\` reads "free"` |
-| Reaper over-protects | `— false reap = the campaign` | *(none)* |
-| Diverging worktree | `— converge; 4 gates + probe` | *(none)* |
+| Reaper over-protects  | `— false reap = the campaign`                  | *(none)*                        |
+| Diverging worktree    | `— converge; 4 gates + probe`                  | *(none)*                        |
 
 The fourth is **Per-run timeout ordering**, whose hook survived. Rung-1 row *titles* are
 unchanged, so the "the intervention is weaker now" reading holds for these four specifically.

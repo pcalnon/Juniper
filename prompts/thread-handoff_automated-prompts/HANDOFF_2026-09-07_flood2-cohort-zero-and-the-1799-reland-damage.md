@@ -96,18 +96,18 @@ zero at 2026-09-06T00:10:02Z.** This arc's carriers account for **12 of the 97 c
 earlier draft framed this as "juniper-ml went 103 → 62 → 0", which read as this session's
 achievement and was wrong in both figures.
 
-| carrier | closes | this arc's? |
-|---|---:|---|
-| **#1797** (`docs/fleet-round2`) | **30** | no |
-| harvest-triage / method-presence, no carrier | 33 | no |
-| #1746 | 10 | no |
-| #1793 | 7 | no |
-| #1787 | 5 | **yes** |
-| #1756 | 5 | **yes** |
-| #1796 | 3 | no |
-| #1760 | 2 | **yes** |
-| #1784 | 2 | gated by this arc, not authored by it |
-| **total** | **97** | |
+| carrier                                      | closes | this arc's?                           |
+|----------------------------------------------|-------:|---------------------------------------|
+| **#1797** (`docs/fleet-round2`)              | **30** | no                                    |
+| harvest-triage / method-presence, no carrier |     33 | no                                    |
+| #1746                                        |     10 | no                                    |
+| #1793                                        |      7 | no                                    |
+| #1787                                        |      5 | **yes**                               |
+| #1756                                        |      5 | **yes**                               |
+| #1796                                        |      3 | no                                    |
+| #1760                                        |      2 | **yes**                               |
+| #1784                                        |      2 | gated by this arc, not authored by it |
+| **total**                                    | **97** |                                       |
 
 The cohort hit zero **before** #1799, #1800 and #1802 existed as merges. **The flood spans
 four repos**, not one — that disposition analysis §8 tallies canopy 13, data 31, data-client
@@ -146,7 +146,7 @@ critical, all pre-dating the arc.
 ## 3. Outstanding work
 
 | # | Item | Evidence |
-|---|---|---|
+| --- | --- | --- |
 | 1 | **#1814 is OPEN and repairs live duplication on `main`** from this arc's #1799 | `grep '^## ' docs/REFERENCE.md \| sort \| uniq -d \| wc -l` → 8, floor 3 |
 | 2 | **The 2026-09-05 consolidator unions on the whole stripped line** — the root cause. Keying on the row's first cell is still open | disposition analysis §8 |
 | 3 | **canopy −1597, data −956, deploy 0 margin, cascor-client −208** against their own 30-day slack. **DO NOT** transcribe these; re-run `measure-growth --days 30` | §1 block |

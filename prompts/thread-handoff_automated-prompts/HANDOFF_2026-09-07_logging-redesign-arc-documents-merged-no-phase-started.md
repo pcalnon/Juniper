@@ -8,13 +8,13 @@
 
 **Documents REFERENCED** (short names used throughout, full filenames here once):
 
-| short name | filename, all under `juniper-ml/notes/` |
-| --- | --- |
-| **ROADMAP** | `JUNIPER_2026-09-02_JUNIPER-CASCOR_LOGGING-REDESIGN-ROADMAP.md` |
-| **RECON** | `JUNIPER_2026-09-02_JUNIPER-CASCOR_LOGGING-CURRENT-STATE-RECONCILIATION.md` |
-| **DESIGN** | `JUNIPER_2026-08-29_JUNIPER-CASCOR_LOGGING-REDESIGN-DESIGN.md` |
-| **ANALYSIS** | `JUNIPER_2026-08-29_JUNIPER-CASCOR_LOGGING-CALL-SITE-MIGRATION-ANALYSIS.md` |
-| **GATED** | `JUNIPER_2026-08-29_JUNIPER-ECOSYSTEM_GATED-MEASUREMENTS-RESULTS.md` |
+| short name    | filename, all under `juniper-ml/notes/`                                         |
+|---------------|---------------------------------------------------------------------------------|
+| **ROADMAP**   | `JUNIPER_2026-09-02_JUNIPER-CASCOR_LOGGING-REDESIGN-ROADMAP.md`                 |
+| **RECON**     | `JUNIPER_2026-09-02_JUNIPER-CASCOR_LOGGING-CURRENT-STATE-RECONCILIATION.md`     |
+| **DESIGN**    | `JUNIPER_2026-08-29_JUNIPER-CASCOR_LOGGING-REDESIGN-DESIGN.md`                  |
+| **ANALYSIS**  | `JUNIPER_2026-08-29_JUNIPER-CASCOR_LOGGING-CALL-SITE-MIGRATION-ANALYSIS.md`     |
+| **GATED**     | `JUNIPER_2026-08-29_JUNIPER-ECOSYSTEM_GATED-MEASUREMENTS-RESULTS.md`            |
 | **CONSENSUS** | `JUNIPER_2026-08-30_JUNIPER-ECOSYSTEM_INDEPENDENT-AGENT-CONSENSUS-PROCEDURE.md` |
 
 **Documents CHANGED by this handoff**: this file only.
@@ -81,14 +81,14 @@ Continue the **juniper-cascor logging redesign** ([cascor#573](https://github.co
 
 **DESIGN §7 decisions 1–6 are SETTLED (2026-08-29) and still binding.** Do not re-open them:
 
-| # | settled decision |
-| --- | --- |
-| 1 | Measure before building |
+| # | settled decision                                                                                                                                     |
+|---|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1 | Measure before building                                                                                                                              |
 | 2 | **Flush per record** — *"a complete log for a crashed run outweighs the throughput; a truncated log is how several analyses in this arc went wrong"* |
-| 3 | Per-process file handle, opened lazily — **premise refuted** (it says "after fork"; read "after forkserver start"), never formally re-issued |
-| 4 | **Console stays on stdout** (provisional) |
-| 5 | Call-site migration scope **deferred, and reserved to the owner** — this is ROADMAP §13 decision 6 |
-| 6 | JSON via `juniper-observability` — **already violated deliberately**; `api/observability.py:75-119` is a local fork |
+| 3 | Per-process file handle, opened lazily — **premise refuted** (it says "after fork"; read "after forkserver start"), never formally re-issued         |
+| 4 | **Console stays on stdout** (provisional)                                                                                                            |
+| 5 | Call-site migration scope **deferred, and reserved to the owner** — this is ROADMAP §13 decision 6                                                   |
+| 6 | JSON via `juniper-observability` — **already violated deliberately**; `api/observability.py:75-119` is a local fork                                  |
 
 **ROADMAP §13 decisions 1–7 are the OPEN set.** §13.1 is a response slot: `.` means unanswered. Only 7 is answered. **Everywhere below, "decision N" means ROADMAP §13 N.**
 
@@ -118,20 +118,20 @@ which has drifted — anchor on the `print(f"+{_console_message(...)}")` text).
 
 **Stable** (re-verify only if something looks wrong):
 
-| item | state |
-| --- | --- |
-| Implementation | **none** — zero phases started |
-| cascor `src/log_config/`, `src/candidate_unit/`, `src/tests/conftest.py`, `src/api/observability.py` | **untouched** across the 12 commits `70edfc4..origin/main` |
-| Documents | all four on ml `main`; only header-format normalisation and the addition of ROADMAP §13.1 since the merge |
+| item                                                                                                 | state                                                                                                     |
+|------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| Implementation                                                                                       | **none** — zero phases started                                                                            |
+| cascor `src/log_config/`, `src/candidate_unit/`, `src/tests/conftest.py`, `src/api/observability.py` | **untouched** across the 12 commits `70edfc4..origin/main`                                                |
+| Documents                                                                                            | all four on ml `main`; only header-format normalisation and the addition of ROADMAP §13.1 since the merge |
 
 **Volatile — re-measure, do not trust:**
 
-| item | value at 2026-09-07 |
-| --- | --- |
-| juniper-ml `origin/main` | `ef73443f` |
-| juniper-cascor `origin/main` | `1ea2062` |
-| cascor#573 | OPEN, **0 comments**, `createdAt == updatedAt == 2026-08-24T00:29:11Z` |
-| In-flight logging work | none in either repo |
+| item                         | value at 2026-09-07                                                    |
+|------------------------------|------------------------------------------------------------------------|
+| juniper-ml `origin/main`     | `ef73443f`                                                             |
+| juniper-cascor `origin/main` | `1ea2062`                                                              |
+| cascor#573                   | OPEN, **0 comments**, `createdAt == updatedAt == 2026-08-24T00:29:11Z` |
+| In-flight logging work       | none in either repo                                                    |
 
 > **The primary checkouts are routinely behind `origin/main`** — at time of writing, juniper-ml by 11 commits and juniper-cascor by 3. Always `git fetch` and compare against `origin/main`, never the local `main` ref.
 
@@ -139,14 +139,14 @@ which has drifted — anchor on the `print(f"+{_console_message(...)}")` text).
 
 ## 5. Anchors, re-verified 2026-09-07 at cascor `1ea2062`
 
-| anchor | location | verified |
-| --- | --- | --- |
-| `is_valid_level`'s `level == level` typo | `src/log_config/logger/logger.py:341` | yes |
-| `_level_logger_name` assigned once, never rewritten | `src/log_config/logger/logger.py:164` | yes |
-| `isEnabledFor(level=` sites | `src/candidate_unit/candidate_unit.py:596,597,764,765,766,833,834,1046` — **8** | yes |
-| the `_cache_logging_system` fixture | `src/tests/conftest.py:871-935` | yes |
-| the `configure_logging` fork | `src/api/observability.py:75-119` | yes |
-| Path C's rotator | `src/api/observability.py:110-115`, 10 MiB / 5 backups | yes |
+| anchor                                              | location                                                                        | verified |
+|-----------------------------------------------------|---------------------------------------------------------------------------------|----------|
+| `is_valid_level`'s `level == level` typo            | `src/log_config/logger/logger.py:341`                                           | yes      |
+| `_level_logger_name` assigned once, never rewritten | `src/log_config/logger/logger.py:164`                                           | yes      |
+| `isEnabledFor(level=` sites                         | `src/candidate_unit/candidate_unit.py:596,597,764,765,766,833,834,1046` — **8** | yes      |
+| the `_cache_logging_system` fixture                 | `src/tests/conftest.py:871-935`                                                 | yes      |
+| the `configure_logging` fork                        | `src/api/observability.py:75-119`                                               | yes      |
+| Path C's rotator                                    | `src/api/observability.py:110-115`, 10 MiB / 5 backups                          | yes      |
 
 **Anchor on the quoted text, not the number.** DESIGN's `:475` for the `print` has already drifted to `:523`.
 
@@ -158,12 +158,12 @@ RECON §6.1 says these were inlined *"because Phase 0's author may not open the 
 
 Pre-#598, over **84.96 s** of worker self time at `67d7ea35` (32-profile cap-4 corpus, `~/.local/state/juniper-experiments/census-at67d7ea35/prof`):
 
-| component | calls | time | share | paid for |
-| --- | --- | --- | --- | --- |
-| `Tensor.__format__` chain | 2,262 → 1.81 M | 27.98 s | 33 % | **emitted records only** |
-| `_filter_by_level` | 646,016 | 11.19 s | 13.2 % | every call — 91 % discarded |
-| `strftime` | 116,798 | 0.99 s | 1.2 % | emitted only |
-| `currentframe` (eager) | 646,016 | 0.87 s | 1.0 % | every call |
+| component                 | calls          | time    | share  | paid for                    |
+|---------------------------|----------------|---------|--------|-----------------------------|
+| `Tensor.__format__` chain | 2,262 → 1.81 M | 27.98 s | 33 %   | **emitted records only**    |
+| `_filter_by_level`        | 646,016        | 11.19 s | 13.2 % | every call — 91 % discarded |
+| `strftime`                | 116,798        | 0.99 s  | 1.2 %  | emitted only                |
+| `currentframe` (eager)    | 646,016        | 0.87 s  | 1.0 %  | every call                  |
 
 Logger calls by level, exact and complete (sums to 646,016): **`trace` 264,784 · `debug` 264,223 · `verbose` 58,610 · `info` 58,399**. **91.0 % of calls are discarded** (587,617 of 646,016) at INFO.
 
@@ -356,11 +356,11 @@ Per **CONSENSUS** §3, sized **high criticality** (a handoff misdirects a whole 
 
 **Sample**: three agents, ~120 tool calls, no tests run — every claim comes from source, git, the GitHub API, and two live executions of the probe.
 
-| lens | found |
-| --- | --- |
-| Lane A — re-derive every factual claim from primary sources | 3 wrong, 2 unverifiable, of 12 |
-| Lane B — amputation | ~40 dropped items; 5 ranked top |
-| Lane B — executability | 35 numbered defects, 4 classed as day-one blockers |
+| lens                                                        | found                                              |
+|-------------------------------------------------------------|----------------------------------------------------|
+| Lane A — re-derive every factual claim from primary sources | 3 wrong, 2 unverifiable, of 12                     |
+| Lane B — amputation                                         | ~40 dropped items; 5 ranked top                    |
+| Lane B — executability                                      | 35 numbered defects, 4 classed as day-one blockers |
 
 **What the review changed, materially:**
 

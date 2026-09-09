@@ -212,7 +212,7 @@ cross-check **79 / 79 / 79, AGREE**.
 ## 2. What this session did
 
 | PR | Result |
-|---|---|
+| --- | --- |
 | **data#381** | **MERGED** (`c8f09fe`). **The JD-PERF-02 metadata cache was INERT in production.** 6 of 7 stores never called `super().__init__()`, so `_list_all_metadata_cached` silently degraded to an uncached walk — including on `LocalFSDatasetStore`, the store `api/app.py` wires. **Order 100× at N=100 and N=1,000** — measured 96.6–148.3× and 77.4–163.2× across four runs, so quote the order, not four significant figures. |
 | **cascor#630** | **MERGED** (`1ea2062`). `_artifact_to_tensors` refuses NaN/Inf by name, all six arrays, with the count and the producer-side remedy in the message. |
 | **recurrence#151** | **MERGED** (`e5679b0`). The regression target is now finiteness-checked, as `X` and `dt` already were. |
@@ -227,16 +227,16 @@ Round 36's five PRs (data#376/#377, cascor#621/#624, ml#1791/#1795) all merged; 
 
 ## 3. Owner rulings — do not re-litigate
 
-| Date | Question | Ruling |
-|---|---|---|
-| 09-05 | Option numbering in the partial-data spec | **Option 3 (fail)** cancels and deselects |
+| Date  | Question                                                   | Ruling                                                                             |
+|-------|------------------------------------------------------------|------------------------------------------------------------------------------------|
+| 09-05 | Option numbering in the partial-data spec                  | **Option 3 (fail)** cancels and deselects                                          |
 | 09-05 | The 3 tickers rescuable only via `CommonStockSharesIssued` | **Add the rung, annotated as its own degraded basis** (`issued_includes_treasury`) |
-| 09-05 | Whether STZ needs more than refusal | **No** |
-| 09-05 | `fundamentals_fill` default | **`"nan"`** — shipped |
-| 09-07 | `APD-DATA-019` disposition | **Re-scope to the real cost**, keep open |
-| 09-07 | The inert cache | **Fix it properly now** (done, data#381) |
-| 09-07 | NaN follow-up | **Guard cascor AND recurrence's `y`** (done) |
-| 09-07 | The NaN record | **Add the measured numbers** (done) |
+| 09-05 | Whether STZ needs more than refusal                        | **No**                                                                             |
+| 09-05 | `fundamentals_fill` default                                | **`"nan"`** — shipped                                                              |
+| 09-07 | `APD-DATA-019` disposition                                 | **Re-scope to the real cost**, keep open                                           |
+| 09-07 | The inert cache                                            | **Fix it properly now** (done, data#381)                                           |
+| 09-07 | NaN follow-up                                              | **Guard cascor AND recurrence's `y`** (done)                                       |
+| 09-07 | The NaN record                                             | **Add the measured numbers** (done)                                                |
 
 ---
 
@@ -273,11 +273,13 @@ and the recurrence tier rejects non-finite `X` by name.
 ## 5. Traps
 
 ### 5.1 The sandbox refuses shell STRUCTURE
+
 Loops, `${PIPESTATUS}`, heredocs, `cd … && … && git …` chains, `gh api` with a path built inside a
 larger construct, and `sleep` followed by another command — all refused. Split into plain commands.
 **cwd does not persist.** Heredocs into `python3 -` DO work and were the workhorse this round.
 
 ### 5.2 A `# noqa` that satisfies ruff and not CodeQL is worse than none
+
 data#381 was blocked twice by CodeQL on **my own test code**: `py/side-effect-in-assert` (a mutation
 inside an `assert` vanishes under `python -O`, so the test passes having deleted nothing) and
 `py/unused-import` on three imports kept for their subclass-registration side effect — each already
@@ -285,20 +287,24 @@ carrying `# noqa: F401`. The fix that works is `importlib.import_module(...)`: a
 import. Same pattern as canopy#585.
 
 ### 5.3 A broken thing masks the next one — in the tests
+
 While a store's cache is **inert**, its read-your-writes tests pass **trivially**: there is no cache
 to go stale. Fixing only the store the validator named would have left three arms meaningless.
 Always ask what the test can still detect once the first defect is gone.
 
 ### 5.4 The census caught its own stub
+
 Walking `DatasetStore.__subclasses__()` found the test file's `_CountingStore`. Scope such a census
 to the production package (`sub.__module__.startswith("juniper_data.storage")`) or it fails for a
 reason it does not care about.
 
 ### 5.5 A skipped arm pins nothing
+
 The recurrence `y_train` fallback arm originally `pytest.skip`ped when the fixture did not emit that
 key. Make the fixture reach the branch (here: pop `y_reg_train`) instead of skipping past it.
 
 ### 5.6 Environments
+
 juniper-data → `/opt/miniforge3/envs/JuniperData/bin/python` (pass `-p juniper_data.api.app`, a
 circular import otherwise). juniper-cascor → `.../JuniperCascor1/bin/python` — **note the trailing
 `1`**; the unsuffixed names are `-DEPRECATED` on disk. **juniper-recurrence has NO conda env**:
@@ -307,6 +313,7 @@ worktree. In that borrowed env `test_crossval.py` does not collect (stale `junip
 one torch test skips — both pre-existing, reproduced on an unmodified checkout.
 
 ### 5.7 Golden snapshots need three collection gates
+
 `GOLDEN_CAPTURE=1 pytest -m golden --golden --slow --integration src/tests/integration`. `--slow`
 alone still skips.
 
@@ -333,17 +340,17 @@ sessions and were left untouched.
 **TWO ADVERSARIAL ROUNDS RUN (2026-09-07). Both found real errors in it; all are corrected above and
 the corrections were re-derived from source before being applied.** What they changed:
 
-| Claim as first written | Verdict |
-|---|---|
-| "prefer fixing the OR" in §0.3 | **Withdrawn** — the OR is deliberate, documented in five places, and pinned by `test_request_cannot_opt_out_of_deployment_allow_truncation` |
-| "it also rides the WS training stream" | **Wrong for canopy's case** — `get_status()` reaches WS only in a one-shot at connect |
-| "Postgres already pushes down, so a LocalFS-shaped fix would regress it" | **Wrong method** — the pushdown is in `list_datasets`, not on the `/filter` path |
-| §0.7 "understated 0.638%" | **Direction inverted** — it is OVERSTATED, and 40 days is 1 of 3 episodes totalling 103 |
-| "0 of 485 tickers exempt" | **Wrong denominator** — 485 CIKs *with a payload*; the universe is 503/500 and 15 have none |
-| "114.8× / 92.9×" | **Unsupportable precision** — run-to-run spread is ~2× |
-| "zero non-test consumers ⇒ absent is cheap" | **Incomplete** — removal is a MAJOR bump on a published contract |
-| §8 marking ml#1813 done | **It is still OPEN** |
-| Three cited line numbers | **Stale on the day written** (data#369 had shifted them) |
+| Claim as first written                                                   | Verdict                                                                                                                                     |
+|--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| "prefer fixing the OR" in §0.3                                           | **Withdrawn** — the OR is deliberate, documented in five places, and pinned by `test_request_cannot_opt_out_of_deployment_allow_truncation` |
+| "it also rides the WS training stream"                                   | **Wrong for canopy's case** — `get_status()` reaches WS only in a one-shot at connect                                                       |
+| "Postgres already pushes down, so a LocalFS-shaped fix would regress it" | **Wrong method** — the pushdown is in `list_datasets`, not on the `/filter` path                                                            |
+| §0.7 "understated 0.638%"                                                | **Direction inverted** — it is OVERSTATED, and 40 days is 1 of 3 episodes totalling 103                                                     |
+| "0 of 485 tickers exempt"                                                | **Wrong denominator** — 485 CIKs *with a payload*; the universe is 503/500 and 15 have none                                                 |
+| "114.8× / 92.9×"                                                         | **Unsupportable precision** — run-to-run spread is ~2×                                                                                      |
+| "zero non-test consumers ⇒ absent is cheap"                              | **Incomplete** — removal is a MAJOR bump on a published contract                                                                            |
+| §8 marking ml#1813 done                                                  | **It is still OPEN**                                                                                                                        |
+| Three cited line numbers                                                 | **Stale on the day written** (data#369 had shifted them)                                                                                    |
 
 **A third round is owed**, because §0.11–§0.13 were added *by* validation and have had none. Attack
 in this order:
