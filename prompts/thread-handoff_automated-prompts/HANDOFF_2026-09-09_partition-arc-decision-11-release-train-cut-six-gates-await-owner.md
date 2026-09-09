@@ -85,11 +85,12 @@ juniper-ml's floors + 0.8.0; the documentation that records the released version
 | juniper-ml | #1829 | straggler S-2 (`crossval/splits.py` docstring) + two release-train helpers |
 | juniper-ml | #1838–#1842, #1844 | exempt notes-archive PRs, one per Release (auto-merge armed) |
 
-**Open at handoff**: juniper-recurrence#159 — app `juniper-recurrence-model` ceilings `<0.4.0`
-(dependencies, `[torch]`, `[bench-torch]`), auto-merge armed; it went BEHIND four times as this
-contended lane moved and was refreshed with `update-branch` each time (§7 checks it). Closed unmerged:
-juniper-data#384 (superseded by #386), juniper-recurrence#155 (anyio fix; another session's #154 landed
-the identical filter six minutes earlier).
+Also merged (07:41Z, after the table was first written): juniper-recurrence#159 — app
+`juniper-recurrence-model` ceilings `<0.4.0` (dependencies, `[torch]`, `[bench-torch]`); it went BEHIND
+four times as this contended lane moved and was refreshed with `update-branch` each time. **No PR of
+this arc is open in a sibling repo at handoff.** Closed unmerged: juniper-data#384 (superseded by #386),
+juniper-recurrence#155 (anyio fix; another session's #154 landed the identical filter six minutes
+earlier).
 
 **Next actions, in order.** (1) Owner approves the six gates in §2. (2) §3 — the app's floor bump and
 0.5.0, then juniper-ml's floors and 0.8.0. (3) §4 — documentation. (4) §5 — carried forward.
@@ -119,7 +120,7 @@ points at another (the app's floor bump is §3a and comes after).
 
 ## 3. The two trains still to run, in dependency order
 
-**3a. juniper-recurrence (app) 0.5.0** — needs #159 merged AND `juniper-recurrence-model 0.3.0` **on
+**3a. juniper-recurrence (app) 0.5.0** — #159 is merged; needs `juniper-recurrence-model 0.3.0` **on
 PyPI** (the app lane runs `pip install -e ".[test]"`, which resolves the model from PyPI, so a floor at an
 unpublished version is red CI). Then, as ONE PR: `juniper-recurrence/pyproject.toml` floors
 `juniper-recurrence-model>=0.3.0,<0.4.0` in `dependencies`, `[torch]` and `[bench-torch]`, plus an app
@@ -228,8 +229,8 @@ wheel is stale. `detect` will offer it as a patch. Also UNRELEASED per `detect` 
 ```bash
 cd /home/pcalnon/Development/python/Juniper/juniper-ml/.claude/worktrees/fancy-marinating-nova
 git fetch -q origin && git status --short && git log --oneline -1 origin/main
-# The one recurrence PR this handoff could not wait for:
-gh pr view 159 --repo pcalnon/juniper-recurrence --json state,mergedAt,mergeStateStatus
+# Every sibling PR of this arc should read MERGED; a control that must resolve:
+gh pr view 159 --repo pcalnon/juniper-recurrence --json state,mergedAt --jq '"\(.state) \(.mergedAt)"'   # MERGED 2026-09-09T07:41:24Z
 # Gate state per package (waiting = still the owner's; success = approved). Control: the run id must resolve.
 gh run view 34322900465 --repo pcalnon/juniper-data-client --json jobs --jq '.jobs[] | "\(.name)\t\(.status)\t\(.conclusion)"'
 gh run view 34324270593 --repo pcalnon/juniper-recurrence   --json jobs --jq '.jobs[] | "\(.name)\t\(.status)\t\(.conclusion)"'
