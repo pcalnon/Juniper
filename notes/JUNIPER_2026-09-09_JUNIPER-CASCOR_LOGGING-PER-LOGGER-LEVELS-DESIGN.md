@@ -91,8 +91,8 @@ around does not discriminate between the options.
 ## 3. Correction 2 — dual *syntax* already works; only dual *state* is missing
 
 `@classmethod` is already accessible from an instance. `instance.debug(...)` on a classmethod binds
-`cls` to the class and runs fine — measured at **92.0 ns** against **89.7 ns** for `Logger.debug(...)`,
-a **+2.3 ns** difference (§4).
+`cls` to the class and runs fine — measured at **88–97 ns** against **84–90 ns** for `Logger.debug(...)`,
+a **+2 … +8 ns** difference (§4).
 
 So the convenience the owner describes — "accessible as both class and object calls" — is *not* what
 is missing today. What is missing is that both access paths reach the **same class-level state**.
@@ -110,24 +110,27 @@ cost on a path taken 646,016 times per corpus?"**
 
 ## 4. What each dispatch mechanism costs
 
-Measured with `timeit.repeat(..., repeat=7)` reporting the **minimum** — the correct estimator here,
-because scheduler noise is one-sided and only ever adds time. Bodies are trivial and identical across
-mechanisms (a level compare and an early return), so **the delta is the dispatch cost**. Level 1
-against a threshold of 20, i.e. the **discarded** path — 91.0 % of real calls (RECON §6.1).
+Measured with `timeit.repeat(..., repeat=7)` reporting each run's **minimum** — the correct estimator
+here, because scheduler noise is one-sided and only ever adds time. Bodies are trivial and identical
+across mechanisms (a level compare and an early return), so **the delta is the dispatch cost**.
+Level 1 against a threshold of 20, i.e. the **discarded** path — 91.0 % of real calls (RECON §6.1).
 
 Script: `juniper-ml/util/ad-hoc/2026-09-09_p41_dualpath_mechanisms_bench.py`, with the naive
 descriptor in `…/2026-09-09_p41_hybrid_descriptor_bench.py`.
 
-| mechanism                                             | ns/call | vs `@classmethod` | s / 646 k corpus |
-|-------------------------------------------------------|--------:|------------------:|-----------------:|
-| **B** plain instance method                            |  **48.7** | **−41.0 ns**    | 0.032            |
-| **G** metaclass design, via an **instance**            |    87.8 |          −1.9 ns  | 0.057            |
-| **A** `@classmethod` — **status quo**                  |    89.7 |               —   | 0.058            |
-| **A′** `@classmethod` via an **instance**              |    92.0 |          +2.3 ns  | 0.059            |
-| **H** eager-bind in `__init__`, via an instance        |    99.2 |          +9.5 ns  | 0.064            |
-| **I** instance-`__dict__` cache, steady state          |   280.2 |        +190.5 ns  | 0.181            |
-| **F** metaclass **data descriptor**, via the **class** |   353.4 |        +263.7 ns  | 0.228            |
-| **hybrid descriptor** (naive `__get__`), either path   | 441–527 |    +350…+438 ns   | 0.29–0.34        |
+Reported as the **range across four independent runs**, not a single run's figures: the host is
+shared, and per-row noise reached 50 %. The ranges are what the evidence supports.
+
+| mechanism                                             |  ns/call | vs `@classmethod` | s / 646 k corpus |
+|-------------------------------------------------------|---------:|------------------:|-----------------:|
+| **B** plain instance method                            | **48–50** | **−36 … −41 ns** | 0.031–0.033      |
+| **A** `@classmethod` — **status quo**                  |    84–90 |               —   | 0.054–0.058      |
+| **A′** `@classmethod` via an **instance**              |    88–97 |      +2 … +8 ns   | 0.057–0.063      |
+| **G** metaclass design, via an **instance**            |   88–111 |      −2 … +27 ns  | 0.057–0.072      |
+| **H** eager-bind in `__init__`, via an instance        |   99–116 |     +24 … +30 ns  | 0.064–0.075      |
+| **I** instance-`__dict__` cache, steady state          |  243–288 |   +153 … +204 ns  | 0.157–0.186      |
+| **F** metaclass **data descriptor**, via the **class** |  353–410 |   +271 … +320 ns  | 0.228–0.265      |
+| **hybrid descriptor** (naive `__get__`), either path   |  441–527 |   +350 … +438 ns  | 0.285–0.341      |
 
 **The pattern is unambiguous.** Every mechanism that makes **one name** dispatch on its receiver —
 the naive hybrid, the metaclass data descriptor, the instance-`__dict__` cache — costs **3–6× a
@@ -136,11 +139,11 @@ nothing, or is *cheaper* than today.
 
 Two secondary findings from the same runs, both actionable:
 
-- **A plain instance method is 41 ns FASTER than a classmethod** (48.7 vs 89.7). Moving the hot path
-  to instance methods is a small performance *win*, not a cost.
+- **A plain instance method is 36–41 ns FASTER than a classmethod** (48–50 vs 84–90). Moving the hot
+  path to instance methods is a small performance *win*, not a cost.
 - **`*args, **kwargs` packing dominates the closure mechanisms.** H (a fixed-signature lambda) is
-  99.2 ns; I (a `*a, **kw` closure) is 280.2 ns, on otherwise identical work. Any closure introduced
-  on this path must take a fixed signature.
+  99–116 ns; I (a `*a, **kw` closure) is 243–288 ns, on otherwise identical work. Any closure
+  introduced on this path must take a fixed signature.
 
 ### 4.1 A trap, found by measurement rather than by reading
 
@@ -160,6 +163,27 @@ defining `__set__`/`__delete__`) outranks the class `__dict__` — and that is r
 This is worth recording because the shadowing is silent at import and at definition: nothing warns,
 and a suite that only exercises the instance path stays green.
 
+### 4.2 The metaclass design also defeats static analysis
+
+Found by CI rather than by design: **CodeQL raised three "Wrong number of arguments in a call"
+alerts** against the corrected, working mechanism **F**, on ml#1860 — *"Call to method
+MetaStyle.debug with too few arguments; should be no fewer than 3."*
+
+CodeQL is right about the source and wrong about the runtime. It resolves `MetaStyle.debug` to the
+**class's** three-argument instance method, exactly as a human reader would; at runtime the
+metaclass **data** descriptor wins and the two-argument call is correct. The benchmark now prints
+the resolution to settle it:
+
+```text
+MetaStyle.debug        -> _MetaDataDescriptor.__get__.<locals>.bound
+MetaStyle().debug      -> MetaStyle.debug
+```
+
+**This is an argument against mechanism F beyond its +271…+320 ns.** A design that a whole class of
+tooling cannot verify — and that reports a *false positive on every correct call site* — imposes a
+permanent cost on review, on CI, and on every future reader. It also blocks merges: an unresolved
+CodeQL thread holds `mergeStateStatus: BLOCKED` while all 17 required contexts read green.
+
 ---
 
 ## 5. Recommendation — two objects, not one overloaded name
@@ -170,11 +194,11 @@ this whole arc has been making cheaper, and it buys nothing that two bindings do
 Recommended shape:
 
 1. **`Logger` keeps its 32 classmethods, unchanged.** The 109 `Logger.M(...)` sites — 64 of them
-   inside `logger.py` — are untouched, at 89.7 ns. The class path remains the process-wide default
+   inside `logger.py` — are untouched, at 84–90 ns. The class path remains the process-wide default
    and the bootstrap path (it must keep working before any instance exists; `logger.py`'s own
    construction logging depends on that).
 2. **Add a factory returning a per-logger instance** whose class defines the eight emit methods and
-   `isEnabledFor` as **plain instance methods** — 48.7 ns, *faster than today*, with the level knobs
+   `isEnabledFor` as **plain instance methods** — 48–50 ns, *faster than today*, with the level knobs
    as instance attributes falling back to the class value when unset.
 3. **The 967 `self.logger.M(...)` sites change zero characters.** Only the **14 bind sites** change,
    from `self.logger = Logger` to `self.logger = <factory>("candidate_unit")` — plus the two indirect
@@ -210,6 +234,7 @@ rejected mechanisms, except where noted.
 | 8 | **The mirror.** `candidate_unit/`, `utils/`, `log_config/` and `cascor_constants/` are byte-gated (ROADMAP trap 2), and `log_config/logger/logger.py` is on `_INTENTIONAL_DIVERGENCE`. Any P4 edit touching the bind sites in `candidate_unit.py` carries a mirror re-extraction **and a package release**. | medium | Now governed by the ruled decision 4 (converge — see §8). |
 | 9 | **Two idioms invite drift.** Once both work, new code picks either, and the choice stops being deliberate. | low | P6.3's lint rule is the natural home for a "use the instance binding inside `candidate_unit`/`cascade_correlation`" rule. |
 | 10 | **`isEnabledFor` as an instance method changes the 8 guard sites' meaning.** They currently ask a class-wide question; they would ask a per-instance one. That is the intent, but it is a behaviour change at exactly the 8 sites whose integers are already wrong (RECON N-3). | medium | Sequence P1.3 (fix the integers) **before** P4 changes what the predicate means. |
+| 11 | **A receiver-dispatching name is invisible to static analysis.** §4.2: CodeQL raises a false "too few arguments" on **every correct class-path call site** under mechanism F, and an unresolved CodeQL thread holds a PR at `BLOCKED` while all 17 required contexts read green. | **high** *(F only)* | Does **not** apply to §5's recommendation, where each name has one receiver and every call site is statically checkable. This is a further reason to prefer it. |
 
 **Not a concern, contrary to expectation:** raw dispatch cost, *provided* §5's shape is used. The
 967-site majority gets **faster**. It is only the one-name-two-receivers mechanisms that are
@@ -222,7 +247,7 @@ expensive, and none of them is needed.
 - **It does not measure the real logger.** All figures in §4 are dispatch-only, on synthetic bodies,
   on one machine and one interpreter (Python 3.13.13, `JuniperCascor1`). They size the *delta between
   mechanisms*, which is the decision at hand; they are **not** a claim about cascor's logging share.
-  Run-to-run noise reached 57 % on the fastest rows, which is why minima are reported.
+  Per-row run-to-run noise reached 50 %, which is why §4 reports the RANGE across four runs rather than any single run's figures.
 - **It does not re-open P1.** The state split (RECON N-3) and the `is_valid_level` typo
   (`logger.py:341`, N-3a) remain prerequisites, and concern 2 above raises their priority.
 - **It does not decide the precedence chain.** ROADMAP P4.2's chain — per-logger env → global env →
@@ -262,8 +287,10 @@ The alternatives remain on the table and are cheap to state:
 - **(b) Named sub-loggers on the class only.** A name-keyed level map consulted by the existing
   classmethods; no instances, no bind changes at all. Smallest change, but every call site must then
   *pass* its name, which is a 1,188-site edit — the opposite of the trade in (a).
-- **(c) One overloaded name, dispatching on receiver.** Rejected on measurement: +190 to +438 ns per
-  call, 3–6× the status quo, on the 646 k-call path.
+- **(c) One overloaded name, dispatching on receiver.** Rejected on two independent grounds:
+  measurement (+153 to +438 ns per call, 3–6× the status quo, on the 646 k-call path) and
+  verifiability (§4.2 — static analysis cannot resolve it, and reports a false positive on every
+  correct class-path call).
 
 **Once selected, this document is extended** with the implementation design: the concrete class
 shape, the precedence chain wired to P4.2, the `__getstate__`/`__setstate__` contract from concern 5,

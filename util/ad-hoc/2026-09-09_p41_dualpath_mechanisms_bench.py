@@ -179,6 +179,20 @@ class CachingStyle:
         self._level = THRESHOLD
 
 
+def class_path(cls, level, message):
+    """Reach the metaclass data descriptor EXPLICITLY.
+
+    ``cls.debug`` resolves, at runtime, to exactly this -- the metaclass data
+    descriptor bound to the class. Spelling it out keeps the call arity honest to a
+    static reader: written as ``MetaStyle.debug(1, "m")`` the call is indistinguishable,
+    to any static analysis, from a two-argument call to the class's three-argument
+    instance method, and CodeQL reports it as such. The benchmark row still times the
+    ordinary ``MetaStyle.debug(...)`` attribute access, because that is the cost being
+    measured; this helper is only for the correctness demonstrations below.
+    """
+    return type(cls).__dict__["debug"].__get__(cls)(level, message)
+
+
 def bench(label, stmt, g):
     """Best-of-REPEATS. timeit.repeat + min is the right estimator here: the
     distribution is one-sided (scheduler noise only ever ADDS time), so the mean is
@@ -226,21 +240,30 @@ def main():
     print("-" * 88)
 
     print("\nCorrectness -- both access paths must reach the SAME core and agree:")
-    print(f"  MetaStyle.debug(1,'m') = {MetaStyle.debug(1, 'm')!r}   meta.debug(1,'m') = {meta.debug(1, 'm')!r}")
-    print(f"  MetaStyle.debug(30,'m')= {MetaStyle.debug(30, 'm')!r}   meta.debug(30,'m')= {meta.debug(30, 'm')!r}")
+    print(f"  class path (1,'m')  = {class_path(MetaStyle, 1, 'm')!r}   meta.debug(1,'m')  = {meta.debug(1, 'm')!r}")
+    print(f"  class path (30,'m') = {class_path(MetaStyle, 30, 'm')!r}   meta.debug(30,'m') = {meta.debug(30, 'm')!r}")
 
     print("\nPer-instance level actually overrides, while class access keeps the class level:")
     quiet = MetaStyle()
     quiet._level = 99
-    print(f"  quiet._level=99 -> quiet.debug(30,'m')     = {quiet.debug(30, 'm')!r}  (suppressed per-instance)")
-    print(f"                     MetaStyle.debug(30,'m') = {MetaStyle.debug(30, 'm')!r}  (class path unaffected)")
+    print(f"  quiet._level=99 -> quiet.debug(30,'m') = {quiet.debug(30, 'm')!r}  (suppressed per-instance)")
+    print(f"                     class path (30,'m') = {class_path(MetaStyle, 30, 'm')!r}  (class path unaffected)")
+
+    print("\nWhich implementation does each access path actually reach?")
+    print(f"  MetaStyle.debug        -> {getattr(MetaStyle.debug, '__qualname__', type(MetaStyle.debug).__name__)}")
+    print(f"  MetaStyle().debug      -> {meta.debug.__qualname__}")
+    print("  A STATIC reader -- CodeQL included -- resolves `MetaStyle.debug` to the CLASS's")
+    print("  instance method and reports 'too few arguments'. It is right about the source and")
+    print("  wrong about the runtime: the metaclass DATA descriptor wins. That a whole class of")
+    print("  tooling cannot verify this design is itself an argument against adopting it.")
 
     print("\nInstance-dict cache: does it really stop re-entering __get__?")
     c2 = CachingStyle()
     print(f"  before first access: 'debug' in c2.__dict__ -> {'debug' in c2.__dict__}")
     c2.debug(1, "m")
     print(f"  after  first access: 'debug' in c2.__dict__ -> {'debug' in c2.__dict__}")
-    print(f"  c2.debug is c2.debug -> {c2.debug is c2.debug}  (True = no re-allocation)")
+    first, second = c2.debug, c2.debug
+    print(f"  c2.debug is c2.debug -> {first is second}  (True = no re-allocation)")
     print("  NOTE: this puts a strong reference to the bound method on every instance,")
     print("        creating an instance -> closure -> instance reference cycle.")
     return 0
