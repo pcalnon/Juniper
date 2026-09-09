@@ -136,6 +136,71 @@ class RetrievalChannel(unittest.TestCase):
         self.assertTrue(ch["pointer_doc_referenced"])
         self.assertEqual(ch["suggests"], "follow")
 
+    def test_a_sibling_repos_same_named_file_is_not_a_hit(self) -> None:
+        # Measured on all three P24 runs (2026-09-08 re-audit): the session ran
+        # `cd .../juniper-deploy && grep -rn 3001 .` and matched juniper-deploy's
+        # OWN docs/REFERENCE.md. 7 of the 8 sibling repos ship one. The fact under
+        # test is in juniper-ml's copy, so the pointer was never followed -- but a
+        # substring test scored all three as follows.
+        parsed = {
+            "tool_inputs": [
+                json.dumps(
+                    {
+                        "command": "cd /home/pcalnon/Development/python/Juniper/juniper-deploy " "&& grep -rn 3001 docs/REFERENCE.md",
+                    }
+                )
+            ],
+            "answer": "",
+        }
+        ch = mod.retrieval_channel(parsed, "docs/REFERENCE.md#ecosystem-compatibility")
+        self.assertFalse(ch["pointer_doc_referenced"])
+        self.assertEqual(ch["suggests"], "source-recovered-or-miss")
+
+    def test_an_absolute_sibling_path_is_not_a_hit(self) -> None:
+        parsed = {
+            "tool_inputs": [
+                json.dumps(
+                    {
+                        "file_path": "/home/pcalnon/Development/python/Juniper/juniper-canopy/docs/REFERENCE.md",
+                    }
+                )
+            ],
+            "answer": "",
+        }
+        ch = mod.retrieval_channel(parsed, "docs/REFERENCE.md#x")
+        self.assertFalse(ch["pointer_doc_referenced"])
+
+    def test_a_real_hit_still_counts_when_a_sibling_hit_comes_first(self) -> None:
+        # Order must not decide it. Returning on the FIRST occurrence would let a
+        # sibling-repo path seen early suppress a genuine read of this repo's copy
+        # later in the same run -- trading a false positive for a false negative.
+        parsed = {
+            "tool_inputs": [
+                json.dumps({"command": "grep -rn x /home/x/juniper-deploy/docs/REFERENCE.md"}),
+                json.dumps({"file_path": "docs/REFERENCE.md"}),
+            ],
+            "answer": "",
+        }
+        ch = mod.retrieval_channel(parsed, "docs/REFERENCE.md#x")
+        self.assertTrue(ch["pointer_doc_referenced"])
+        self.assertEqual(ch["suggests"], "follow")
+
+    def test_this_repos_own_worktree_path_is_still_a_hit(self) -> None:
+        # A worktree of juniper-ml is the SAME document. Only a sibling repo is
+        # a different one.
+        parsed = {
+            "tool_inputs": [
+                json.dumps(
+                    {
+                        "file_path": "/home/pcalnon/Development/python/Juniper/juniper-ml/" ".claude/worktrees/giggly-marinating-backus/docs/REFERENCE.md",
+                    }
+                )
+            ],
+            "answer": "",
+        }
+        ch = mod.retrieval_channel(parsed, "docs/REFERENCE.md#x")
+        self.assertTrue(ch["pointer_doc_referenced"])
+
 
 class EventParsing(unittest.TestCase):
     def _log(self, lines: list[dict]) -> Path:
