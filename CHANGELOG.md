@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Perf lane — Wave 4 re-scoped, the micro timing reference established, PF-2 probed**
+  (`notes/JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md`).
+  Item 4.3 answered before any harness was built: PF-8 has no gate content (`step_count` was
+  invariant across a 3× load span in every sweep cell) and the concurrent-launch harness Wave 4
+  planned to build already exists — `run_suite` parallel mode accepts a two-cell cascor suite
+  (the 2026-08-30 version floor lifted the one-checkout refusal; dry-run verified), allocating
+  disjoint ports and pinning equal thread budgets. 4.1 withdrawn, 4.2 re-specified as a suite
+  pair and **blocked on a CI hazard**: `tests/test_experiment_suite_yamls.py` loads every suite in
+  CI, where no cascor sibling exists and the floor check fails closed. Item 2.4 shipped as
+  `juniper-cascor#638` (a report-only pytest-benchmark reference, host identity compared, load
+  condition recorded; a census of all 22 `baseline_*.json` files that ever existed — 312
+  entries — found zero timing keys, `util/ad-hoc/2026-09-08_cascor_baseline_history_census.py`).
+  Item 2.1's calibration probe ran (`util/ad-hoc/2026-09-08_pf2_epoch_calibration_suite.yaml`,
+  with `util/ad-hoc/2026-09-08_loadavg_sampler.py` recording the host condition the driver does
+  not). Three inherited phrases corrected at source: "no timing tolerance of any kind" (P1 design
+  §1 — two fixed absolute ceilings exist; none is baseline-relative), "10× dataset range" (P2 item
+  2.1 — it is 8×), and the Wave 4 "no harness exists" premise. `docs/REFERENCE.md` and
+  `util/experiments/suites/perf/README.md` PF-4 / PF-8 rows updated.
+
 - `tests/test_duplicati_scheduled_backup.py` — hermetic gate for the #1292 systemd
   `--user` scheduled-backup lane (`util/duplicati_scheduled_backup.bash`,
   `util/duplicati_backup_failure.bash`, `util/install_duplicati_timer.bash`, and the
