@@ -24,7 +24,9 @@ on every citation, because more than one document is cited):
 `util/ad-hoc/2026-09-08_changelog_insert.py` (all in #1829); `util/ad-hoc/2026-09-08_bump_version_carriers.py`,
 `util/ad-hoc/2026-09-08_insert_after_line.py` and this file (the handoff PR, §8);
 `notes/releases/RELEASE_NOTES_{juniper-data-client_v0.5.0,juniper-data_v0.14.0,juniper-cascor_v0.11.0,juniper-canopy_v0.7.0,juniper-recurrence-model_v0.3.0,juniper-recurrence-client_v0.3.0}.md`
-(the ceremony's exempt archive PRs #1838–#1842 and #1844). Sibling repos: §1's table.
+(the ceremonies opened one exempt archive PR each, #1838–#1842 and #1844; all six were green but BEHIND
+on the contended main, so they were closed and their six files re-landed as ONE exempt PR, #1847).
+Sibling repos: §1's table.
 
 ---
 
@@ -83,7 +85,7 @@ juniper-ml's floors + 0.8.0; the documentation that records the released version
 | juniper-recurrence | #158 | **juniper-recurrence-model 0.3.0** bump |
 | juniper-recurrence | #161 | **juniper-recurrence-client 0.3.0** bump + sub-package `AGENTS.md` header |
 | juniper-ml | #1829 | straggler S-2 (`crossval/splits.py` docstring) + two release-train helpers |
-| juniper-ml | #1838–#1842, #1844 | exempt notes-archive PRs, one per Release (auto-merge armed) |
+| juniper-ml | #1847 | the six notes-archive files in one exempt PR (auto-merge armed); #1838–#1842 and #1844 closed in its favour |
 
 Also merged (07:41Z, after the table was first written): juniper-recurrence#159 — app
 `juniper-recurrence-model` ceilings `<0.4.0` (dependencies, `[torch]`, `[bench-torch]`); it went BEHIND
@@ -102,14 +104,14 @@ earlier).
 Each run is parked with `Publish to TestPyPI = success` and `Publish to PyPI = waiting`. TestPyPI serves
 the version (HTTP 200 on `https://test.pypi.org/pypi/<pkg>/<ver>/json`); PyPI does not yet (404).
 
-| package | Release | publish run (approve here) | archive PR |
+| package | Release | publish run (approve here) | archive file (all six in juniper-ml#1847) |
 | --- | --- | --- | --- |
-| juniper-data-client 0.5.0 | `v0.5.0` | <https://github.com/pcalnon/juniper-data-client/actions/runs/34322900465> | juniper-ml#1838 |
-| juniper-data 0.14.0 | `v0.14.0` | <https://github.com/pcalnon/juniper-data/actions/runs/34322906502> | juniper-ml#1839 |
-| juniper-cascor 0.11.0 | `v0.11.0` | <https://github.com/pcalnon/juniper-cascor/actions/runs/34322913355> | juniper-ml#1840 |
-| juniper-canopy 0.7.0 | `v0.7.0` | <https://github.com/pcalnon/juniper-canopy/actions/runs/34322919025> | juniper-ml#1841 |
-| juniper-recurrence-model 0.3.0 | `juniper-recurrence-model-v0.3.0` | <https://github.com/pcalnon/juniper-recurrence/actions/runs/34323535743> | juniper-ml#1842 |
-| juniper-recurrence-client 0.3.0 | `juniper-recurrence-client-v0.3.0` | <https://github.com/pcalnon/juniper-recurrence/actions/runs/34324270593> | juniper-ml#1844 |
+| juniper-data-client 0.5.0 | `v0.5.0` | <https://github.com/pcalnon/juniper-data-client/actions/runs/34322900465> | `RELEASE_NOTES_juniper-data-client_v0.5.0.md` |
+| juniper-data 0.14.0 | `v0.14.0` | <https://github.com/pcalnon/juniper-data/actions/runs/34322906502> | `RELEASE_NOTES_juniper-data_v0.14.0.md` |
+| juniper-cascor 0.11.0 | `v0.11.0` | <https://github.com/pcalnon/juniper-cascor/actions/runs/34322913355> | `RELEASE_NOTES_juniper-cascor_v0.11.0.md` |
+| juniper-canopy 0.7.0 | `v0.7.0` | <https://github.com/pcalnon/juniper-canopy/actions/runs/34322919025> | `RELEASE_NOTES_juniper-canopy_v0.7.0.md` |
+| juniper-recurrence-model 0.3.0 | `juniper-recurrence-model-v0.3.0` | <https://github.com/pcalnon/juniper-recurrence/actions/runs/34323535743> | `RELEASE_NOTES_juniper-recurrence-model_v0.3.0.md` |
+| juniper-recurrence-client 0.3.0 | `juniper-recurrence-client-v0.3.0` | <https://github.com/pcalnon/juniper-recurrence/actions/runs/34324270593> | `RELEASE_NOTES_juniper-recurrence-client_v0.3.0.md` |
 
 The ceremony's `detect` reads "released" from PyPI, so every row reads `BUMPED_NOT_RELEASED` until the
 gate is approved, then `UP_TO_DATE`. The gate also has a 5-minute wait timer; approval during the timer
@@ -241,8 +243,8 @@ curl -s -o /dev/null -w '%{http_code}\n' https://test.pypi.org/pypi/juniper-recu
 python3 util/release_train/detect.py --repo-root . --ecosystem-root /home/pcalnon/Development/python/Juniper \
   --package juniper-data-client --package juniper-data --package juniper-cascor --package juniper-canopy \
   --package juniper-recurrence-model --package juniper-recurrence-client --package juniper-recurrence
-# Archive PRs (exempt; auto-merge armed):
-gh pr list --repo pcalnon/juniper-ml --state all --search "release-notes: in:title" --limit 7
+# The consolidated archive PR (exempt; auto-merge armed) -- expect MERGED, else update-branch it:
+gh pr view 1847 --repo pcalnon/juniper-ml --json state,mergedAt,mergeStateStatus
 ```
 
 ---
