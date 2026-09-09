@@ -234,21 +234,42 @@ DEFAULT_TIMEOUT = 2400  # unmeasured repos: the "standard" tier
 # If a repo starts refusing healthy PRs, re-run the v2 tool with `-n 30` and record `n`
 # alongside whatever you write here -- the 2026-09-05 juniper-ml re-tier could not be
 # reproduced because its sample size was never written down.
+#
+# THESE BUDGETS COVER THE SPAN, NOT THE QUEUE, AND THAT IS DELIBERATE. The measured span
+# starts at the first required context's `started_at`, so it excludes the delay between
+# pushing a head and CI starting on it -- which this tool DOES wait through when invoked
+# right after a push. That delay is usually seconds (juniper-deploy: 4 s, 33 s) and
+# occasionally minutes (juniper-cascor#623: 353 s), and it is a function of runner
+# CONTENTION rather than of the repo.
+#
+# Observed 2026-09-09: run 34293438446 sat `queued` over eight minutes under concurrent
+# session load, and this tool refused ml#1828 at 1500 s on a PR whose 17 required contexts
+# every one passed. That is the design working, not a budget being wrong -- the armed
+# auto-merge net completed the merge server-side minutes later.
+#
+# So do NOT raise a budget to absorb a queue. A budget large enough to sit through runner
+# starvation is large enough that a genuinely stuck check looks merely slow, which is the
+# one distinction this timeout exists to draw. Size on the span; let the net carry the tail.
 REPO_TIMEOUTS = {
-    # p90 538, max 773 -> window (773, 2152]. 1500 kept from the 2026-09-05 re-tier; it
-    # remains mid-window on the corrected numbers, so this row needed no change. (The
-    # 2026-09-05 figures it was chosen from -- p90 455, max 823 -- came from v1, but ml's
-    # advisory check-runs happen to sit inside its CI window, so v1 overstated ml by 1.0x.)
-    "juniper-ml": 1500,
-    # p90 679, max 1047 -> window (1047, 2716].
+    # p90 997, max 1657 -> window (1657, 3988], mid 2822. RAISED 1500 -> 2800 on 09-09,
+    # ONE DAY after 1500 was set from p90 538 / max 773. The four longest ml spans are
+    # #1828 1657, #1830 1529, #1831 1041, #1829 997 -- every one merged during a burst of
+    # concurrent sessions; the next longest, #1816 at 773, is exactly yesterday's max.
+    #
+    # This is WITHIN-span stretch (required contexts queueing between first-start and
+    # last-end), which this tool does wait through, and so is distinct from the pre-start
+    # queue the note above says not to absorb. It is also not hypothetical: 1500 REFUSED
+    # ml#1828 live, on a PR whose 17 required contexts every one passed.
+    "juniper-ml": 2800,
+    # p90 955, max 2126 -> window (2126, 3820].
     "juniper-data": 2400,
-    # p90 770, max 2561 -> window (2561, 3080]. RAISED 2400 -> 2800: the old value did not
-    # clear the observed max. cascor's spread is the fleet's widest (median 635, max 2561)
-    # because `Quality Gate` gates on 23 other required contexts and re-runs extend the tail.
+    # p90 1333, max 2561 -> window (2561, 5332]. RAISED 2400 -> 2800 on 09-08: the old
+    # value did not clear the observed max. cascor's spread is the fleet's widest because
+    # `Quality Gate` gates on 23 other required contexts and re-runs extend the tail.
     "juniper-cascor": 2800,
-    # p90 888, max 1029 -> window (1029, 3552].
+    # p90 1010, max 1283 -> window (1283, 4040].
     "juniper-cascor-worker": 2400,
-    # p90 1597, max 2067 -> window (2067, 6388]. Kept at the ceiling: canopy's window is
+    # p90 1837, max 2370 -> window (2370, 7348]. Kept at the ceiling: canopy's window is
     # wide enough that TIMEOUT_CEILING binds first, and tightening it buys nothing.
     "juniper-canopy": 3300,
     # p90 724, max 1511 -> window (1511, 2896], so 3300 is ABOVE 4x p90 and this row is
@@ -261,15 +282,18 @@ REPO_TIMEOUTS = {
     # the same bot-check-run cause as everywhere else. Lowering it is a live merge-path
     # change on a repo this arc was told not to touch, so it is left for an owner ruling.
     "juniper-cascor-client": 3300,
-    # p90 893, max 1109 -> window (1109, 3572]. First measurement; was falling through to
-    # DEFAULT_TIMEOUT at the same 2400 s, so this row records the number rather than changing it.
+    # p90 896, max 1725 -> window (1725, 3584]. First measured 09-08; was falling through
+    # to DEFAULT_TIMEOUT at the same 2400 s, so this row records the number, not a change.
     "juniper-data-client": 2400,
     # p90 262, max 375 -> window (375, 1048], mid 711. First measurement; was DEFAULT_TIMEOUT 2400.
     "juniper-deploy": 700,
-    # p90 258, max 352 -> window (352, 1032], mid 692. First measurement; was DEFAULT_TIMEOUT 2400.
+    # p90 587, max 1666 -> window (1666, 2348], mid 2007. RAISED 700 -> 2000 on 09-09, ONE
+    # DAY after 700 was set from p90 258 / max 352. Unlike ml this is NOT a contention
+    # artifact: PRs 152/153/156/159/161 all merged since and span 1666/723/1119/587/403 on
+    # the same 10 required contexts, so recurrence's CI genuinely got heavier.
     # juniper-recurrence is absent from the parent CLAUDE.md's repo table, which is why no
     # earlier sweep measured it.
-    "juniper-recurrence": 700,
+    "juniper-recurrence": 2000,
 }
 
 
