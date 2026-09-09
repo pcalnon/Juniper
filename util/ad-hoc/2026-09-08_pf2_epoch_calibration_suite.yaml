@@ -1,0 +1,97 @@
+# Calibrate PF-2's epoch override: one matched epoch pair that puts the SMALLEST dataset cell over
+# the ~60 s duration floor while keeping the LARGEST inside spiral-smoke's max_wall_seconds: 600.
+#
+# Project:     juniper-ml
+# Sub-Project: ad-hoc tooling
+# Author:      Paul Calnon
+# Created:     2026-09-08
+# Status:      ad-hoc -- investigation (perf lane P2 item 2.1, the probe the 2026-09-07 handoff
+#              required before any epoch number is written into pf2-cascor-dataset-scaling.yaml)
+# Retire when: RETAINED -- ad-hoc scripts are kept as provenance of record (owner policy 2026-08-25)
+# Related:     notes/JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md
+#
+# WHY THIS EXISTS
+#
+# PF-2 inherits spiral-smoke's native (2, 2) / 50-epoch budget and runs 15.09 s -- below the ~40 s
+# scrapeability floor and PF-1's ~60 s target. PF-1 fixed the same problem by PROBING 500 / 2000 /
+# 5000 epochs at (10, 10) and interpolating in the upper segment (the log-log slope changes at
+# ~2000 where early stopping stops binding), landing on 4000. PF-2 is harder: its matrix spans an
+# 8x dataset range (n_points_per_spiral 250 -> 2000), so one epoch value must satisfy BOTH ends.
+# Whether one does is empirical; a guessed number would look like calibration without being it.
+#
+# WHY THESE SIX CELLS
+#
+# The two matrix ENDPOINTS only (250 and 2000 points) at three epoch budgets that bracket PF-1's
+# 4000: 1000 / 2000 / 4000. The interior points (500, 1000) are bounded by the endpoints and are
+# not needed to choose a value. 4000 at 2000 points is expected to hit the 600 s wall -- that
+# cell is kept deliberately, because "exceeds the budget" is itself the upper bracket, and a
+# `timed_out` completion_reason is an honest record of that (the driver's budget binds first:
+# 600 < per_run_timeout_seconds below, so the manifest is written).
+#
+# The PF-1 calibration base is THINNER than its four points suggest (2026-09-07 handoff §4): the
+# 50-epoch anchor is a cross-suite n=2 mean with 26% spread and the 500/2000/5000 points are n=1
+# each. This probe is n=1 per cell too; it chooses a budget, it does not measure variance. Repeat
+# the chosen cell before quoting its duration as a property of PF-2.
+#
+# WHY `include` AND NOT `matrix`
+#
+# The two epoch keys must CO-VARY (a matrix would cross them into mismatched pairs), and each
+# include cell carries ONLY its own overrides, so every cell restates the (10, 10) caps too.
+schema_version: 1
+suite:
+  name: pf2-epoch-calibration
+  description: "P2 2.1: find one epoch budget that clears the floor at 250 points and the 600 s wall at 2000"
+  app: cascor
+  base_config: [/home/pcalnon/Development/python/Juniper/juniper-cascor/conf/experiments/spiral-smoke.yaml]
+  seed_policy: fixed
+execution: {mode: sequential, continue_on_failure: true, per_run_timeout_seconds: 1200}
+include:
+  - name: n250-e1000
+    overrides:
+      experiment.description: "PF-2 calibration: 250 points, 1000 epochs"
+      dataset.params.n_points_per_spiral: 250
+      training.params.max_hidden_units: 10
+      training.params.max_iterations: 10
+      training.params.max_epochs: 1000
+      training.params.output_epochs: 1000
+  - name: n2000-e1000
+    overrides:
+      experiment.description: "PF-2 calibration: 2000 points, 1000 epochs"
+      dataset.params.n_points_per_spiral: 2000
+      training.params.max_hidden_units: 10
+      training.params.max_iterations: 10
+      training.params.max_epochs: 1000
+      training.params.output_epochs: 1000
+  - name: n250-e2000
+    overrides:
+      experiment.description: "PF-2 calibration: 250 points, 2000 epochs"
+      dataset.params.n_points_per_spiral: 250
+      training.params.max_hidden_units: 10
+      training.params.max_iterations: 10
+      training.params.max_epochs: 2000
+      training.params.output_epochs: 2000
+  - name: n2000-e2000
+    overrides:
+      experiment.description: "PF-2 calibration: 2000 points, 2000 epochs"
+      dataset.params.n_points_per_spiral: 2000
+      training.params.max_hidden_units: 10
+      training.params.max_iterations: 10
+      training.params.max_epochs: 2000
+      training.params.output_epochs: 2000
+  - name: n250-e4000
+    overrides:
+      experiment.description: "PF-2 calibration: 250 points, 4000 epochs"
+      dataset.params.n_points_per_spiral: 250
+      training.params.max_hidden_units: 10
+      training.params.max_iterations: 10
+      training.params.max_epochs: 4000
+      training.params.output_epochs: 4000
+  - name: n2000-e4000
+    overrides:
+      experiment.description: "PF-2 calibration: 2000 points, 4000 epochs (expected to hit the 600 s wall)"
+      dataset.params.n_points_per_spiral: 2000
+      training.params.max_hidden_units: 10
+      training.params.max_iterations: 10
+      training.params.max_epochs: 4000
+      training.params.output_epochs: 4000
+outputs: {suite_dir: null, aggregate: [csv, markdown]}
