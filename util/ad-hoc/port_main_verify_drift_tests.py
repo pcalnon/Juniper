@@ -135,7 +135,7 @@ def build(repo_slug: str, project: str, marker: str | None) -> str:
     # --- seam 2: define the replacement helper the next two seams will call ----
     src = _replace_once(src, '\nSTEP_NAME = "Resolve catch-up base"\n', '\nSTEP_NAME = "Resolve catch-up base"\n' + CHILD_ENV_HELPER, label="child-env helper insertion")
 
-    # --- seam 3 + 4: both RedactedEnv construction sites -----------------------
+    # --- seam 3: both RedactedEnv construction sites -----------------------
     src = _replace_once(
         src,
         'env=RedactedEnv(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t"),',
@@ -159,11 +159,23 @@ def build(repo_slug: str, project: str, marker: str | None) -> str:
         label="header",
     )
 
-    # --- seam 7: fold in canopy's unique static test ----------------------------
+    # --- seam 7: the comma-form `# nosec` under-suppresses ----------------------
+    # Bandit's nosec parser does NOT split on commas: `# nosec B603,B607` suppresses
+    # NEITHER code, with or without trailing prose. Space-separated works, with or
+    # without prose (measured 4 ways, bandit 1.9.4, 2026-09-08).
+    #
+    # This is LATENT in juniper-ml, whose bandit `--skip` already covers B603/B604/B607,
+    # so the reference has carried a broken suppression that could never fire. cascor's
+    # test-scoped bandit skips a different set (no B603/B607), so the port surfaced it as
+    # a real CI failure -- juniper-cascor#636, `Security scan tests with Bandit (relaxed)`.
+    # Fix it here so no repo inherits it, whatever its skip list happens to cover today.
+    src = _replace_once(src, "# nosec B603,B607", "# nosec B603 B607", label="comma-form nosec", expect=2)
+
+    # --- seam 8: fold in canopy's unique static test ----------------------------
     anchor = "    def test_screen_job_name_matches_the_workflow_job(self) -> None:"
     src = _replace_once(src, anchor, unique + "\n\n" + anchor, label="unique-test anchor")
 
-    # --- seam 8: optional pytest marker for marker-filtered repos ---------------
+    # --- seam 9: optional pytest marker for marker-filtered repos ---------------
     if marker:
         src = _replace_once(
             src,
