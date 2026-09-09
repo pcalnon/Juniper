@@ -36,7 +36,16 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+# The pilot's transcripts live under the PRIMARY project directory, not the
+# worktree-suffixed one this list named until 2026-09-08. Only that component
+# was wrong -- the session UUID under it was always correct -- but the screen
+# resolved no transcript at all, so every invocation reported nothing and the
+# 8 output-scored rows went un-re-audited for 17 days. The stale entry is kept,
+# last, for a host that still has the old worktree.
 SUBAGENT_DIRS = [
+    Path.home() / ".claude/projects"
+    / "-home-pcalnon-Development-python-Juniper-juniper-ml"
+    / "bf50124e-6fde-4314-bdca-0ca7876b8efb" / "subagents",
     Path.home() / ".claude/projects"
     / "-home-pcalnon-Development-python-Juniper-juniper-ml--claude-worktrees-giggly-marinating-backus"
     / "bf50124e-6fde-4314-bdca-0ca7876b8efb" / "subagents",

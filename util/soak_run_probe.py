@@ -94,6 +94,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess  # nosec B404 - fixed argv, no shell
 import sys
@@ -335,6 +336,65 @@ def parse_events(path: Path) -> dict:
     }
 
 
+# Every sibling repo in the ecosystem that ships its own `docs/REFERENCE.md`.
+# Measured 2026-09-08: 7 of the 8 siblings do (all but juniper-recurrence), so a
+# bare substring test for the pointer path credits a DIFFERENT document.
+SIBLING_REPO_SEGMENTS = (
+    "juniper-cascor-client/", "juniper-cascor-worker/", "juniper-data-client/",
+    "juniper-recurrence-client/", "juniper-recurrence-model/",
+    "juniper-cascor/", "juniper-canopy/", "juniper-data/", "juniper-deploy/",
+    "juniper-recurrence/", "juniper-legacy/",
+)
+# Every checkout of juniper-ml -- worktrees included -- is the SAME document.
+_ML_ROOT_SEGMENTS = ("juniper-ml/", "juniper-ml--", "/juniper-ml")
+_CD_RE = re.compile(r"cd\s+(/[\w./-]+)")
+
+
+def _own_repo_occurrence(tool_inputs: list, doc: str) -> bool:
+    """True if `doc` appears in any tool input as THIS repo's file, not a sibling's.
+
+    Measured defect (2026-09-08 re-audit,
+    notes/JUNIPER_2026-09-08_JUNIPER-ML_SOAK-RETRIEVAL-STANDARD-EVIDENCE-RECOVERY.md):
+    all three P24 runs ran `cd .../juniper-deploy && grep -rn 3001 .` and matched
+    `docs/REFERENCE.md` in juniper-deploy, whose own copy documents the same
+    Grafana port. The fact under test lives in juniper-ml's copy at :201, so the
+    pointer was never followed -- but a substring test cannot tell the two apart
+    and scored all three as follows.
+
+    Deliberately narrow. This removes hits on a DIFFERENT document; it does not
+    touch the over-inclusiveness pinned by
+    `tests/test_soak_run_probe.py::test_pointer_path_in_a_command_arg_currently_counts_as_a_hit`,
+    where the path names this repo's file and is merely not opened. Whether THAT
+    counts is the retrieval-standard question, which is an owner decision
+    (Sec 7.2 of the 09-04 consensus review) and is not decided here.
+
+    PER INPUT, not over the joined blob. A sibling repo reaches a tool input two
+    ways -- named in the path, or entered with `cd` -- and `cd` scopes to the one
+    command, so the test has to as well. Scanning the concatenation also lets a
+    60-character window span the join, where a sibling path in one input
+    suppresses a genuine read in the next: a false negative traded for the false
+    positive, which is no better.
+    """
+    for raw in tool_inputs:
+        text = raw if isinstance(raw, str) else json.dumps(raw)
+        # `cd /…/juniper-deploy && grep …` makes every relative path in this
+        # command a sibling's. Note the cd target carries no trailing slash,
+        # which is why the path-segment test alone missed the real P24 shape.
+        cd = _CD_RE.search(text)
+        if cd and not any(r in cd.group(1) + "/" for r in _ML_ROOT_SEGMENTS):
+            continue
+        start = 0
+        while True:
+            idx = text.find(doc, start)
+            if idx < 0:
+                break
+            start = idx + len(doc)
+            prefix = text[max(0, idx - 60):idx]
+            if not any(seg in prefix for seg in SIBLING_REPO_SEGMENTS):
+                return True
+    return False
+
+
 def retrieval_channel(parsed: dict, pointer: str) -> dict:
     """Mechanical: did the run touch the pointer document, or only source?
 
@@ -354,8 +414,7 @@ def retrieval_channel(parsed: dict, pointer: str) -> dict:
     # exactly the thing the soak must not credit -- the whole question is whether
     # the pointer gets FOLLOWED, and a model reciting the path without reading it
     # is the strongest possible example of not following it.
-    blob = "\n".join(parsed["tool_inputs"])
-    hit = bool(doc) and doc in blob
+    hit = bool(doc) and _own_repo_occurrence(parsed["tool_inputs"], doc)
     return {
         "pointer_doc": doc,
         "pointer_doc_referenced": hit,
