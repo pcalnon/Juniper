@@ -519,7 +519,32 @@ class KillResilienceTest(SafeMergeTestBase):
         BELOW its own observed max of 2561 s, so a healthy cascor PR at its worst is refused
         today. The p90 assertion alone reports that as fine (2400 > 770, 2400 <= 3080).
 
-        NUMBERS ARE FROM THE v2 INSTRUMENT, n=30, 2026-09-08. v1
+        THESE CONSTANTS WENT STALE IN ONE DAY, AND THAT IS THE POINT. Every pair below was
+        replaced on 2026-09-09, having been measured on 2026-09-08. Two budgets set yesterday
+        no longer cleared their own max today:
+
+            juniper-ml           p90 538 -> 997    max  773 -> 1657    1500 -> 2800
+            juniper-recurrence   p90 258 -> 587    max  352 -> 1666     700 -> 2000
+
+        The two moved for DIFFERENT reasons, and the distinction decides whether a budget
+        should follow:
+
+          * ml's four longest spans are #1828, #1830, #1831 and #1829 -- all merged inside one
+            burst of concurrent sessions. The next longest, #1816 at 773 s, is yesterday's max
+            exactly. This is contention.
+          * recurrence's is not: PRs 152/153/156/159/161 merged since, spanning
+            1666/723/1119/587/403 on the same 10 required contexts. Its CI got heavier.
+
+        Both were still followed, because both are WITHIN-span stretch -- required contexts
+        queueing between first-start and last-end, which `safe_merge` waits through. That is
+        not the pre-start queue `util/safe_merge.py` says never to absorb; the span does not
+        contain that at all. And ml's is not hypothetical: 1500 s refused ml#1828 live, on a
+        PR whose 17 required contexts every one passed.
+
+        So a number here is a SNAPSHOT with a shelf life measured in days. Re-measure and
+        re-write both halves rather than trusting the pair below.
+
+        NUMBERS ARE FROM THE v2 INSTRUMENT, n=30, RE-MEASURED 2026-09-09. v1
         (`util/ad-hoc/2026-08-20_measure_required_check_span.py`) filtered nothing, so every
         bot and out-of-band check-run on the head SHA entered the span -- it overstated the
         observed max by 11x on cascor, 20x on canopy and 70x on cascor-worker. Re-measure
@@ -530,14 +555,14 @@ class KillResilienceTest(SafeMergeTestBase):
         # repo -> (p90, observed_max), required contexts only, v2 instrument, n=30.
         # juniper-cascor-client is deliberately ABSENT -- see the note in safe_merge.py.
         measured = {
-            "juniper-ml": (538, 773),
-            "juniper-data": (679, 1047),
-            "juniper-cascor": (770, 2561),
-            "juniper-canopy": (1597, 2067),
-            "juniper-cascor-worker": (888, 1029),
-            "juniper-data-client": (893, 1109),
+            "juniper-ml": (997, 1657),
+            "juniper-data": (955, 2126),
+            "juniper-cascor": (1333, 2561),
+            "juniper-canopy": (1837, 2370),
+            "juniper-cascor-worker": (1010, 1283),
+            "juniper-data-client": (896, 1725),
             "juniper-deploy": (262, 375),
-            "juniper-recurrence": (258, 352),
+            "juniper-recurrence": (587, 1666),
         }
         for repo, (p90, observed_max) in measured.items():
             with self.subTest(repo=repo):
