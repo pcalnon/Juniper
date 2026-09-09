@@ -4569,11 +4569,11 @@ In-tree table: [`util/experiments/suites/perf/README.md`](../util/experiments/su
 | PF-1 | `pf1-cascor-spiral-repeats.yaml` | step-duration p50/p95 + wall variance over 5 identical cells | Load-bearing cell length; repeats are a **matrix axis** |
 | PF-2 | `pf2-cascor-dataset-scaling.yaml` | wall vs `n_points_per_spiral` `{250, 500, 1000, 2000}` | RSS from the experiments dashboard Process RSS panel |
 | PF-3 | `pf3-cascor-pool-scaling.yaml` | speedup vs `candidate_pool_size` × `runtime.num_processes` | Must declare stall **and** wall (below) |
-| PF-4 | — | cascor in-repo pytest vs `baseline_20260526.json` | **Not a driver suite.** That baseline has memory keys and **no timing data** (P1 §1) |
+| PF-4 | — | cascor in-repo pytest, report-only timing reference | **Not a driver suite.** No baseline file ever held timing data (P1 §1; 22 files / 312 entries censused 2026-09-08). Reference established 2026-09-09: `juniper-cascor` `docs/testing/REFERENCE.md` § Micro timing reference — `--benchmark-autosave` into `~/.local/state/juniper-experiments/baselines/cascor-micro`, `--benchmark-compare=NNNN` to report, never `--benchmark-compare-fail` (owner, P2 item 2.5) |
 | PF-5 | `pf5-recurrence-d-scaling.yaml` | fit time vs `train.d` `{8, 16, 32, 64}` | Thresholds unratified; instrument only |
 | PF-6 | `pf6-recurrence-nsteps-scaling.yaml` | fit time vs `dataset.params.n_steps` `{1000, 4000, 16000}` | same |
 | PF-7 | `pf7-recurrence-readout-rungs.yaml` | fit time + r² per `train.readout` `{linear, rff, mlp}` | same |
-| PF-8 | — | two simultaneous pinned-budget runs | **Not a sequential suite.** Wave 7.5 parallel / two-terminal |
+| PF-8 | — | two simultaneous pinned-budget runs | **Not a sequential suite — and no longer needs a harness.** `run_suite` accepts `execution: {mode: parallel, max_parallel: 2}` for cascor once the launched tree is ≥ 0.10.0 (the primary is 0.11.0; dry-run verified 2026-09-08), allocating disjoint ports per cell and pinning equal thread budgets (`thread_budget_env`). Re-scoped by P2 item 4.3: the work half is already settled (`step_count` invariant under a 3× load span, sweep §8.4), so PF-8 can only ever report speed. **A checked-in parallel cascor suite fails `tests/test_experiment_suite_yamls.py` in CI**, where no cascor sibling exists to read the version floor from — see P2 item 4.2 |
 
 ### How to run
 

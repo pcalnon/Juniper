@@ -210,6 +210,23 @@ Remaining, in order:
 2. **PR C** *(parallel)* — §4.6 alias, §4.9 staging guard + G4 as re-specified, and the two real
    fixes filed as **cross-repo** items: `RecurrenceBackend.stage_dataset` (juniper-recurrence) and
    `equities_seq` in `juniper-cascor/src/api/models/training.py:235`'s `Literal`.
+
+   **Correction (2026-09-08): neither fix is cross-repo; both premises above were wrong.**
+   (a) cascor's `Literal` lacking `equities_seq` is not a gap. cascor refuses 3-D artifacts **by
+   design** at the tier boundary (`api/lifecycle/manager.py:3815`, *"3-D sequence artifacts belong
+   to the juniper-recurrence tier, not cascade-correlation (W-2)"*), and widening the `Literal`
+   would only move the refusal from the request boundary to artifact load, after a juniper-data
+   round trip. The only way canopy sent a rank-3 dataset there was the inactive-selection state
+   N5 names — Recurrence recorded over the cascor/demo backend — and the fix is to refuse that
+   state: canopy#601 gates Start on it, and the follow-on staging PR refuses
+   `POST /api/stage_dataset` in it and disables Apply Dataset alongside Start.
+   (b) juniper-recurrence needs no staging endpoint. The service is one-shot — the dataset
+   reference rides in `POST /v1/train` — so "staged for the next start" is a canopy-side fact,
+   held in-process exactly as `DemoMode` already holds it. `RecurrenceBackend` now stages
+   in-process, surfaces `pending_dataset` on status for the banner, and fits the staged config at
+   the next start, which takes precedence over the one-shot body (that body carries only the
+   registry's defaults and knows nothing of what the operator applied). Recorded in
+   `prompts/thread-handoff_automated-prompts/HANDOFF_2026-09-08_canopy-selection-n5-shipped-staging-is-canopy-only.md`.
 3. **§12 generator programme** — decoupled, blocking nothing, and startable now. **Y5 auth first**;
    then the rank-2 seeds, which are already in cascor's `Literal` and reachable with no part of
    PR B or C. **X8 must be settled before any seed sources `task_type` upstream.**

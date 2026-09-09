@@ -47,6 +47,18 @@ The timing entries carry only their parameters — `forward_5_hidden` records
 `MEMORY_DELTA_THRESHOLD_MB`, `MEMORY_ABSOLUTE_THRESHOLD_MB` and
 `MEMORY_REGRESSION_TOLERANCE_PCT` — and **no timing tolerance of any kind**.
 
+> **Correction (2026-09-08).** "No timing tolerance of any kind" is **false** and was inherited
+> unchanged into item 2.4 of the P2 plan and two handoffs before consensus validation caught it.
+> The same file defines `FIT_TIME_THRESHOLD_S = 60.0` and `SERIALIZATION_TIME_THRESHOLD_S = 30.0`,
+> each enforced by a hard `assert` in `test_save_load_trained`. What is true, and what this
+> section's argument actually needs, is narrower: they are **fixed absolute ceilings, not
+> baseline comparisons** — no test reads a timing back from a baseline file, and the only
+> baseline-relative check is `_check_memory_regression`. The conclusion below stands on that
+> narrower fact. The census behind "no timing data" was also re-run over every baseline file
+> that ever existed, not only the live one: 22 files (21 tracked until cascor `971d35a` deleted
+> them, plus `baseline_20260526.json`), 312 entries, zero timing keys
+> (`util/ad-hoc/2026-09-08_cascor_baseline_history_census.py`).
+
 So the micro tier today detects **memory** regressions and nothing else. §12.1's reuse claim is
 true for memory and false for timing, and **PF-4 cannot be evaluated as written**.
 
