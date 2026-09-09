@@ -131,8 +131,9 @@ def identifiers(text: str) -> set[str]:
 
 def features(probe: dict) -> dict[str, int]:
     fact = (probe["fact"] or "").lower()
-    task = (probe["task"] or "").lower()
     disc = (probe["discriminator"] or "").lower()
+    # No lowercased `task` string: the task contributes only through
+    # `identifiers()` below, which case-folds its own tokens.
 
     fact_ids = identifiers(probe["fact"])
     task_ids = identifiers(probe["task"])
