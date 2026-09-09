@@ -142,4 +142,3 @@ None known at time of release.
 
 - [Full Changelog](https://github.com/pcalnon/juniper-recurrence/blob/juniper-recurrence-client-v0.3.0/juniper-recurrence-client/CHANGELOG.md)
 - Archive target: `notes/releases/RELEASE_NOTES_juniper-recurrence-client_v0.3.0.md`
-

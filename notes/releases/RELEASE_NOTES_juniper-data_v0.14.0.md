@@ -200,4 +200,3 @@ None known at time of release.
 
 - [Full Changelog](https://github.com/pcalnon/juniper-data/blob/v0.14.0/CHANGELOG.md)
 - Archive target: `notes/releases/RELEASE_NOTES_juniper-data_v0.14.0.md`
-

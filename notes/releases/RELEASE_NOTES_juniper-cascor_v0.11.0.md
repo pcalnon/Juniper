@@ -214,4 +214,3 @@ None known at time of release.
 
 - [Full Changelog](https://github.com/pcalnon/juniper-cascor/blob/v0.11.0/CHANGELOG.md)
 - Archive target: `notes/releases/RELEASE_NOTES_juniper-cascor_v0.11.0.md`
-

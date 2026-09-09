@@ -84,4 +84,3 @@ None known at time of release.
 
 - [Full Changelog](https://github.com/pcalnon/juniper-recurrence/blob/juniper-recurrence-model-v0.3.0/juniper-recurrence-model/CHANGELOG.md)
 - Archive target: `notes/releases/RELEASE_NOTES_juniper-recurrence-model_v0.3.0.md`
-

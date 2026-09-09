@@ -85,4 +85,3 @@ None known at time of release.
 
 - [Full Changelog](https://github.com/pcalnon/juniper-data-client/blob/v0.5.0/CHANGELOG.md)
 - Archive target: `notes/releases/RELEASE_NOTES_juniper-data-client_v0.5.0.md`
-
