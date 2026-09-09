@@ -42,6 +42,32 @@ Three consequences, all of them observed rather than argued:
     fail.** Its band is `(p90, 4*p90]`; with p90 itself swinging 3x, every candidate budget
     -- including the 900 s that REFUSED ml#1754 live -- sits inside it at some sample size.
 
+WHAT THIS TOOL DOES **NOT** MEASURE -- read before sizing a budget from it
+--------------------------------------------------------------------------
+The span starts at `min(started_at)` over the required contexts, so it EXCLUDES the delay
+between pushing a head and the first required check starting. `safe_merge` waits through
+that delay when it is invoked right after a push, so its worst-case wait is
+
+    queue + span,   not span
+
+and a budget sized on span alone systematically undercounts it. Measured 2026-09-08, head
+commit time against first required-context start:
+
+    juniper-deploy #207     06:47:59Z -> 06:48:03Z        4 s
+    juniper-deploy #206     07:53:45Z -> 07:54:18Z       33 s
+    juniper-cascor #623     11:20:22Z -> 11:26:15Z      353 s
+
+So the term is usually negligible and occasionally minutes. It is also CONTENTION-dependent
+rather than a property of the repo: juniper-ml run 34293438446 sat `queued` for over eight
+minutes on 2026-09-09 under concurrent session load, which is what made `safe_merge` refuse
+ml#1828 at its 1500 s budget on a PR whose 17 required contexts all passed.
+
+That refusal is the designed behaviour, not a sizing failure. `safe_merge` arms a server-side
+auto-merge net precisely because a local wait cannot be made long enough to survive runner
+starvation -- its own docstring says so. Do NOT inflate `REPO_TIMEOUTS` to absorb a queue:
+that is how a stuck check becomes indistinguishable from a slow one, which is the single
+distinction the timeout exists to draw. Size on span, and let the net carry the tail.
+
 WHAT THIS TOOL DOES DIFFERENTLY
 -------------------------------
   1. **Filters to the repo's actual required contexts**, read from its rulesets, so an
