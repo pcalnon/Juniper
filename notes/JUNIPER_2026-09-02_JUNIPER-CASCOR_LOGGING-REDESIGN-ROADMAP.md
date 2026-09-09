@@ -613,12 +613,56 @@ allocates a closure per call **even when suppressed**, a new per-call cost at ~8
 
 ### 13.1 Responses and Decisions
 
-1. .
-2. .
-3. .
-4. .
-5. .
-6. .
+Ruled by the owner **2026-09-09** unless noted. This subsection is the canonical record.
+
+1. **Pre-authorised, threshold 10 %.** If P0.2 puts the total logging share of worker self time
+   below **10 %**, P2 is **cancelled** and recorded as cancelled; at or above, it runs. P0 closes
+   without a second ask either way. Note the standing caveat (§3.1): P0.2 may report the *emitted*
+   share and the discard *count*, and **must not** promise the construction cost of discarded
+   records — so the 10 % is measured on what the instrument can attribute.
+2. **On by default, off in the harness profile.** A **policy** switch (env + config), explicitly
+   **not** runtime detection — `isatty()` is false for a redirect, a pipe and systemd alike. P3-G6
+   still applies: the record-count check must be made on the **redirected-stdout** file, not the
+   file sink.
+3. **Narrow the fork to the delta** — option (c). The `RotatingFileHandler` at
+   `api/observability.py:111` **stays**; only `JuniperJsonFormatter` is re-used from the shared
+   package. No fleet-wide pin move. P5-G4 still owes the disposition of
+   `src/tests/unit/test_api_observability.py:89,:97,:114`.
+4. **Converge.** Re-extract `log_config/logger/logger.py` into `juniper-cascor-model` and retire
+   `_INTENTIONAL_DIVERGENCE` (`test_drift.py:31`), deleting `test_intentional_divergences_actually_differ`
+   (`:104-117`) in the same PR. Grounds, measured 2026-09-09: the package's copy is dated
+   **2026-06-14** (`c350651`), is 127 lines shorter, still carries
+   `getattr(getouterframes(frame)[1], name)` at `:235` — **the exact line #563 removed** — and has
+   **no** `_level_number_cache`, so it is pre-#563 **and** pre-#598. It ships (`log_config*` is in
+   the package `include` list) and `juniper-cascor-model` **0.1.0 is live on PyPI**. It is latent
+   rather than live only because `juniper-cascor-worker` declares the dependency
+   (`pyproject.toml:68`) while importing nothing from it. The drift gate's own comment — *"to be
+   backported to src in Wave 2"* — is **stale in direction**: `src` has been ahead since August.
+5. **Open — investigation first, then select.** The owner declined the M-vs-L framing and directed
+   that the analysis and recommendation be written into a design document before an approach is
+   chosen, with an added question about serving logging as **both** class and instance calls.
+   Delivered as [`JUNIPER_2026-09-09_JUNIPER-CASCOR_LOGGING-PER-LOGGER-LEVELS-DESIGN.md`](JUNIPER_2026-09-09_JUNIPER-CASCOR_LOGGING-PER-LOGGER-LEVELS-DESIGN.md).
+   **That document corrects two premises of the question above**: the break surface is **109 sites
+   (9.2 %), 45 of them outside `logger.py`**, not ~1,200 — because 967 sites are written
+   `self.logger.M(...)` and only the **14 binds** change; and dual *syntax* already works today
+   (a classmethod called on an instance costs +2.3 ns), so what is missing is dual *state*. Its
+   recommendation is **two bindings, not one overloaded name**: `Logger` keeps its 32 classmethods
+   and a factory returns per-logger **instances** with plain instance methods, which is **41 ns
+   FASTER per call** than the status quo. Every one-name-dispatches-on-receiver mechanism measured
+   3–6× the status quo (+190 to +438 ns on a 646,016-call path).
+6. **P6.1 + P6.2 + P6.3 authorised; P6.4 open.** P6.4 is held pending the owner's review of the
+   affected lines, supplied 2026-09-09 from
+   `juniper-ml/util/ad-hoc/2026-09-09_p64_fstring_classify.py`: **775** live Path-A f-string sites —
+   **507 (65.4 %)** mechanical `{name}`, **215 (27.7 %)** expression args (evaluated eagerly either
+   way, so `%`-args saves only the string build), **47 (6.1 %)** carrying a format spec, and **6
+   (0.8 %)** carrying a literal `%` — the six being *doubly* hazardous, since all of them also carry
+   a format spec. Sizing note for P6.2: its surface is **8 sites in one file**
+   (`candidate_unit.py:596,597,764,765,766,833,834,1046`), so G-6's "one PR per file" is one PR and
+   P6.3 is **not** blocked behind a multi-PR sequence — trap 3 does not bind here.
+   **P6.4 is worth more than the roadmap assumed**: `logger.py:519-520` puts `message = message % args`
+   **inside** the `_filter_by_level` block at `:514`, with the comment *"Lazy formatting: only
+   interpolate %s args when the message passes the level filter"* — so `%`-args genuinely defer
+   interpolation for the 91 % discarded.
 7. i concur. let's run the investigation as written.
 
 ---
