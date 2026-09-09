@@ -200,6 +200,17 @@ deployment reaches `RecurrenceBackend`, which has no `stage_dataset`, called ung
 `main.py:3995` → **500**. One-shot Start bypasses staging and is unaffected. Minimum: guard the
 call site and surface a real message; full fix is a `stage_dataset` implementation.
 
+**Correction (2026-09-08).** Both branches above were attributed to other repos, and both
+attributions were wrong. The cascor 502 is cascor refusing a rank-3 artifact **by design** (the W-2
+tier boundary, `api/lifecycle/manager.py:3815`); the defect was canopy staging into a backend the
+selection does not target — the inactive state N5 names — and the fix is to refuse that state
+(canopy#601 for Start; the follow-on staging PR for `POST /api/stage_dataset` and Apply Dataset).
+The recurrence 500 needed no service endpoint: the service is one-shot, so `RecurrenceBackend`
+stages **in-process**, as `DemoMode` does, and the next fit consumes the staged config, which
+takes precedence over the one-shot body. The "full fix" this section asked for is therefore
+canopy-only. See the consensus validation's §7 item 2 correction and
+`HANDOFF_2026-09-08_canopy-selection-n5-shipped-staging-is-canopy-only.md`.
+
 ### 4.10 Dataset-axis hydration — the prerequisite for `⊥` at mount (N10 / OQ-N2)
 
 **Measured**: canopy has *never* hydrated the dataset from the backend. There is no
