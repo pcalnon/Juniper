@@ -73,8 +73,7 @@ claim proven live.
 **All five image-bearing repos carry `publish-image.yml`** from the worker template, each asserting the
 CPU-only contract inside the image on the PR arm AND on the publish path. States below are as of
 writing — **re-probe with `gh pr view <n> --repo pcalnon/<repo> --json state,mergeCommit` before
-acting**; canopy#603 was still in CI with native auto-merge armed, and the four item-6a hardening
-PRs had just opened:
+acting**; recurrence#160 and canopy#608 were still in CI with native auto-merge armed:
 
 | repo | PRs | state at writing | image-specific facts |
 | --- | --- | --- | --- |
@@ -82,8 +81,8 @@ PRs had just opened:
 | juniper-data | #385 (workflow), #387 (digest fix) | both MERGED: `0f177990`, `e769999d` | torch-free, check runs `EXPECT_TORCH=absent`; CMD-only |
 | juniper-recurrence | #153 (workflow), #154 (anyio test fix) | both MERGED: `7d0291f1`, `63974b32` | `juniper-recurrence-v` guard REQUIRED; semver `match=` attribute; context `juniper-recurrence/`; version from `_version.py`; py3.13; torch-free; ENTRYPOINT image |
 | juniper-cascor | #634 | MERGED `2798a2af` (one API-signed commit, rebased twice onto `main`, last onto the v0.11.0 release-PROPOSAL merge `3286b75` = #635; the v0.11.0 tag itself sits on `5eb6f144`) | `v` guard REQUIRED; NEW `requirements-cpu.lock`; torch pinned `2.14.0+cpu`; CMD-only |
-| juniper-canopy | #603 | OPEN, in CI, auto-merge armed; rebased to one commit `45f70228` onto the v0.7.0 release-proposal commit `d8b1592d` (#606) after its second conflict, then `update-branch` merged #601 (head `ecf102ff`, 2 commits) | torch pinned `2.14.0+cpu` (installed for demo mode); `paths:` covers `conf/`; CMD-only |
-| item 6a hardening | worker#178, data#391, cascor#637, recurrence#160 | opened 2026-09-09 07:18 UTC (02:18 CDT), auto-merge armed; #178 MERGED `fde50791`, #391 MERGED `910f7a55`, #637 MERGED `f96551e1`, #160 in CI behind a busy `main` | canopy's follows #603 — see item 6a |
+| juniper-canopy | #603 | MERGED `134d375f` at 07:58 UTC (rebased to one commit `45f70228` onto the v0.7.0 release-proposal commit `d8b1592d` (#606) after its second conflict, then `update-branch` merged #601) | torch pinned `2.14.0+cpu` (installed for demo mode); `paths:` covers `conf/`; CMD-only |
+| item 6a hardening | worker#178, data#391, cascor#637, recurrence#160 | opened 2026-09-09 07:18 UTC (02:18 CDT), auto-merge armed; #178 MERGED `fde50791`, #391 MERGED `910f7a55`, #637 MERGED `f96551e1`, #160 in CI behind a busy `main`; **canopy#608** opened 08:00 UTC after #603 merged, auto-merge armed | see item 6a |
 
 Every PR arm built both arches natively (recurrence 58 s / 40 s, worker ~4 min per arch). Every
 commit was **GitHub-signed via the API** (`util/open_signed_pr.py`; follow-ups via
@@ -138,8 +137,8 @@ package inherits the repo's permissions but NOT its visibility, so verify each n
 visibility on its package page after the first publish rather than assuming). Confirm with the owner
 first. **Precondition: the repo's `publish-image.yml` on `main` must carry the CORRECTED identity
 check** (the merge job resolves each pushed digest with `imagetools inspect` before comparing; the
-step text says `verified build digests resolve to`). recurrence `main` has it; canopy has NO workflow
-on `main` until #603 merges, so a dispatch before that is simply refused (nothing written — the
+step text says `verified build digests resolve to`). Both recurrence and canopy `main` carry it now (canopy since #603 merged at
+07:58 UTC; before that canopy had no workflow on `main` and a dispatch was simply refused — the
 "writes the tag, then the merge job fails" mode was data's between #385 and #387, and the worker's
 first dispatch). For a rehearsal that creates no release tags:
 
@@ -202,8 +201,9 @@ merge → image published), canopy v0.7.0 (tag on `d8b1592d`, BEFORE #603 → **
 can never carry one), worker still v0.5.0 (the CPU fix and the workflow are unreleased — the image
 exists only as `dispatch-*` tags), recurrence app still `juniper-recurrence-v0.4.0` (the model and
 client v0.3.0 Releases of 07:22 / 07:31 UTC are not the app and were skipped by the guard). **Wave 3
-therefore still needs three Releases — worker (> v0.5.0), canopy (a tag cut AFTER #603 is on `main`),
-recurrence app (`juniper-recurrence-v` > 0.4.0) — plus the Pi pull of item 3.** All owner actions.
+therefore still needs three Releases — worker (> v0.5.0), canopy (any `v*` tag cut from `main` at or
+after `134d375f`, i.e. after #603; the 0.7.0 tag can never carry an image), recurrence app
+(`juniper-recurrence-v` > 0.4.0) — plus the Pi pull of item 3.** All owner actions.
 cascor's and canopy's CHANGELOGs list the workflow under `[Unreleased]` although cascor's 0.11.0 tag
 ships it — cosmetic, the release author's call. Carried from the predecessor (verified 2026-09-09):
 `docker-compose.yml` has **13 `image:` lines, 9 Juniper, 5 unique** — canopy ×3 (L620/764/855, identical
@@ -241,15 +241,15 @@ answer OQ-1 first. Not started; the worker workflow header still says "phase 2, 
   green (parametrized cases counted); recurrence also corrects the pyproject comment ("two" → three
   skipped-green runs). actionlint is clean on worker/cascor; data/recurrence show a PRE-EXISTING
   SC2129 style note on the provenance step (present on `main`, not a required check). The two release
-  images of 07:15 UTC were verified by the UN-hardened check — see § Where this stands. **Canopy is
-  the one left**: only AFTER #603 merges (the block the script rewrites is the one #603 adds — before
-  that the script refuses, and a PR would conflict), from a fresh worktree off canopy `origin/main`:
-  run the script with `--workflow .github/workflows/publish-image.yml --census
-  util/check_image_cpu_only.py --tests src/tests/unit/test_dockerfile_cpu_torch_pin.py`, add the same
-  CHANGELOG bullet under `[Unreleased]` → `### Fixed` (the other four PRs carry the wording),
-  `conda run -n JuniperCanopy1 python -m pytest src/tests/unit/test_dockerfile_cpu_torch_pin.py`
-  (total 20→22), actionlint, `pre-commit run --files <the changed files>`, `open_signed_pr.py`,
-  `gh pr merge --squash --auto` under a fresh merge approval.
+  images of 07:15 UTC were verified by the UN-hardened check — see § Where this stands. **Canopy's
+  landed too: #608**, opened 08:00 UTC once #603 was on `main` (the block the script rewrites is the
+  one #603 added), from `worktrees/juniper-canopy--fix--harden-cpu-only-checks--20260909-0259--134d375f`:
+  script with `--workflow --census --tests`, the same CHANGELOG bullet, `conda run -n JuniperCanopy1
+  python -m pytest src/tests/unit/test_dockerfile_cpu_torch_pin.py` total 20→22, actionlint clean,
+  auto-merge armed. Once #160 and #608 merge, item 6a is closed in all five repos: the census forbids
+  `cuda-*` everywhere and every merge job asserts one linux image per pushed digest. If either has to
+  be redone, the recipe is the other PRs' — the script refuses on a file that already carries the
+  new block ("expected exactly one occurrence … found 0").
 - **6b. Worker torch 2.12.0 vs CI's unpinned torch.** `ci.yml` tests against `pip install torch`
   (2.14.0 today) while the image pins the lock header's 2.12.0 — tested ≠ shipped. Bump the override in
   `requirements-cpu.lock`'s header recipe to 2.14.0, regenerate, and move `ARG TORCH_VERSION` with it
@@ -433,6 +433,7 @@ worktrees/juniper-cascor-worker--fix--harden-cpu-only-checks--20260909-0211--989
 worktrees/juniper-data--fix--harden-cpu-only-checks--20260909-0211--e769999d            (#391)
 worktrees/juniper-cascor--fix--harden-cpu-only-checks--20260909-0211--5eb6f144          (#637)
 worktrees/juniper-recurrence--fix--harden-cpu-only-checks--20260909-0211--46f3faff      (#160)
+worktrees/juniper-canopy--fix--harden-cpu-only-checks--20260909-0259--134d375f          (#608; cut 02:59 CDT after #603 merged)
 ```
 
 Plus the predecessor's three arc worktrees and two older worker worktrees, unchanged. The worker
