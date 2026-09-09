@@ -1,6 +1,28 @@
 #!/usr/bin/env python3
 """2026-09-05_fleet_docs_consolidate.py -- consolidate N fleet docs PRs into one branch.
 
+*** SUPERSEDED 2026-09-06 by util/ad-hoc/2026-09-06_docs_consolidate.py. DO NOT RUN. ***
+
+This resolver unions on the WHOLE STRIPPED LINE, and that is the measured root cause of the
+damage juniper-ml#1799 put on `main`: it re-landed six PRs that #1797 had already carried, and
+**367 of its 391 added lines were duplicates** -- 5 duplicated `## ` sections, 3 duplicated
+tables, and 14 isolated-stack rows spliced into `## Environment Floor Drift Check`'s
+troubleshooting table because it happens to share the header `| Symptom | Check / Fix |`.
+Repaired by #1814.
+
+A whole-line union cannot tell an added row from a changed one, so two versions of the same
+row are two distinct lines and both are kept. The replacement resolves by ITEM IDENTITY -- a
+table row is addressed by its first cell AND the table it sits in (see `item_key()` in
+`2026-09-06_docs_conflict_resolve.py`) -- and REFUSES anything it cannot key, which is the
+safety property this tool never had.
+
+NOTE THE NEIGHBOUR. `util/ad-hoc/2026-09-05_markdown_structure_check.py` and
+`util/ad-hoc/2026-09-05_md_structure_check.py` are two DIFFERENT files one word apart. The
+first is the screen `util/markdown_structure_delta.py` imports and is wired into CI; the
+second is a separate verifier with known blind spots. Neither is this file.
+
+Retained as provenance of record (owner policy 2026-08-25), not as a usable tool.
+
 Project: juniper-ml
 Sub-Project: fleet triage / Cursor-fleet PR-flood remediation (round 2)
 Application: ad-hoc automation (draft-PR backlog disposition)

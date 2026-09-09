@@ -61,6 +61,22 @@ def _repo(root: Path) -> None:
     _git(root, "init", "-q", "-b", "main")
     _git(root, "config", "user.email", "test@example.invalid")
     _git(root, "config", "user.name", "Test")
+    # Identity is not the only thing a fixture commit inherits. `required_signatures` is
+    # fleet-wide, so every Juniper working machine sets `commit.gpgsign = true` globally, and
+    # a temp repo inherits it. What happens next depends on GPG AGENT STATE, which is why it
+    # is worth pinning rather than tolerating:
+    #
+    #   * agent able to sign non-interactively -> every fixture commit is signed for nothing.
+    #     Measured 2026-09-09: 3.5 s, versus 0.96 s with signing off.
+    #   * agent unable to prompt (no TTY, locked, or pinentry already timed out) -> the commit
+    #     FAILS. `base` is then unresolvable and four tests exit 2, "cannot resolve ref".
+    #     Measured 2026-09-08 in exactly that state: 7 failures after 101 s of timeouts.
+    #
+    # So the suite was green or red depending on something no test controls, and CI never saw
+    # the red half because a runner has no signing key. That is the worst shape for it: green
+    # on the machine nobody debugs on. `tests/test_predict_merge.py` already does this.
+    _git(root, "config", "commit.gpgsign", "false")
+    _git(root, "config", "tag.gpgsign", "false")
 
 
 def _commit(root: Path, message: str) -> str:
@@ -95,7 +111,7 @@ class DeltaGateTest(unittest.TestCase):
                 return code, buf.getvalue()
 
     def test_untouched_broken_file_does_not_fail_the_pr(self):
-        # The whole reason the gate can ship today: `main` carries 104 problems and a PR that
+        # The whole reason the gate can ship today: `main` carries 102 problems and a PR that
         # does not touch them is not the PR's problem.
         code, out = self.run_gate(
             {"legacy.md": BROKEN_TABLE, "touched.md": CLEAN_TABLE},
