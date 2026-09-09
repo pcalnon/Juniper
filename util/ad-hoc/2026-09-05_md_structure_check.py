@@ -1,13 +1,44 @@
 #!/usr/bin/env python3
 """Markdown STRUCTURE damage a line-level diff check cannot see.
 
+*** PREFER util/markdown_structure_delta.py -- IT IS THE ONE WIRED INTO CI. ***
+
+Two things to know before running this.
+
+**It is not the file its name suggests.** `util/ad-hoc/2026-09-05_markdown_structure_check.py`
+is a DIFFERENT script, one word apart in the filename. That one is the screen
+`util/markdown_structure_delta.py` imports, and it is what the `Markdown structure (delta
+against the merge-base)` CI step actually executes. This file is a standalone verifier and is
+wired into nothing.
+
+**Its blind spots are known and were measured with a mutation harness:**
+
+  * `git` is absent from the `CODEY` alternation
+    (`python3?|bash|gh|pip|cd|export|make|sudo|npm|curl|LD_LIBRARY_PATH=|LIBTORCH=|JUNIPER_|
+    CASCOR_`), so every `git` command line is invisible to the unfenced-command count.
+    Measured on `docs/REFERENCE.md` 2026-09-08: 14 such lines against 186 the list does
+    cover, so this is a real hole and a MODEST one -- roughly 7%, not the ~38% an earlier
+    handoff quoted. Re-measure before repeating either figure;
+  * DUPLICATION is invisible -- a re-landed section balances its own fences, keeps its
+    separators and RAISES the heading count, so every check here passes. That is exactly how
+    juniper-ml#1799's 367 duplicated lines reached `main` with a clean report. For duplication
+    use `util/ad-hoc/2026-09-07_duplicate_section_census.py`;
+  * check C2 is set-membership, so N copies of a known line pass;
+  * check C4 is a NET count, so a loss and a gain cancel;
+  * a missing path, a new file, or an unresolvable `--base` all print OK and exit 0 -- a
+    correct predicate over an empty site enumeration, which is the failure this whole family
+    of tools keeps re-introducing.
+
+Retained because its fence-parity reasoning below is still the clearest statement of why
+balance alone is insufficient. Do not use it as a gate.
+
 Project:     Juniper
 Sub-Project: juniper-ml
 Application: ad-hoc verification tooling (docs consolidation)
 Author:      Paul Calnon
 License:     MIT License
 Created:     2026-09-05
-Status:      ad-hoc -- verification (run after every docs consolidation)
+Status:      ad-hoc -- verification, SUPERSEDED as a gate by util/markdown_structure_delta.py
 Retire when: the consolidator runs this itself, or docs stop being merged N-way.
 Related:     util/ad-hoc/2026-09-05_fleet_docs_consolidate.py (--verify checks
              LINES; this checks STRUCTURE),
