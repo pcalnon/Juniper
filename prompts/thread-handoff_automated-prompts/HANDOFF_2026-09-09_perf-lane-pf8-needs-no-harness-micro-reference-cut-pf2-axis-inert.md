@@ -77,7 +77,7 @@ splits into *decisions only the owner can take*, *free work*, and *host-bound wo
 |---|---|---|---|
 | `juniper-ml#1852` | 2026-09-09T18:35:29Z | `1a82815b` | the re-scope note; P1 §1 + P2 corrections; PF-4/PF-8 rows in `docs/REFERENCE.md` and `util/experiments/suites/perf/README.md`; `util/ad-hoc/2026-09-08_{cascor_baseline_history_census.py,pf2_epoch_calibration_suite.yaml,loadavg_sampler.py}`; `CHANGELOG.md` |
 | `juniper-cascor#638` | 2026-09-09T19:30:57Z | `3de89b11` | item 2.4: `src/tests/performance/timing_reference.py`, two pytest-benchmark hooks in the performance `conftest.py`, timing in `save_baseline`, 13 unit tests, `.benchmarks/` ignored, `docs/testing/REFERENCE.md` § Micro timing reference, `AGENTS.md`, `CHANGELOG.md`. Carries `Allow-Symbol-Loss: func:_collect_environment` (extract-method waiver). 21 of its 23 check-runs `success`, including `Symbol & Docs Screen`; the other two (`Memory Budget`, `Notify on Failure`) skipped by their own `if:` conditions — no failures |
-| this handoff | OPEN at hand-off (its own docs PR) | — | this file; a rounding fix and the consensus-derived mechanism blockquote in the re-scope note's §4, the `0002` sha wording in its §2.3, two caveats in its §1.2 / §1.3 and a history-sweep line in its §2.1; the knee wording in P2 row 4.1 |
+| this handoff — `juniper-ml#1863` | OPEN at hand-off, native squash auto-merge armed | — | this file; a rounding fix and the consensus-derived mechanism blockquote in the re-scope note's §4, the `0002` sha wording in its §2.3, two caveats in its §1.2 / §1.3 and a history-sweep line in its §2.1; the knee wording in P2 row 4.1 |
 
 ---
 
@@ -274,9 +274,9 @@ happened; and PF-8's start-time alignment is an assumption until a pair is actua
 ## Git state at hand-off
 
 - juniper-ml: session worktree `.claude/worktrees/memoized-waddling-whistle` on branch
-  `docs/handoff-2026-09-09-perf-lane` (from `origin/main` `8a2a8e94`); the merged feature branch
-  deleted locally and on origin. Uncommitted: this file, the re-scope note's consensus fixes and
-  the P2 row 4.1 wording — all destined for the handoff PR.
+  `docs/handoff-2026-09-09-perf-lane` (from `origin/main` `8a2a8e94`), pushed as
+  `juniper-ml#1863` with this file, the re-scope note's consensus fixes and the P2 row 4.1 wording;
+  the merged feature branch deleted locally and on origin. Nothing uncommitted.
 - juniper-cascor: primary at `53c0338` (`origin/main`), clean; the session's worktree and branch
   removed.
 - Nothing else staged or uncommitted anywhere from this session.
