@@ -31,7 +31,23 @@ Usage
         --add /local/path/file.py:src/path/file.py [--add ...] [--delete repo/path] \
         --message "headline" [--commit-body-file body.txt] [--dry-run]
 
-Exit 0 = commit landed (or --dry-run), 1 = refused (head moved / branch missing), 2 = hard error.
+Why it reads back what it wrote
+-------------------------------
+``create_signed_commit`` takes ``additions`` as ``(repo_path, base64_contents)`` TUPLES.
+A caller that passes dicts instead gets its dict UNPACKED INTO ITS KEYS, and the commit
+then writes a file literally named ``path`` containing ``base64.b64decode("contents")``
+-- while never uploading the real file at all. It prints ``signed commit <sha>`` and looks
+like a success. That happened on **nine branches** in one session (juniper-ml#1835), and
+what eventually caught it was a pre-commit ``end-of-file-fixer`` tripping over the stray
+binary, not anything that understood the problem.
+
+This script builds tuples correctly and never had that bug. It verifies anyway, because
+the failure mode is silent by construction: a write tool that cannot confirm its own write
+will eventually report a success it did not achieve. After committing it re-reads every
+added path from the branch and compares bytes, and confirms every deleted path is gone.
+
+Exit 0 = commit landed and verified (or --dry-run), 1 = refused (head moved / branch
+missing), 2 = hard error, INCLUDING "the commit landed but its content is wrong".
 """
 
 from __future__ import annotations
@@ -52,6 +68,42 @@ def _branch_head(owner: str, repo: str, branch: str) -> str:
     return (out or "").strip()
 
 
+def _blob_at(owner: str, repo: str, ref: str, repo_path: str) -> "bytes | None":
+    """Raw bytes of ``repo_path`` at ``ref``; None when the API returns nothing.
+
+    ``ref`` goes in the QUERY STRING, not through ``-f``: ``gh api`` switches the request
+    to POST as soon as any ``-f`` parameter is present, and the contents endpoint rejects
+    that -- so an ``-f ref=`` read fails on a commit that is perfectly fine, and a verifier
+    built that way accuses every path it checks.
+    """
+    out = osp.gh(["api", "-X", "GET", f"/repos/{owner}/{repo}/contents/{repo_path}?ref={ref}", "--jq", ".content"], check=False)
+    if not (out or "").strip():
+        return None
+    return base64.b64decode(out.strip())
+
+
+def _verify(owner: str, repo: str, branch: str, wanted: dict, deleted: list) -> int:
+    """Re-read what was just written. Returns the number of paths that are wrong."""
+    bad = 0
+    for repo_path, raw in wanted.items():
+        got = _blob_at(owner, repo, branch, repo_path)
+        if got is None:
+            print(f"  VERIFY FAIL {repo_path}: not readable on the branch after the commit", file=sys.stderr)
+            bad += 1
+        elif got != raw:
+            print(f"  VERIFY FAIL {repo_path}: branch has {len(got)} bytes, expected {len(raw)}", file=sys.stderr)
+            bad += 1
+        else:
+            print(f"  verified {repo_path} ({len(raw)} bytes)")
+    for repo_path in deleted:
+        if _blob_at(owner, repo, branch, repo_path) is not None:
+            print(f"  VERIFY FAIL {repo_path}: still present after deletion", file=sys.stderr)
+            bad += 1
+        else:
+            print(f"  verified {repo_path} is gone")
+    return bad
+
+
 def main(argv: list) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--owner", default="pcalnon")
@@ -63,6 +115,7 @@ def main(argv: list) -> int:
     parser.add_argument("--message", required=True, help="commit headline")
     parser.add_argument("--commit-body-file", default=None)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--no-verify", action="store_true", help="skip the post-commit read-back (you almost never want this)")
     args = parser.parse_args(argv)
 
     if not args.add and not args.delete:
@@ -70,6 +123,7 @@ def main(argv: list) -> int:
         return 2
 
     additions = []
+    wanted = {}
     for local, repo_path in args.add:
         try:
             with open(local, "rb") as fh:
@@ -78,6 +132,7 @@ def main(argv: list) -> int:
             print(f"ERROR: cannot read {local}: {exc}", file=sys.stderr)
             return 2
         additions.append((repo_path, base64.b64encode(raw).decode("ascii")))
+        wanted[repo_path] = raw
 
     commit_body = None
     if args.commit_body_file:
@@ -112,6 +167,13 @@ def main(argv: list) -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
     print(f"signed commit {oid} on {args.owner}/{args.repo}:{args.branch}")
+
+    if args.no_verify:
+        return 0
+    bad = _verify(args.owner, args.repo, args.branch, wanted, args.delete)
+    if bad:
+        print(f"VERIFY FAILED for {bad} path(s) -- a commit landed, but its CONTENT is not what was sent", file=sys.stderr)
+        return 2
     return 0
 
 
