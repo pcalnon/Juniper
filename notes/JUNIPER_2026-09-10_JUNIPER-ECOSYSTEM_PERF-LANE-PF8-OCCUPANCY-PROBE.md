@@ -643,7 +643,7 @@ the pair's cost is three pairs on one day, and its between-pair spread is not in
 ambient; the sweep-axis reading of any occupancy figure rests on an assumption the sweep did not
 test.
 
-**Post-merge correction (2026-09-10, `juniper-ml#HANDOFF_PR`).** The validators of this session's
+**Post-merge correction (2026-09-10, `juniper-ml#1879`).** The validators of this session's
 handoff found one number the six rounds had carried unchallenged: §7 said the pinned and default
 suites were taken "forty minutes apart"; their timestamps are 09:36:41 and 09:40:28, under four
 minutes apart, and the whole occupancy trace spans fifteen. Corrected in place. No disposition

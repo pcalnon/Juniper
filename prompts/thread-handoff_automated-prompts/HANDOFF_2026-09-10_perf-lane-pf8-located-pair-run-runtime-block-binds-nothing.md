@@ -28,7 +28,7 @@ Document of record for everything below:
 ## 1. GOAL (paste this into the new thread)
 
 Continue the **juniper-ml performance lane**. This session discharged the predecessor's §1 item 2
-and the micro-cut half of its item 3: the occupancy probe ran (twice), the two-arm pair ran because
+and advanced the micro-cut half of its item 3: the occupancy probe ran (twice), the two-arm pair ran because
 the probe landed inside the band, and micro reference `0003` was cut at the best condition the arc
 has seen — at ambient, not on a quiet host; item 3's PF-3 half is now BLOCKED for a new reason.
 `juniper-ml#1877` is **MERGED** and the worktree is clean; this handoff is the only thing left to
@@ -43,7 +43,8 @@ read §3 below before quoting any figure.
 1. **Five owner decisions are open — put them to the owner in the session's closing report (no
    issues, no PRs for them); do NOT take them yourself:**
    - **NEW — the `runtime:` block** (probe note §4, §6 item 4). `runtime.blas_threads` /
-     `runtime.num_processes` / `runtime.eval_metrics_enabled` in every experiment YAML are validated
+     `runtime.num_processes` / `runtime.eval_metrics_enabled`, wherever an experiment YAML carries
+     them, are validated
      by the driver, accepted by the cascor service, and **read by nothing on either path**. With
      the process env unpinned the listener's *initial* output pass burns ~11 cores and runs ~8×
      slower than with `OMP/MKL/OPENBLAS_NUM_THREADS=2 CASCOR_NUM_PROCESSES=4` exported (the other
@@ -116,7 +117,7 @@ read §3 below before quoting any figure.
 | PR | merged | squash sha | what |
 |---|---|---|---|
 | `juniper-ml#1877` | 2026-09-10T12:34:17Z | `06226ed3` | everything listed below; nine authored commits (the work, the `AGENTS.md` date, one consensus fix commit per round 1–5, the round-6 close, a two-line CodeQL fix) plus one merge-from-main sync, squashed |
-| this handoff — `juniper-ml#HANDOFF_PR` | HANDOFF_STATE | — | this file |
+| this handoff — `juniper-ml#1879` | opened with native squash auto-merge armed; merged by the time you read this on `main` | — | this file, and one number in `notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md` (§7's "forty minutes apart" → under four; a post-merge-correction paragraph after its §9 Termination) — see §8 |
 
 `juniper-ml#1877` changed, by filename:
 
@@ -154,7 +155,7 @@ read §3 below before quoting any figure.
   §7 lists the residuals (window definition, the between-suite 34%, the ≥ 60 s cell length not
   met at 35–45 s).
 - **The pair**: three aligned parallel pairs (start offsets 0.003 / 0.046 / 0.068 s; 88.7–100%
-  of each drive window shared (two pairs at 100% of both windows); each cell's juniper-data
+  of each drive window shared (one pair at 100.0% of both windows, one at 99.9%); each cell's juniper-data
   idle) against six sequential controls (three
   before, three after; before vs after 0.26% apart), same four variables, all twelve cells at 1770
   — **parallel / control = 1.1125, +11.3% per step; +8.5 / +12.7 / +12.6% leaving one pair out;
@@ -200,7 +201,7 @@ read §3 below before quoting any figure.
 
 ```bash
 git fetch origin && git rev-parse --short origin/main   # 06226ed3 or a descendant of it
-git log --oneline -1 origin/main -- notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md   # 06226ed3
+git log --oneline -2 origin/main -- notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md   # juniper-ml#1879's squash (the §7 correction), then 06226ed3
 gh pr view 1877 --repo pcalnon/juniper-ml --json state,mergedAt,mergeCommit   # MERGED, 06226ed3
 python3 -m unittest -q tests/test_pf8_occupancy_probe.py tests/test_ci_test_wiring_drift.py   # 26 + 11 = 37 OK
 python3 -m unittest -q tests/test_read_run_metrics.py tests/test_make_baseline.py tests/test_compare_baseline.py   # 118 OK
@@ -210,7 +211,7 @@ python3 util/ad-hoc/2026-09-10_pf8_occupancy_analyse.py --parallel ~/.local/stat
     --control ~/.local/state/juniper-experiments/suites/pf8-occupancy-probe-20260910T094028Z ~/.local/state/juniper-experiments/suites/pf8-occupancy-probe-20260910T094842Z \
     --trace ~/.local/state/juniper-experiments/suites/pf8-occupancy-trace-20260910.tsv | tail -8   # ratio 1.1125, +11.3%, COMPARABLE
 S=~/.local/state/juniper-experiments/baselines/cascor-micro/Linux-CPython-3.13-64bit; python3 util/ad-hoc/2026-09-10_micro_reference_compare.py --base $S/0002_*.json --other $S/0003_*.json | head -5   # median 0.9945, 7 outside
-grep -n "runtime.num_processes" util/experiments/suites/perf/pf3-cascor-pool-scaling.yaml   # 3 hits: the BLOCKED header and the axis at :34, still there until the owner rules
+grep -n "runtime.num_processes" util/experiments/suites/perf/pf3-cascor-pool-scaling.yaml   # 3 hits: the header comments at :3 and :7 and the axis at :34, still there until the owner rules
 ls ~/.local/state/juniper-experiments/baselines/cascor-micro/Linux-CPython-3.13-64bit/   # 0001_*, 0002_*, 0003_a51b7c58*
 ```
 
@@ -233,7 +234,7 @@ REFUSE the pinned one, the baseline or the reader drifted — stop.
   pull: the holder check `ps -eo pid,cmd | grep "[/]juniper-cascor/src"` must return nothing —
   and because a cascor listener's cmdline carries no path (`python -m uvicorn api.app:create_app
   … --port 8202`), also `readlink /proc/<pid>/cwd` for every uvicorn on an 82xx port and confirm
-  none sits under the primary — then measure first — `git -C /home/pcalnon/Development/python/Juniper/juniper-cascor rev-list
+  none sits under the primary — then measure: `git -C /home/pcalnon/Development/python/Juniper/juniper-cascor rev-list
   --count HEAD..origin/main`, as a standalone call (trap 2); the peer's `:8202` stack runs from
   a worktree.
 
@@ -245,8 +246,8 @@ REFUSE the pinned one, the baseline or the reader drifted — stop.
    `sys.modules` before `exec_module` — `dataclasses` resolves the owner module through it and
    gets `None`. Every `_load()` helper in `tests/` that omits the line works only because its
    script has no dataclass.
-2. **The worktree classifier refuses `git -C <sibling>` in a compound command but accepts it
-   alone**, and refuses `VAR=$(…)` before `python3`. Read a sibling repo's HEAD with `cat
+2. **The worktree classifier refuses `git -C <sibling>` inside an `&&` list but accepts it
+   alone** (a `;` list was accepted once), and refuses `VAR=$(…)` before `python3`. Read a sibling repo's HEAD with `cat
    .git/HEAD` + `cat .git/refs/heads/main`; run a sibling's pytest with `env -C <dir> <python>
    -m pytest …` — no `cd`, so the shell's cwd does not move for every parallel call.
 3. **A glob does not survive `env -C`**: the shell expands it against the *caller's* cwd, so name
@@ -307,7 +308,26 @@ the `AGENTS.md` date, one fix commit per round 1–5, the round-6 close, a two-l
 an unused import and an uncommented `except`, which held the merge behind two unresolved review
 threads while every check was green) plus one merge-from-main sync, squashed on merge.
 
-This handoff itself was HANDOFF_VALIDATION.
+After that merge, this handoff's own validators found one number the six rounds had carried: §7's
+"forty minutes apart" for suites taken at 09:36:41 and 09:40:28. Corrected in `juniper-ml#1879`,
+with a post-merge-correction paragraph after the note's §9 Termination; no disposition or action
+changed.
+
+This handoff itself was validated independently before archiving, per
+`notes/JUNIPER_2026-02-23_JUNIPER-ML_THREAD-HANDOFF-PROCEDURE.md`'s practice of re-probing every
+assertion: round 1 by three lenses on the draft (an adversarial fact-checker that executed every §4
+command, a fresh-session procedure auditor, the repo's `prompt-validator` agent) — all three FAIL,
+converging on the same core (a wrong expected test count, the merge asserted before it happened, a
+LOW-count miscount, two consensus-fixed qualifiers dropped, cascor#531's counter-evidence missing, a
+self-matching process grep), 30 substitutions; round 2 by two fresh lenses on the corrected draft —
+FAIL again (a worktree-removal instruction that
+`notes/JUNIPER_2026-06-25_JUNIPER-ML_WORKTREE-CLEANUP-PROCEDURE-V2.md` Phase 4 forbids; a range that
+excluded its own top value, introduced by round 1; the probe note's own "forty minutes", which six
+consensus rounds had carried), all fixed; round 3 by one fresh lens on the archived file — FAIL on
+two omissions (this PR's own note correction absent from §2's row and §4's comment), fixed in this
+PR's second commit with six minors; every other number, citation, path and link verified clean.
+Every finding was re-verified against the primary source before it was applied, and every correction
+pass introduced at least one defect the next round caught.
 
 ---
 
@@ -316,7 +336,7 @@ This handoff itself was HANDOFF_VALIDATION.
 - juniper-ml: branch `perf/pf8-occupancy-probe-2026-09-10` merged as `juniper-ml#1877`
   (squash `06226ed3`); the remote branch was auto-deleted on merge (`delete_branch_on_merge` is
   on) and the local one deleted by hand. This file on branch `docs/handoff-2026-09-10-perf-lane`
-  as `juniper-ml#HANDOFF_PR`, same remote deletion on merge. The session worktree
+  as `juniper-ml#1879`, same remote deletion on merge. The session worktree
   `.claude/worktrees/valiant-doodling-lynx` (Claude Code's session-isolation worktree, locked,
   left on the handoff branch, clean) outlives the session like the other worktrees under
   `.claude/worktrees/`. **Do NOT remove it yourself**: it is locked, and merged-and-clean is not
