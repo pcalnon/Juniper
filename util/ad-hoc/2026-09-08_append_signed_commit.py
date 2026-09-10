@@ -33,6 +33,7 @@ import importlib.util
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _UTIL = os.path.dirname(_HERE)
@@ -76,7 +77,10 @@ def main(argv: list) -> int:
     if head.returncode != 0 or not expected:
         print(f"REFUSED: branch {args.branch} not found on {args.owner}/{args.repo}: {head.stderr.strip()}", file=sys.stderr)
         return 1
-    body = open(args.body_file, encoding="utf-8").read() if args.body_file else None
+    # Read through pathlib so the handle is closed deterministically: a bare
+    # ``open(...).read()`` leaves it to the garbage collector, which CodeQL flags
+    # (py/file-not-closed) and which is a real leak on any non-refcounting runtime.
+    body = Path(args.body_file).read_text(encoding="utf-8") if args.body_file else None
 
     print(f"{'DRY-RUN ' if args.dry_run else ''}{args.owner}/{args.repo}:{args.branch} @ {expected}")
     for repo_path, contents in additions:
