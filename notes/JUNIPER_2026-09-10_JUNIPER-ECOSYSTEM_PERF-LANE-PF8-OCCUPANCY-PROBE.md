@@ -531,9 +531,9 @@ claims, to hunt any consumer of the `runtime:` block, and to check amputation ag
 re-scope note and the 2026-09-09 handoff). Both ran against the tree frozen at `84143b1e`; the
 document was edited only after both had reported. Round 2, briefed on the corrections only, ran
 against the corrected tree at `e38caf06`; round 3, briefed on rows 18–27, against `a97fb91f`;
-round 4, briefed on rows 28–35, against `526d0842`; round 5, briefed on what round 4 found,
-against the tree after those fixes. Each round's record below is written after that round
-reports.
+round 4, briefed on rows 28–35, against `526d0842`; round 5, briefed on rows 36–40, against
+`e1a7c72f`; round 6, briefed on what round 5 found, against the tree after that fix. Each
+round's record below is written after that round reports.
 
 Verdicts, round 1: **A — PASS WITH FINDINGS** (48 claims, 45 exact matches, three corrections);
 **B — NOT SAFE AS WRITTEN, SAFE WITH FIXES** (claim 1 SURVIVES and is understated; claim 2
@@ -591,7 +591,8 @@ introduced or left, all fixed before round 3:
 dispositions present, correct and consistent on every surface; the measured half re-derived
 again (+8.45 / +12.74 / +12.58%; 400 epoch lines over 18 s; trailing samples 4 / 4 / 5; the
 driver's last-sample 0.588 / 1.267 / 1.442; external ambient per pair 5.60 / 4.22 / 3.96). Seven
-items the round-2 fix pass introduced or left, all fixed before round 4:
+items the round-2 fix pass introduced or left, plus a bundle of three observations (row 35) —
+eight rows — all fixed before round 4:
 
 | # | finding | disposition |
 |---|---|---|
@@ -617,9 +618,17 @@ tables with no column mismatch). Five items, all fixed before round 5:
 | 39 | §7 still said "83% one phase" beside §2.3's 82–83% | fixed |
 | 40 | prose outside the two scripts still said "worker-equivalents" for what the reducer computes (the test's docstring, the probe suite's header) | fixed |
 
-**Round 5** (on rows 36–40 only): ROUND5_RESULT
+**Round 5 — PASS WITH FINDINGS** (on rows 36–40 only, against `e1a7c72f`). Rows 36–39 re-derived
+exactly (four of fifteen cells; +9.67 / +9.29 / +10.42%; 82.44% / 83.02%; the split counts
+160 / 148 / 160 under the poll-boundary rule). One residual, fixed before round 6:
 
-**Termination.** Rounds continue until one changes no number, disposition or action; rounds 1–4
+| # | finding | disposition |
+|---|---|---|
+| 41 | one line of the test's docstring (its item 7) still said "worker-equivalent figure" for the cores the reducer computes; and the round-3 record said "seven items" above eight rows without saying row 35 bundles observations | fixed, both |
+
+**Round 6** (on row 41 only): ROUND6_RESULT
+
+**Termination.** Rounds continue until one changes no number, disposition or action; rounds 1–5
 each did. **Residual uncertainty, stated plainly**: the burst's library is a leading candidate, not an identification;
 the pair's cost is three pairs on one day, and its between-pair spread is not independent of
 ambient; the sweep-axis reading of any occupancy figure rests on an assumption the sweep did not

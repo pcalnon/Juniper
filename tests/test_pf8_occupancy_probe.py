@@ -34,7 +34,7 @@ What it pins
    Σcpu / Σwall — not a mean of per-second ratios, which would weight a short final tick like a
    full one.
 7. **End to end on a synthetic suite**: registry + run dir + series + trace → the expected
-   worker-equivalent figure and readout.
+   core-occupancy figure and readout.
 """
 
 from __future__ import annotations
