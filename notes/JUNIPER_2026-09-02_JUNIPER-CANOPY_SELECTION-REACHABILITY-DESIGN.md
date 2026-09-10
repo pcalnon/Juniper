@@ -556,7 +556,7 @@ proceed independently.
 > — verified, not assumed. But "several will legitimately be unavailable" understates what that
 > meant while `equities_seq` was the LMU's **only** compatible dataset: in the container the LMU
 > had **zero** available datasets, so §4.7's empty-set alert was not an edge case, it was the
-> normal state of the deployed product. The five rank-3 synthetics seeded in **canopy#611** are
+> normal state of the deployed product. The five rank-3 synthetics seeded in **canopy#612** are
 > numpy-only and declare no `is_available` hook, so they are available everywhere; that is the
 > substantive fix, and the packaging workstream is no longer on the LMU's critical path.
 
@@ -569,7 +569,7 @@ schemas — the probes are `util/ad-hoc/2026-09-09_generator_gap_census.py`,
 and `…_dt_uniformity_and_equities_cap.py` in juniper-ml.
 
 **Shipped:** Y5 as **canopy#609**, the `equities_seq` seed repair as **canopy#610**, the five
-rank-3 synthetic seeds + G10 as **canopy#611**.
+rank-3 synthetic seeds + G10 as **canopy#612**.
 
 **§12.4's premise was truer than it looked, and it applied to the INCUMBENT.** The section warns
 that a count is not a measured capability. It is: `equities_seq` — the seed already shipped, and
