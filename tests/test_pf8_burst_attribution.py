@@ -74,7 +74,6 @@ class TestProcStatParsing(unittest.TestCase):
     def test_comm_with_spaces_and_parens_does_not_shift_fields(self) -> None:
         # utime=100, stime=50 at fields 14/15 -> 150 ticks. The comm deliberately contains both
         # a space and a ')' so a first-')' split would land on the wrong field.
-        after_comm = "S " + " ".join(str(i) for i in range(3, 15))
         # positions: fields 3..14 -> index 11 is utime, 12 is stime in the post-comm split
         fields = ["S"] + [str(i) for i in range(1, 20)]
         fields[11 + 1] = "100"  # utime  (+1 because index 0 here is the state field)
@@ -91,7 +90,6 @@ class TestProcStatParsing(unittest.TestCase):
             self.assertEqual(comm, "py (x) thing")
         self.assertIn("rfind", CENSUS.read_text(), "the census must split on the LAST ')'")
         self.assertNotIn("split()[1]", CENSUS.read_text())
-        del after_comm
 
     def test_census_module_exposes_read_threads(self) -> None:
         self.assertTrue(callable(self.census.read_threads))

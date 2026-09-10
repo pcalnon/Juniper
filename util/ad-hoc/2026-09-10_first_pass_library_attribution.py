@@ -438,20 +438,27 @@ def main() -> int:
         "versions": {"torch": torch.__version__, "numpy": np.__version__, "python": sys.version.split()[0]},
     }
 
-    def _synthetic_burn(kind: str, seconds: float = 4.0) -> None:
-        """Burn a pool whose identity is known in advance, to validate the census."""
+    def _synthetic_burn(kind: str, seconds: float = 4.0) -> float:
+        """Burn a pool whose identity is known in advance, to validate the census.
+
+        The product is accumulated and returned rather than discarded. A bare ``a @ b`` would
+        read as a statement with no effect (CodeQL says so), and leaving it that way invites a
+        later reader — or a future evaluator — to delete the one line the probe exists to run.
+        """
+        total = 0.0
         if kind == "numpy":
             a = np.random.rand(1500, 1500).astype(np.float32)
             b = a.copy()
             end = time.perf_counter() + seconds
             while time.perf_counter() < end:
-                a @ b
+                total += float((a @ b)[0, 0])
         else:
             a = torch.rand(1500, 1500)
             b = a.clone()
             end = time.perf_counter() + seconds
             while time.perf_counter() < end:
-                a @ b
+                total += float((a @ b)[0, 0])
+        return total
 
     def _run_workload() -> object:
         nonlocal network
