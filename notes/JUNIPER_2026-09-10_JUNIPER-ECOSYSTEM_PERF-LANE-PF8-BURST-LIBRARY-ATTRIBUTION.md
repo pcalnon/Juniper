@@ -170,7 +170,13 @@ Engine::thread_main → ReadyQueue::pop`.
    (`juniper-cascor/src/cascade_correlation/cascade_correlation.py:617` → `:1179-1180`; there is
    no early return on the path between them).
 2. `torch.set_num_threads` reaches OpenMP through `omp_set_num_threads`, whose `nthreads-var` is
-   a **per-thread** internal control variable. It binds the calling thread.
+   documented as a **per-thread** internal control variable — it binds the calling thread.
+   **This step is the one INFERRED link in the chain**, and it is the standard documented
+   semantics rather than something verified inside PyTorch here. It is consistent with every
+   measurement in §1, but it does **not** on its own predict §5.1 (a plain torch matmul is
+   unaffected by the thread it runs on) or §5.3 (later passes on the same wrong thread do not
+   burst). Treat steps 1 and 3–6 as measured or read from source, and step 2 as the best-supported
+   reading of why they compose the way they do.
 3. The service constructs the network in `_create_network_locked`
    (`juniper-cascor/src/api/lifecycle/manager.py:1538`; the constructor call is at `:1578`),
    which runs on the **request** thread — `POST /v1/training/start` creates the network from the
