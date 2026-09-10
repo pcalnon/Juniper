@@ -471,8 +471,9 @@ cascor stack on `:8202`. Ambient, not idle — the sweep's own standard (§8.2 o
   active portion); neither crosses the knee.
 - **`0003` is ambient, not quiet.** A cut at a 1-minute load under 3 has still never been taken on
   this host, and `0003` does not supersede under the cascor procedure's quiet-host rule.
-- **The 34% pinned-vs-default difference is a between-suite comparison** taken forty minutes apart
-  under similar ambient, not interleaved cell-by-cell; and it is 82–83% one phase (§2.3).
+- **The 34% pinned-vs-default difference is a between-suite comparison** taken under four minutes
+  apart (09:36:41 and 09:40:28) under similar ambient, not interleaved cell-by-cell; and it is
+  82–83% one phase (§2.3).
 - **§1.3's ≥ 60 s cell length was not met** (35–45 s); the bridge was off, so the reason for it did
   not apply, but it is a departure from the design and is recorded as one.
 
@@ -641,3 +642,9 @@ each did and round 6 did not, so the rounds stop there. **Residual uncertainty, 
 the pair's cost is three pairs on one day, and its between-pair spread is not independent of
 ambient; the sweep-axis reading of any occupancy figure rests on an assumption the sweep did not
 test.
+
+**Post-merge correction (2026-09-10, `juniper-ml#HANDOFF_PR`).** The validators of this session's
+handoff found one number the six rounds had carried unchallenged: §7 said the pinned and default
+suites were taken "forty minutes apart"; their timestamps are 09:36:41 and 09:40:28, under four
+minutes apart, and the whole occupancy trace spans fifteen. Corrected in place. No disposition
+or action changes; the comparison stays between-suite and not interleaved, which was the point.
