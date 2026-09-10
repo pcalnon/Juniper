@@ -551,3 +551,91 @@ packaging workstream (§7) lands their extras — `equities` needs `yfinance`, w
 `juniper-data/requirements.lock` today (§9). The availability gate already renders that honestly
 with an install hint; §4.7 makes the fully-empty case legible. The UI work and the packaging work
 proceed independently.
+
+> **Correction, 2026-09-09** (session `resilient-strolling-bachman`). `yfinance` is still absent
+> — verified, not assumed. But "several will legitimately be unavailable" understates what that
+> meant while `equities_seq` was the LMU's **only** compatible dataset: in the container the LMU
+> had **zero** available datasets, so §4.7's empty-set alert was not an edge case, it was the
+> normal state of the deployed product. The five rank-3 synthetics seeded in **canopy#611** are
+> numpy-only and declare no `is_available` hook, so they are available everywhere; that is the
+> substantive fix, and the packaging workstream is no longer on the LMU's critical path.
+
+### 12.6 Execution record and corrections (2026-09-09)
+
+Added by session `resilient-strolling-bachman`. Everything below was established by **executing**
+juniper-data's registry and fitting `juniper_recurrence_model.LMURegressor`, not by reading
+schemas — the probes are `util/ad-hoc/2026-09-09_generator_gap_census.py`,
+`…_rank3_seed_validation.py`, `…_equities_seq_remedies.py`, `…_equities_seq_candidate_seeds.py`
+and `…_dt_uniformity_and_equities_cap.py` in juniper-ml.
+
+**Shipped:** Y5 as **canopy#609**, the `equities_seq` seed repair as **canopy#610**, the five
+rank-3 synthetic seeds + G10 as **canopy#611**.
+
+**§12.4's premise was truer than it looked, and it applied to the INCUMBENT.** The section warns
+that a count is not a measured capability. It is: `equities_seq` — the seed already shipped, and
+the entire subject of canopy#601 and canopy#607 — **could not generate at all**, and once that was
+fixed, **could not fit**. Two independent defects, each fatal at a different stage:
+
+1. `max_symbols` is a cap juniper-data **refuses** against, not a truncator. At
+   `{"max_symbols": 5}` it compares against the requested 503-name universe and raises
+   `InputTooLargeError` → 422. Every Start failed in 0.0s. The remedy is an explicit `symbols`
+   list, which juniper-ml's own `tests/test_equities_symbol_cap_operator.py` already prescribes
+   while warning off the `allow_truncation` escape.
+2. `fundamentals_fill` defaults to `"nan"`, and `LMURegressor.fit` refuses non-finite input.
+   `X_train` was **9.1% non-finite while `X_val` and `X_test` were entirely clean** — so any check
+   sampling the held-out splits saw a healthy dataset. Columns were exactly
+   `EQUITIES_FEATURE_COLUMNS[7]/[8]/[15]`. `incomplete_rows` does not touch it, and a later
+   `start_date` is **not** a substitute: `2010-01-01` still yields 299,808 non-finite cells, so the
+   schema's "pre-2009 missing" wording is incomplete.
+
+**§12.3's prerequisites, resolved:**
+
+| item | status |
+|---|---|
+| 1 — Y5 hard blocker | **Confirmed and shipped** (canopy#609). It was the one raw-`httpx` caller; every other canopy → juniper-data call already sent the key via juniper-data-client. |
+| 2 — `default_params` load-bearing / G11 | **Restated.** As worded G11 fails the five incumbents *and* the five synthetics. The unbounded axis is an imported **universe**, not generator parameters — and narrower than "imports data" (`mnist` downloads a fixed corpus bounded by the sidebar's `n_samples`). It binds the equities pair; enforced by `TestEquitiesSeedIsGenerableAndFinite`. |
+| 3 — `mackey_glass` seed inert | **Does not reach canopy.** `seed` is in `INFRASTRUCTURE_FIELDS`, so the schema-driven form neither renders nor forwards it, and juniper-data's synthetic base pins `seed: int = Field(default=0)`. Runs are reproducible. Latent, not absent: it would bite if `seed` were ever added to the form. |
+| 4 — `csv_import` excluded | **Confirmed by execution** — calling it with defaults raises a `ValidationError` (`file_path` required). It is on G10's list. |
+| 5 — `arc_agi` rank unverified | **Answered, and the answer is that it has no fixed rank.** Rank-2 at defaults (`(6, 900)`, 30×30 flattened), but `flatten_pairs` — a plain boolean the params panel **renders** — flips it to rank-3. `DatasetTypeSpec.ndim` is static and cannot express that; a rank-3 `arc_agi` is compatible with nothing (cascor is rank-2 only, recurrence is regression-only). **This is a new trap the design did not contain.** It stays unseeded until the registry can express a variable-rank generator. |
+
+**§12.1's table is CORRECT** — and worth recording that the first census contradicted it and the
+census was wrong. `dt[:, 0]` is a `0.0` no-previous-step sentinel; including it makes every
+generator look non-uniform. Excluding it: `multi_sine` / `mackey_glass` / `ar_p` are regular
+(a single Δt of 1.0), `irregular_sine` / `delay_product` genuinely irregular (36 distinct values).
+A measurement that contradicts a considered design claim is a reason to re-examine the instrument
+first — the probe was answering an adjacent question (what does the whole array look like?)
+rather than the intended one (what is the per-step spacing?).
+
+**§12.2 is now measured, not argued.** All five synthetics are rank-3 and cascor is
+`input_ndim={2}`, so `compatible_datasets(cascor)` is unchanged and the graph keeps exactly two
+components — asserted in `test_compatible_datasets_resolver_over_seeds`.
+
+**What §12 did not say, and should have: order is load-bearing.**
+`_gate_dataset_options_handler` snaps to the first compatible **and available** entry, so registry
+order decides where an operator lands on selecting Recurrence. The synthetics are seeded *before*
+`equities_seq` so that target is `multi_sine` (generate 0.00s, fit 0.10s, r² 1.000) rather than
+`equities_seq` (40.5s, r² −0.004, unavailable in the container).
+
+**Per-generator validation, as §12.4 requires** — generate then fit, observed once, at the
+recurrence service's effective LMU defaults (`d=16`, data-driven `theta`, `ridge=0.0`):
+
+| generator | X_train | Δt | generate | fit | r² |
+|---|---|---|---|---|---|
+| `multi_sine` | (1574, 32, 1) | regular | 0.00s | 0.10s | 1.000 |
+| `mackey_glass` | (1574, 32, 1) | regular | 0.00s | 0.11s | 0.9999 |
+| `irregular_sine` | (1574, 32, 1) | irregular | 0.00s | 0.11s | 0.9918 |
+| `ar_p` | (1574, 32, 1) | regular | 0.01s | 0.10s | 0.043 |
+| `delay_product` | (1574, 32, 1) | irregular | 0.00s | 0.10s | 0.004 |
+| `equities_seq` (repaired) | (15476, 64, 16) | irregular | 0.90s | 39.6s | −0.004 |
+
+Zero non-finite in any split for all six. The two low-r² synthetics are honest rather than broken
+— a noisy AR process has a low ceiling, and `delay_product` has a multiplicative target against a
+linear ridge readout — and are recorded inline in the registry so neither is mistaken for a good
+default. **`equities_seq`'s r² ≈ 0 is likewise the honest outcome for next-day equity returns**,
+which is the strongest argument for the synthetics: the pair now runs, but it demonstrates little,
+whereas three of the five synthetics are signals the LMU visibly learns.
+
+**Still unseeded after this phase** (G10 records the reason for each): `gaussian`, `checkerboard`,
+`equities` — rank-2, deferred to a slice whose §12.4 validation runs against **cascor** rather
+than the LMU, with `equities` additionally needing the canopy#610 treatment — plus `arc_agi`
+(variable rank, above) and `csv_import` (excluded).
