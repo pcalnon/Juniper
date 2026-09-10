@@ -331,6 +331,47 @@ The 2026-09-08 session lost the fixture to a host reboot (`/tmp` is tmpfs; the t
 
 ---
 
+## F-CANOPY-035 mechanism, fix and aftermath (operational, 2026-09-10)
+
+The instruments that took F-CANOPY-035 from "leading hypothesis with an unexplained residual" to a merged
+fix (juniper-canopy#613 `b792256`). Full write-up: **Phase 6 — 2026-09-10** in
+`notes/JUNIPER_2026-08-09_JUNIPER-CANOPY_E2E-VALIDATION-EVIDENCE.md`.
+
+- **`2026-09-10_f035_unopposed_response_test.py`** brackets EVERY store-writing response individually —
+  classified opposed/unopposed and matched against a continuous in-page trace of the store's length — where
+  `2026-09-05_f035_store_write_latency_probe.py` reads the store only at window start and end. Its first
+  run classified opposition by the next **HTTP request** and returned `SUPERSESSION-INSUFFICIENT`; that
+  boundary is **wrong** (the renderer evicts on a new `requested` entry, created by the TICK) and the
+  module now classifies on observed `n_intervals` transitions. **Read its docstring before quoting either
+  verdict.** `--early-observer` installs the observer before the tab opens, which is required on a FIXED
+  leg — the store fills during page load, so a late observer reads it already full and records no
+  transition at all.
+- **`2026-09-10_f035_trigger_period_sweep.py`** is the dose-response that actually closed the mechanism:
+  raise only the Interval period and watch the store. `PERIOD-CONTROLS-LANDING` twice, with the threshold
+  falling inside the measured round-trip range. Runs ASCENDING and STOPS at the first phase that lands,
+  because a filled store stays filled and every later phase is unscoreable.
+- **`2026-09-10_f035_running_guard_cleanroom.py`** reproduces the defect in ~80 lines with **no canopy at
+  all** (an Interval, a slow callback, a store) and shows `running=` fixing it — the same technique
+  `e2e_f027_cleanroom.py` used for the 12-slot cap. This is what proved the defect was dash-renderer's
+  rather than canopy's wiring, and what proved `running=` applies to ORDINARY callbacks on dash 4.2.0.
+- **`2026-09-10_f035_fix_wiring_check.py`** asserts the fix's six wiring properties against the **built**
+  app (`app.callback_map` + `app._callback_list` + the real layout), never an AST pass — an AST census of
+  canopy's frontend resolves only 151 of 182 callbacks and has already missed two real pollers. Note
+  `running=` is NOT on the `callback_map` entry; it lives on the callback spec in `app._callback_list`.
+- **`2026-09-10_f035_downstream_consumer_probe.py`** answers F-CANOPY-052 (the defect the empty store was
+  masking): is the candidate loss plot empty because of the DATA or the RENDER, and does the consumer fire
+  at all. **Use `--no-force`** for any render-rate observation: the forced second store change shrinks the
+  window to 40 rows and the candidate entries sit EARLY in the history, so the force can drop the very
+  rows the figure needs — this probe scored its own contamination as a defect once before the flag existed.
+
+Two traps worth carrying forward. **`e2e_finding_triage.py` reads only the LAST 170 characters of a
+finding's bold header** (`tail = body[-170:]`), so a `FIXED` placed early in a long header is invisible and
+the finding still counts as open — put the disposition at the END. And **a `dcc.Interval` does not tick at
+its nominal rate under load**: 54 ticks per 90 s at a 1000 ms period, ~0.6 Hz, which is why the sweep reads
+the gap from observed `n_intervals` transitions and never from the constant.
+
+---
+
 ## What does NOT belong here
 
 - Scripts that are part of a documented build / test / release flow → `util/` proper or `scripts/`.

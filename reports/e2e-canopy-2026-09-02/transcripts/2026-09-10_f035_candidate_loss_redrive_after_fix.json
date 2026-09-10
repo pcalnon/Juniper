@@ -1,0 +1,73 @@
+{
+  "canopy": "http://127.0.0.1:8053",
+  "server_history": {
+    "ok": true,
+    "total": 66,
+    "phases": {
+      "output": 54,
+      "candidate": 12
+    },
+    "candidate": 12
+  },
+  "store_read": {
+    "ok": true,
+    "via": "paths.strs",
+    "len": 66,
+    "type": "list"
+  },
+  "ws_liveness": {
+    "ok": true,
+    "via": "paths.strs",
+    "value": {
+      "metrics_live": false,
+      "state_live": false
+    }
+  },
+  "ws_metrics_buffer_before": {
+    "ok": true,
+    "via": "paths.strs",
+    "value": {
+      "events": [],
+      "gen": 0,
+      "last_drain_ms": 0
+    }
+  },
+  "wire_census_25s": {
+    "responses_naming_store": 0,
+    "responses": 61,
+    "window_s": 25.0
+  },
+  "write_census_30s": {
+    "responses": 71,
+    "wrote": [],
+    "omitted": 0,
+    "unparsed": 0,
+    "window_s": 30.0
+  },
+  "store_read_after_writes": {
+    "ok": true,
+    "via": "paths.strs",
+    "len": 66,
+    "type": "list"
+  },
+  "ws_metrics_buffer_after": {
+    "ok": true,
+    "via": "paths.strs",
+    "value": {
+      "events": [],
+      "gen": 0,
+      "last_drain_ms": 0
+    }
+  },
+  "ws_appender_fired": false,
+  "loss_figure": {
+    "present": true,
+    "traces": [],
+    "annotations": []
+  },
+  "M-CANDIDATES-07": {
+    "verdict": "FAIL",
+    "reason": "store populated but no candidate trace rendered",
+    "named_traces": []
+  }
+}
