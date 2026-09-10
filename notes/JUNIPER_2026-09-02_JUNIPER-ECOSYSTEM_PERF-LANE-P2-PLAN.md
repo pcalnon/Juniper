@@ -448,6 +448,18 @@ line numbers §12 quotes, two of which have drifted.
   scenario; wiring the block into the launcher is an owner decision, because it changes what every
   existing YAML means
   (§4 of [`JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md`](JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md)).
+- **That ~8× initial-output-pass penalty is a cascor DEFECT, not a missing YAML wiring** (found
+  2026-09-10, [`JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-BURST-LIBRARY-ATTRIBUTION.md`](JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-BURST-LIBRARY-ATTRIBUTION.md)).
+  cascor pins the parent with `torch.set_num_threads(2)` inside the network **constructor**
+  (`cascade_correlation.py:617` → `:1179-1180`), but the service constructs in
+  `_create_network_locked` (`api/lifecycle/manager.py:1538`) on the request thread and trains in
+  `_run_training` (`:2476`) on the `cascor-train` executor (`:2431`) — a different thread, which
+  keeps OpenMP's default width of 16. The burst is **libgomp under `libtorch_cpu`**, not NumPy's
+  OpenBLAS: `OMP_NUM_THREADS=2` alone removes it, `OPENBLAS_NUM_THREADS=2` alone does not, and
+  `libopenblas` is 0.0% of the native profile. Consequence for this plan: exporting
+  `JUNIPER_CASCOR_BLAS_THREADS` from `runtime.blas_threads` would **mask** the defect rather than
+  repair it, so the "implement" option in the owner decision above is not the whole fix. The
+  narrower repair is a cascor change.
 - **A parallel cascor suite under `suites/` turns the R-6 drift gate red in CI.** `load_suite`
   enforces the cascor version floor by reading the sibling tree; CI clones only juniper-ml, the
   check fails closed, and `test_every_suite_loads` fails while the same file passes locally. Found

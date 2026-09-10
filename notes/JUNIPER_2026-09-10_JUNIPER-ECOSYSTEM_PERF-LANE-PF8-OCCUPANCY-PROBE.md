@@ -380,6 +380,37 @@ attribution: **not identified** are the call site, why only the initial pass (th
 inside the listener while the burst runs. The discriminating test is a profile of the listener's
 first pass, or reading both pool sizes from inside the process; neither was done.
 
+> **SUPERSEDED 2026-09-10 — the leading candidate named in this section is REFUTED.** The
+> discriminating tests were run the same day and are recorded in
+> [`JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-BURST-LIBRARY-ATTRIBUTION.md`](JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-BURST-LIBRARY-ATTRIBUTION.md).
+> The burst is carried by **libgomp — the GNU OpenMP runtime — inside `libtorch_cpu`,
+> predominantly under `torch::autograd::Engine`**. NumPy's OpenBLAS pool carries **none** of it:
+> pinning `OPENBLAS_NUM_THREADS=2` alone leaves the burst completely intact at 16 threads and
+> 13.7 cores (while the OpenBLAS pool demonstrably shrinks — alive threads fall 43 → 29), pinning
+> `OMP_NUM_THREADS=2` alone removes it completely (2 threads, 2.0 cores), and `libopenblas`
+> appears in **0.0%** of 614 native profile samples against `libgomp`'s 47.6%. The single-variable
+> arms this section says were never run ("the probe never sets one alone") are what settled it.
+>
+> Two further corrections to this section. **(a)** `torch.get_num_threads()` **does** read 2
+> inside the process while the burst runs — it reports the library-global setting, not the width
+> in force on the thread doing the work, so that question could not have discriminated anything
+> on its own. **(b)** The trigger is that the pass runs on a thread other than the one that
+> constructed the network: cascor's parent pin is applied in the constructor
+> (`cascade_correlation.py:617` → `:1179-1180`) while the service constructs in
+> `_create_network_locked` (`api/lifecycle/manager.py:1538`) on the request thread and trains in
+> `_run_training` (`:2476`) on the `cascor-train` executor created at `:2431`. In one process,
+> unchanged otherwise, moving the pass off the constructor's thread takes it from 1.53 cores / 2
+> threads to 9.45 / 16, and constructing on that same worker thread puts it back to 1.48 / 2.
+>
+> §2.2's "confined to the initial pass" **stands** and was re-measured independently (a 150 s
+> listener census over four growth iterations and 16 `_retrain_output_layer` calls contains
+> exactly one ≥10-thread block). Why it is confined, given that later passes run on the same
+> thread and nothing re-pins it, is the open residual — see that note's §5.3.
+>
+> One reading in item 1 above is also corrected there: the "four hundred `train_output_layer …
+> Epoch N` lines" are 400 INFO lines at `epoch_display_frequency` = 10, i.e. **4000 epochs**,
+> matching the cell's `output_epochs: 4000`. The pass has no early exit.
+
 **The probe does not settle throughput either**: in this session's run the NumPy loop at the
 runtime-default width completed fewer matmuls in its two seconds (57) than the 2-thread one (79), but a re-run during
 validation reversed that order (94 against 85) while reproducing the core figures (12.8 / 12.2 /
