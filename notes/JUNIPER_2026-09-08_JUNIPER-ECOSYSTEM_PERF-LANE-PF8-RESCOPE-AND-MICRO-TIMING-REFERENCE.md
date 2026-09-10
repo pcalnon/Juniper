@@ -86,6 +86,12 @@ scratch suite is not committed; §1.5 says why). What the run would get for free
 So 4.1 as a build item is **withdrawn**. The plan's dependency edge `4.3 → 4.1 → 4.2` collapses
 to `4.3 → 4.2`.
 
+**What this reinterprets, stated so a reader of this note alone sees it** (consensus finding,
+2026-09-09). §3 of the P1 design phrased PF-8 as needing *two suites at once* and declared
+`execution.mode: parallel` insufficient on exactly that ground. Two identical cells of **one**
+suite *are* two simultaneous runs, so the requirement is met by reinterpretation, not literally —
+the P2 plan's Wave 4 preamble carries the dated correction.
+
 ### 1.3 What PF-8 is now — an occupancy probe first, a two-arm suite only if needed
 
 **Step 1 (S, no new tooling).** During one ordinary PF-1 cell, sample the CPU occupancy of the
@@ -95,7 +101,9 @@ saturated core. `run_experiment.py` does not record this today; a per-process `/
 delta over the cell is enough, and `ps %CPU` is **not** (it is a lifetime average). Read the
 second run's cost off the sweep curve at that abscissa.
 
-**Step 2 (M, only if step 1 lands between ~4 and ~8 worker-equivalents).** A suite **pair**:
+**Step 2 (M, only if step 1 lands in the ~4–8 worker-equivalent band around the sweep's
+6–8-worker knee — below 6 the sweep cannot separate, above 8 it is the plateau).** A suite
+**pair**:
 
 - *parallel arm* — two identical PF-1-shape cells, `mode: parallel, max_parallel: 2`;
 - *control arm* — the same two cells, `mode: sequential`, run with the **same four thread
@@ -103,6 +111,13 @@ second run's cost off the sweep curve at that abscissa.
   mode, so the control must pin by hand or the arms differ in budget, not only in concurrency —
   `compare_baseline`'s `thread_budget` identity field would refuse the comparison, which is the
   right outcome for a mismatched pair).
+
+Two things the pair does not settle by itself (consensus finding, 2026-09-09). Each parallel cell
+brings up its **own** juniper-data instance as well as its own cascor — `experiment_stack.bash
+--up` launches data → cascor per cell — so the parallel arm is two data services too; probably
+immaterial to what is measured, but unexamined. And start-time alignment is plausible (the
+executor submits both cells back-to-back; the only serialisation point is the port lock's `mkdir`)
+and unmeasured until a pair actually runs.
 
 Instrument: **mean step duration** (`step_sum / step_count`) from the resolving instrument, never
 `timings.drive` (poll-quantized; §1 of the sweep note). Design controls from §8.1 of the sweep
@@ -160,7 +175,11 @@ cascor commit `971d35a` — a dependabot bump that also carried the deletion. Be
 into a document, every one of the 22 was read
 (`util/ad-hoc/2026-09-08_cascor_baseline_history_census.py`): **312 entries, zero timing keys.**
 `save_baseline`'s docstring had promised `mean_ms` / `stddev_ms` / `min_ms` / `max_ms` /
-`iterations` since 2026-03-31; every caller passed only its parameters.
+`iterations` since 2026-03-31; every caller passed only its parameters. That census reads each
+file's final state; a consensus lane (2026-09-09) went further and swept the directory's whole
+tracked history — `git log --all -p`, 45 commits — for `mean_ms` / `median_ms` / `stddev_ms` /
+`min_ms` / `max_ms`, and found **none anywhere**, closing the added-then-reverted loophole a
+snapshot census cannot see.
 
 ### 2.2 What shipped (`juniper-cascor#638`, branch `feat/perf-micro-timing-reference`)
 
@@ -189,7 +208,7 @@ same convention as the run tier's `pf1-2026-09-04b`). 71 benchmarks per run.
 | run | sha | `juniper_run.loadavg` 1m / 5m / 15m at save | load trace during the run (`loadavg-20260909.tsv`, 5 s) |
 |---|---|---|---|
 | `0001` | `3286b758` (dirty tree) | **9.17** / 5.05 / 3.46 | 40 samples, 1m min / mean / max = 4.22 / 7.41 / 10.91 |
-| `0002` | `145fbe92` (the branch commit) | **10.22** / 6.51 / 4.32 | 1-minute load 5.2 at start, 9.5 at the end of the ~45 s run |
+| `0002` | `145fbe92` (the branch commit at cut time; `juniper-cascor#638` squash-merged as `3de89b11`) | **10.22** / 6.51 / 4.32 | 1-minute load 5.2 at start, 9.5 at the end of the ~45 s run |
 
 **Both cuts were taken on a host well above the sweep's ambient band** (4.7–5.9 at the sweep's
 quiet blocks). The benchmarks are single-threaded and ten cores were idle, but §8.4's knee is in
@@ -224,10 +243,12 @@ so the next handoff does not re-inherit it.
 ## 4. Item 2.1 — the PF-2 calibration probe: the dataset axis is inert
 
 Suite `pf2-epoch-calibration-20260909T074828Z` (`util/ad-hoc/2026-09-08_pf2_epoch_calibration_suite.yaml`),
-seven cells, sequential, every cell `succeeded` and `early_stopped`, 5 min 35 s end to end. Read
-with `util/experiments/read_run_metrics.py`; the dataset sizes below are the resolved artifacts'
-`n_train`, not the override (an 8× spread: 500 vs 4000 training rows). Load is the 1-minute
-average sampled at 5 s across each cell's window (`loadavg.tsv` in the suite directory).
+seven cells, sequential, every cell `succeeded` and `early_stopped`, 5 min 35 s launch-to-report
+(the per-cell walls sum to 5 min 24 s; the rest is stack bring-up and aggregation). Read with
+`util/experiments/read_run_metrics.py`; the dataset sizes below are the resolved artifacts'
+`n_train`, not the override (an 8× spread: 500 vs 4000 training rows), confirmed by a distinct
+`dataset_id` per size. Load is the 1-minute average sampled at 5 s across each cell's window
+(`loadavg.tsv` in the suite directory).
 
 | cell | `n_points_per_spiral` (`n_train`) | epoch pair | `drive` s | `step_sum` s | `step_count` | mean step ms | load 1m mean / max |
 |---|---|---|---|---|---|---|---|
@@ -235,7 +256,7 @@ average sampled at 5 s across each cell's window (`loadavg.tsv` in the suite dir
 | c001 | 250 (500) | 1000 / 1000 | 35.15 | 29.59 | **450** | 65.8 | 8.5 / 11.8 |
 | c002 | 2000 (4000) | 1000 / 1000 | 30.15 | 27.87 | **450** | 61.9 | 12.9 / 14.6 |
 | c003 | 250 (500) | 2000 / 2000 | 35.12 | 29.87 | **890** | 33.6 | 13.9 / 15.8 |
-| c004 | 2000 (4000) | 2000 / 2000 | 30.13 | 27.41 | **890** | 30.8 | 10.1 / 11.9 |
+| c004 | 2000 (4000) | 2000 / 2000 | 30.13 | 27.40 | **890** | 30.8 | 10.1 / 11.9 |
 | c005 | 250 (500) | 4000 / 4000 | 50.20 | 45.63 | **1770** | 25.8 | 8.7 / 10.5 |
 | c006 | 2000 (4000) | 4000 / 4000 | 45.18 | 42.13 | **1770** | 23.8 | 7.1 / 8.2 |
 
@@ -244,6 +265,24 @@ report the **same** `step_count` — 450, 890, 1770 — and 1770 at 4000/4000 is
 invariant (`pf1-2026-09-04b`, `step_count 1770`, at 200 points). This is the load-immune half of
 the result: counts are exact, and the host condition in the right-hand column cannot manufacture
 an equality. Within this range `step_count` is a function of the epoch budget alone.
+
+> **Why — the mechanism, traced during consensus validation (Lane B1, 2026-09-09), which makes
+> the finding structural rather than merely observed, and also bounds it.** Output-layer training
+> is full-batch (`cascade_correlation.py:2078-2186`): one forward/backward/step per epoch over the
+> whole tensor, and the step counter advances on a throttled per-epoch callback whose condition —
+> every 25th epoch plus the last — references only the loop counter and the budget, never the
+> data. With `max_iterations: 10` there are eleven such calls per run, and
+> 11 × (⌊(E − 1) / 25⌋ + 1) reproduces 450 / 890 / 1770 to within one step. Every cell ends
+> `early_stopped` for the same reason too: `max_hidden_units == max_iterations == 10`, so
+> `max_units_reached` fires at the last iteration in all six dataset cells (each reached 10 hidden
+> units) — the "same termination branch" precondition is met **by construction of this budget**,
+> not by data-independent convergence. So "inert" is established for this epoch budget and this
+> cascade cap. **Widen the dataset range without revisiting `max_hidden_units` and the
+> patience / accuracy criteria, and dataset size can start moving the termination branch, and with
+> it the count.** The P1 design's own PF-1 calibration is thin underneath this cross-check
+> (a 50-epoch anchor that is a cross-suite n=2 mean with 26% spread, n=1 at 500 / 2000 / 5000 —
+> the 2026-09-07 handoff §4), and every probe cell here is n=1 as well; the equality is exact
+> regardless, the durations are single samples.
 
 **2. Step time does not see it either.** `step_sum` at 2000 points is 6–8% *lower* than at 250
 points at all three budgets — the wrong sign for a scaling effect and well inside the 20.5% quiet
