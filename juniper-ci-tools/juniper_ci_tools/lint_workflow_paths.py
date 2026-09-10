@@ -29,6 +29,35 @@ What it does NOT catch
 - Absolute paths (``/usr/local/bin/foo``).
 - Shell-variable-expanded paths (``${{ env.SCRIPT }}/foo.py``).
 
+Working directories
+-------------------
+
+A ``run:`` step executes in its effective working directory, so a path
+must be resolved against that directory and not only against the repo
+root. Precedence, highest first (GitHub's own):
+
+1. ``jobs.<id>.steps[].working-directory``
+2. ``jobs.<id>.defaults.run.working-directory``
+3. ``defaults.run.working-directory`` (workflow level)
+4. the repo root
+
+A path is reported missing only when it exists at **neither** its
+effective working directory **nor** the repo root. That is deliberately
+permissive: paths also appear in strings that are not ``run:`` bodies
+(``with:`` inputs, ``if:`` expressions), where no working directory
+applies, and this lint exists to catch renames -- a rename removes the
+file from both locations, so nothing it was built for slips through.
+
+Before 2026-09-09 the resolution was ``repo_root / path`` unconditionally.
+That made every monorepo lane with a nested package a false positive:
+juniper-recurrence's ``ci-recurrence-model.yml`` sets
+``working-directory: juniper-recurrence-model`` and runs
+``pytest tests/test_readouts_mlp.py``, which exists -- and the lane was
+green while the lint disagreed (juniper-ml#1836). The hazard was the
+suggested repair: prefixing the path in the workflow *breaks* the lane,
+because pytest would then look for
+``juniper-recurrence-model/juniper-recurrence-model/tests/...``.
+
 Library API
 -----------
 
@@ -38,8 +67,10 @@ Library API
         lint_workflow_paths,
         LintFinding,
         LintResult,
+        ScriptReference,
         find_repo_root,
         extract_script_paths,
+        extract_script_references,
     )
 
     result = lint_workflow_paths(repo_root)  # auto-discovers via .github/workflows
@@ -107,6 +138,25 @@ DEFAULT_ECOSYSTEM_SIBLING_PREFIXES: tuple[str, ...] = (
 
 
 @dataclass(frozen=True)
+class ScriptReference:
+    """A script path as referenced, together with the directory it runs in.
+
+    ``working_directory`` is the effective ``working-directory`` for the step the
+    path was found in, relative to the repo root -- ``""`` when none applies
+    (the repo root itself, or a string outside any step).
+    """
+
+    path: str
+    working_directory: str = ""
+
+    def candidates(self) -> tuple[str, ...]:
+        """Repo-root-relative locations this reference may legitimately resolve to."""
+        if not self.working_directory:
+            return (self.path,)
+        return (f"{self.working_directory}/{self.path}", self.path)
+
+
+@dataclass(frozen=True)
 class LintFinding:
     """A single workflow-script-path lint finding."""
 
@@ -115,6 +165,14 @@ class LintFinding:
 
     path: str
     """The (relative) path that does not exist in the repo."""
+
+    working_directory: str = ""
+    """The effective ``working-directory`` the path was resolved against, if any.
+
+    Reported so the reader can see *where* the lint looked. Without it the
+    obvious repair for a monorepo lane is to prefix the path in the workflow,
+    which breaks the lane (juniper-ml#1836).
+    """
 
 
 @dataclass(frozen=True)
@@ -137,10 +195,13 @@ class LintResult:
             return f"OK: {len(self.workflow_files)} workflow file(s) checked under {self.workflows_dir}, no missing script paths."
         lines = [
             "CI workflow(s) reference script paths that do not exist:",
-            *(f"  {f.workflow.relative_to(self.repo_root)}: references missing path '{f.path}'" for f in self.missing),
+            *(f"  {f.workflow.relative_to(self.repo_root)}: references missing path '{f.path}'" + (f" (searched '{f.working_directory}/{f.path}' and '{f.path}')" if f.working_directory else "") for f in self.missing),
             "",
             "This is the failure class that broke 3 juniper-X CIs on 2026-05-18 (script rename without workflow update).",
             "Either restore the missing path or update the workflow.",
+            "Where a working directory is shown, both locations were checked: do NOT 'fix' this by",
+            "prefixing the path in the workflow -- the step already runs in that directory, so the",
+            "prefix would be applied twice and break the lane.",
         ]
         return "\n".join(lines)
 
@@ -176,6 +237,76 @@ def extract_script_paths(yaml_text: str) -> set[str]:
         for match in _SCRIPT_PATH.finditer(value):
             paths.add(match.group(1))
     return paths
+
+
+def _paths_in(node: object) -> set[str]:
+    """Every script path reachable in a YAML subtree."""
+    found: set[str] = set()
+    for value in _iter_yaml_strings(node):
+        for match in _SCRIPT_PATH.finditer(value):
+            found.add(match.group(1))
+    return found
+
+
+def _working_directory(container: object) -> Optional[str]:
+    """``defaults.run.working-directory`` of a workflow- or job-level mapping."""
+    if not isinstance(container, dict):
+        return None
+    run = (container.get("defaults") or {}).get("run") if isinstance(container.get("defaults"), dict) else None
+    if isinstance(run, dict):
+        wd = run.get("working-directory")
+        if isinstance(wd, str) and wd.strip():
+            return wd.strip().rstrip("/")
+    return None
+
+
+def extract_script_references(yaml_text: str) -> set[ScriptReference]:
+    """Extract script paths from a workflow, each tagged with the working
+    directory the step that references it actually runs in.
+
+    Walks the ``jobs`` -> ``steps`` structure rather than flattening the tree, so
+    ``working-directory`` context survives. Strings outside any step (top-level
+    ``env``, ``on``, a job's ``container``, ...) are still collected, with no
+    working directory -- dropping them would lose coverage the flat extractor had.
+
+    A workflow that fails to parse yields nothing; the YAML error is its own
+    concern and surfaces from yamllint / actionlint / GitHub.
+    """
+    try:
+        parsed = yaml.safe_load(yaml_text)
+    except yaml.YAMLError:
+        return set()
+    if not isinstance(parsed, dict):
+        return set()
+
+    workflow_wd = _working_directory(parsed)
+    refs: set[ScriptReference] = set()
+
+    jobs = parsed.get("jobs")
+    if isinstance(jobs, dict):
+        for job in jobs.values():
+            if not isinstance(job, dict):
+                continue
+            job_wd = _working_directory(job) or workflow_wd
+            steps = job.get("steps")
+            if not isinstance(steps, list):
+                continue
+            for step in steps:
+                if not isinstance(step, dict):
+                    continue
+                step_wd = step.get("working-directory")
+                effective = step_wd.strip().rstrip("/") if isinstance(step_wd, str) and step_wd.strip() else (job_wd or "")
+                for path in _paths_in(step):
+                    refs.add(ScriptReference(path=path, working_directory=effective))
+
+    # Anything not inside a step keeps the flat extractor's behaviour: repo-root
+    # relative, no working directory. Computed as a set difference so a path that
+    # appears both in a step and elsewhere keeps its working-directory-tagged form.
+    in_steps = {ref.path for ref in refs}
+    for path in extract_script_paths(yaml_text) - in_steps:
+        refs.add(ScriptReference(path=path, working_directory=workflow_wd or ""))
+
+    return refs
 
 
 def is_validatable(
@@ -232,12 +363,14 @@ def lint_workflow_paths(
     missing: list[LintFinding] = []
     for wf_file in workflow_files:
         text = wf_file.read_text(encoding="utf-8")
-        for script_path in extract_script_paths(text):
-            if not is_validatable(script_path, sibling_prefixes=sibling_prefixes):
+        for ref in extract_script_references(text):
+            if not is_validatable(ref.path, sibling_prefixes=sibling_prefixes):
                 continue
-            resolved = repo_root / script_path
-            if not resolved.exists():
-                missing.append(LintFinding(workflow=wf_file, path=script_path))
+            # Missing only when it resolves NOWHERE -- neither under the step's
+            # effective working directory nor at the repo root. See the module
+            # docstring on why that permissiveness is the right trade.
+            if not any((repo_root / candidate).exists() for candidate in ref.candidates()):
+                missing.append(LintFinding(workflow=wf_file, path=ref.path, working_directory=ref.working_directory))
 
     return LintResult(
         repo_root=repo_root,
@@ -251,7 +384,9 @@ __all__ = [
     "DEFAULT_ECOSYSTEM_SIBLING_PREFIXES",
     "LintFinding",
     "LintResult",
+    "ScriptReference",
     "extract_script_paths",
+    "extract_script_references",
     "find_repo_root",
     "is_validatable",
     "lint_workflow_paths",
