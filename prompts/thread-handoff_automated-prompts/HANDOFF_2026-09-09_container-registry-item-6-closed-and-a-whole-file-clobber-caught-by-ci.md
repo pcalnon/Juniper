@@ -197,7 +197,7 @@ worktrees/juniper-cascor-worker--ci--lockfile-update-both-locks--20260909-1911--
 
 Plus the predecessor's eight arc worktrees, unchanged. The session's own juniper-ml worktree is
 `juniper-ml/.claude/worktrees/tender-splashing-wigderson`, fast-forwarded to `a51fe617`, holding
-ml#1869's 17 modified files and this handoff plus seven `util/ad-hoc/` scripts that land with it.
+ml#1869's 17 modified files and this handoff plus eight `util/ad-hoc/` scripts that land with it.
 
 Host docker daemon gained one image: `recurrence-lock-check:local` (built to prove 6e's lock installs
 and the census passes). The predecessor's inventory is otherwise unchanged; **none of it is dangling**,
@@ -234,8 +234,10 @@ commits via the API helpers — **after** the staleness check above.
 `util/ad-hoc/2026-09-09_open_worker_lockfile_6c_pr.bash`,
 `util/ad-hoc/2026-09-09_open_recurrence_lock_6e_pr.bash`,
 `util/ad-hoc/2026-09-09_open_ml_lint_6g_pr.bash`,
-`util/ad-hoc/2026-09-09_fix_ml6g_reference_clobber.bash`, and
-`util/ad-hoc/2026-09-09_open_closing_handoff_pr.bash` (which opens that closing PR itself).
+`util/ad-hoc/2026-09-09_fix_ml6g_reference_clobber.bash`,
+`util/ad-hoc/2026-09-09_open_closing_handoff_pr.bash` (which opens that closing PR) and
+`util/ad-hoc/2026-09-09_add_closing_script_to_pr.bash` (which pushed the follow-up commit adding it).
+The regress stops there: the final commit was made by a plain command, not a script.
 
 The six `open_*` scripts exist because a worktree-isolated session's Bash classifier refuses a
 multi-line command whose operands are computed at runtime; every path in them is a literal.
