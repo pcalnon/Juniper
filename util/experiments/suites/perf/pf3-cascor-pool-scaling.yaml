@@ -1,6 +1,13 @@
 # PF-3 (plan §12.3): candidate-pool x process-count scaling — speedup curve + oversubscription
 # onset (read against the H-11 thread budget via the dashboard's Process CPU Rate panel).
 # runtime.num_processes rides the driver's rule-6-clean runtime: block. Thresholds unratified.
+#
+# BLOCKED 2026-09-10 -- DO NOT LAUNCH AS WRITTEN. The runtime: block is validated by the driver
+# and accepted by the cascor service but READ BY NOTHING on either path (no launcher export, no
+# settings projection), so the runtime.num_processes axis below is a no-op and this 4x3 matrix
+# would be four pool sizes run three times each. Blocked on the owner's runtime: decision
+# (implement -> CASCOR_NUM_PROCESSES exported per cell; retire -> re-express the axis).
+# notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md §4, P2 plan item 2.2.
 schema_version: 1
 suite:
   name: pf3-cascor-pool-scaling
