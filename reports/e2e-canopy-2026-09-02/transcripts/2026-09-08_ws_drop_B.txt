@@ -1,0 +1,12 @@
+[19:22:36] connected to ws://127.0.0.1:8202/ws/training
+[19:22:45] pre-trigger frames: ['connection_established', 'initial_status', 'state', 'initial_metrics']
+[19:22:45] trigger: POST /v1/snapshots/snapshot_20260908T123427Z/resume -> http 200
+[19:22:45]   +0.44s frame type=state
+[19:23:11]   +26.0s frame type=ping
+[19:23:30] 
+[19:23:30]   frames before: ['connection_established', 'initial_status', 'state', 'initial_metrics']
+[19:23:30]   frames after : ['state', 'ping']
+[19:23:30]   close        : None
+[19:23:30]   => VERDICT: STATE-RECEIVED
+[19:23:30]      frames after the trigger: ['state', 'ping']. No drop on this transition.
+[19:23:30] results -> /tmp/juniper-e2e/ws_drop_B.json

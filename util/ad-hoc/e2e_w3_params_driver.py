@@ -93,6 +93,39 @@ def http_get(path: str, timeout: float = 10.0):
         return r.status, json.loads(r.read().decode())
 
 
+def serving_commit(timeout: float = 5.0) -> dict:
+    """The commit the canopy leg is SERVING, read off the leg itself.
+
+    canopy's ``/v1/health`` reports ``git_sha`` / ``build_date`` from the
+    ``JUNIPER_CANOPY_GIT_SHA`` / ``JUNIPER_CANOPY_BUILD_DATE`` env
+    (``src/provenance.py``) -- stamped by the Dockerfile, and by
+    ``util/ad-hoc/2026-09-04_canopy_verify_instance.bash`` for a source-run leg
+    since 2026-09-08. A driver that records THIS, rather than
+    ``git rev-parse`` on a checkout, records what the leg imported at launch:
+    "a checkout is not a deployment", and the 2026-09-07 F-035 artifacts carried
+    no SHA at all (ledger still-owed item 7), which is why two of the ledger's
+    own citations for one leg could not be adjudicated.
+
+    ``git_sha`` is ``None`` for a leg launched without the stamp (the isolated
+    stack's :8051 before its launcher gained the same export) -- reported as
+    such, never inferred from the working tree.
+    """
+    try:
+        status, payload = http_get("/v1/health", timeout=timeout)
+    except Exception as exc:  # noqa: BLE001 - reported, never raised from a probe
+        return {"ok": False, "canopy": CANOPY, "why": f"{type(exc).__name__}: {exc}"[:160]}
+    if status != 200 or not isinstance(payload, dict):
+        return {"ok": False, "canopy": CANOPY, "why": f"HTTP {status}"}
+    return {
+        "ok": True,
+        "canopy": CANOPY,
+        "git_sha": payload.get("git_sha"),
+        "build_date": payload.get("build_date"),
+        "version": payload.get("version"),
+        "read_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+
+
 def http_post(path: str, body: dict, timeout: float = 30.0):
     data = json.dumps(body).encode()
     req = urllib.request.Request(CANOPY + path, data=data, headers={"Content-Type": "application/json"}, method="POST")
@@ -169,6 +202,9 @@ def open_dashboard(pw, capture: list):
     page.on("console", lambda m: log(f"  CONSOLE[{m.type}] {m.text[:300]}") if m.type in ("error", "warning") else None)
 
     log(f"navigating to {CANOPY}")
+    # Provenance line, once per dashboard open: the commit the LEG reports, so every
+    # driver's transcript carries it without each driver having to remember to.
+    log(f"  serving: {json.dumps(serving_commit())}")
     page.goto(CANOPY, wait_until="domcontentloaded", timeout=60_000)
     page.wait_for_timeout(3000)
     dismiss_welcome(page)

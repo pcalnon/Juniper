@@ -228,8 +228,14 @@ def _verdict(res: dict) -> dict:
     """
     d = res.get("dispatches") or []
     tr = [t for t in (res.get("transitions") or []) if not t.get("note")]
-    carrying = [x for x in d if isinstance(x.get("len"), int) and x["len"] > 0]
-    reached = [t for t in tr if isinstance(t.get("to"), int) and t["to"] > 0]
+    # ``len`` is a row count for a list-valued store and -1 for any other non-null
+    # value (a dict-valued store such as the topology store). Both CARRY a value; only
+    # an empty list or null does not. The 2026-09-08 positive control (topology store,
+    # 3 Callbacks.Aggregate dispatches at len=-1, independent read hidden_units=48)
+    # scored DISPATCHED-EMPTY under the list-only rule -- a false negative on the
+    # instrument's own control, which is the exact failure a control exists to catch.
+    carrying = [x for x in d if isinstance(x.get("len"), int) and (x["len"] > 0 or x["len"] == -1)]
+    reached = [t for t in tr if isinstance(t.get("to"), int) and (t["to"] > 0 or t["to"] == -1)]
 
     if not res.get("armed"):
         return {"verdict": "BLOCKED", "why": "the hook never armed -- window.store not found; nothing was measured"}
@@ -256,9 +262,14 @@ def _verdict(res: dict) -> dict:
         # transition anywhere. A pre-registered rule protects against reinterpreting
         # a number after the fact; it does nothing about a branch that encodes the
         # expected answer. Split the branch on the evidence instead.
-        ends_empty = tr and not (isinstance(tr[-1].get("to"), int) and tr[-1]["to"] > 0)
+        # Same dict-awareness as ``carrying`` / ``reached`` above: a length of -1 is a
+        # non-list value that IS present. The 2026-09-08 control's second run landed
+        # here -- 3 carrying dispatches, independent read hidden_units=48 -- and was
+        # still scored APPLIED-THEN-LOST because -1 is not > 0.
+        _present = lambda t: isinstance(t.get("to"), int) and (t["to"] > 0 or t["to"] == -1)  # noqa: E731
+        ends_empty = tr and not _present(tr[-1])
         fell = any(
-            isinstance(a.get("to"), int) and isinstance(b.get("to"), int) and b["to"] < a["to"] and a["to"] > 0
+            _present(a) and isinstance(b.get("to"), int) and not _present(b)
             for a, b in zip(tr, tr[1:])
         )
         if fell or ends_empty:
@@ -295,11 +306,27 @@ def main() -> int:
             "same leg and commit minutes apart, read 0. This flag is what isolates that variable."
         ),
     )
+    ap.add_argument(
+        "--store",
+        default=METRICS_STORE,
+        help=(
+            "which store id to watch. THE POSITIVE CONTROL LIVES HERE (added 2026-09-08). The fixed "
+            "matcher has only ever produced zeros against the subject; pointed at a store that "
+            "demonstrably receives dispatched values -- network-visualizer-topology-store with the "
+            "Network Topology tab open -- it must record at least one dispatch carrying a value, or "
+            "its zero against the subject is structural rather than a measurement."
+        ),
+    )
     args = ap.parse_args()
+    target = args.store  # the watched store id; METRICS_STORE is only its default
 
     from playwright.sync_api import sync_playwright
 
-    res: dict = {"canopy": CANOPY, "store": METRICS_STORE, "window_s": args.window, "tab": args.tab}
+    res: dict = {"canopy": CANOPY, "store": target, "window_s": args.window, "tab": args.tab}
+    try:
+        res["serving"] = _seg17._w3.serving_commit()  # the commit the LEG reports (ledger still-owed item 7)
+    except Exception:  # noqa: BLE001 - provenance must never fail the measurement
+        res["serving"] = None
 
     with sync_playwright() as pw:
         browser, ctx, page = open_dashboard(pw, [])
@@ -308,7 +335,7 @@ def main() -> int:
             # document that has not yet built the store. Patching after the dashboard
             # is up would race the first writes, which is where this store's whole
             # question lives.
-            ctx.add_init_script(f"({_HOOK})({json.dumps(METRICS_STORE)});")
+            ctx.add_init_script(f"({_HOOK})({json.dumps(target)});")
             res["reloaded"] = not args.no_reload
             if args.no_reload:
                 # No reload: the init script cannot have run on THIS document, so the
@@ -316,7 +343,7 @@ def main() -> int:
                 # than the reloading path -- which is exactly the difference under
                 # test, and the reason the two arms are reported separately rather
                 # than averaged.
-                page.evaluate(f"({_HOOK})({json.dumps(METRICS_STORE)});")
+                page.evaluate(f"({_HOOK})({json.dumps(target)});")
             else:
                 page.reload(wait_until="domcontentloaded")
             page.wait_for_timeout(6000)
@@ -340,11 +367,15 @@ def main() -> int:
 
             # An independent read of the same store, so the hook's own view can be
             # cross-checked against the reader the ledger already quotes.
-            rd = _store(page, METRICS_STORE) or {}
+            rd = _store(page, target) or {}
+            val = rd.get("value")
             res["independent_read"] = {
                 "ok": rd.get("ok"),
                 "via": rd.get("via"),
-                "len": len(rd["value"]) if isinstance(rd.get("value"), list) else None,
+                "len": len(val) if isinstance(val, list) else None,
+                # A dict-valued store (the topology store) has no list length; report
+                # its hidden-unit count instead so a control run is readable.
+                "hidden_units": (val.get("hidden_units") if isinstance(val, dict) else None),
             }
         finally:
             browser.close()
@@ -353,7 +384,12 @@ def main() -> int:
 
     log(f"  armed={res.get('armed')} totalDispatches={res.get('totalDispatches')} "
         f"totalNotifies={res.get('totalNotifies')} hookErrors={len(res.get('errors') or [])}")
-    log(f"  dispatches CARRYING a value for {METRICS_STORE}: {len(res.get('dispatches') or [])}")
+    # ``dispatches`` is EVERY action naming the id, carrying or not; ``carrying`` is the
+    # subset the verdict rule uses. Labelling the raw count "CARRYING" contradicted the
+    # distinction this probe exists to draw.
+    log(f"  dispatches NAMING {target}: {len(res.get('dispatches') or [])} "
+        f"(of which carrying a value: "
+        f"{len([x for x in (res.get('dispatches') or []) if isinstance(x.get('len'), int) and (x['len'] > 0 or x['len'] == -1)])})")
     for x in (res.get("dispatches") or [])[:10]:
         log(f"     type={x['type']!r} len={x['len']}")
     log(f"  state transitions: {[(t.get('from'), t.get('to')) for t in (res.get('transitions') or [])][:10]}")

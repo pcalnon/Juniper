@@ -1,0 +1,24 @@
+[t=    538ms] navigating to http://127.0.0.1:8052
+[t=    551ms]   serving: {"ok": true, "canopy": "http://127.0.0.1:8052", "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded", "build_date": "2026-09-08T12:12:17Z", "version": "0.6.0", "read_at": "2026-09-09T00:08:10Z"}
+[t=  12887ms]   welcome modal dismissed
+[t=  15691ms] ==============================================================================
+[t=  15691ms] STEP seq -- M-DATASET-17..27
+[t=  28430ms]   /api/dataset loaded=True keys=['num_samples', 'num_features', 'num_classes', 'loaded', 'train_samples', 'val_samples', 'test_samples', 'inputs', 'targets']
+[t=  30542ms]   dataset-plotter-seq-controls: {"present": true, "display": "none", "visibility": "visible", "w": 0, "h": 0, "text": "Compare:SignalsWindowsWindow:Signals:All signalsSignal:Windows:Select windowsArrange:Small multiplesOverlayShow targetAdvanced: full-cross g"}
+[t=  31734ms]   dataset-plotter-seq-mode: {"present": true, "display": "inline-flex", "visibility": "visible", "w": 0, "h": 0, "text": "SignalsWindows"}
+[t=  32086ms]   dataset-plotter-seq-group-signals: {"present": true, "display": "flex", "visibility": "visible", "w": 0, "h": 0, "text": "Window:Signals:All signals"}
+[t=  33497ms]   dataset-plotter-seq-window-single: {"present": true, "display": "block", "visibility": "visible", "w": 0, "h": 0, "text": ""}
+[t=  34887ms]   dataset-plotter-seq-signal-select: {"present": true, "display": "block", "visibility": "visible", "w": 0, "h": 0, "text": "All signals"}
+[t=  36362ms]   dataset-plotter-seq-group-windows: {"present": true, "display": "none", "visibility": "visible", "w": 0, "h": 0, "text": "Signal:Windows:Select windows"}
+[t=  37214ms]   dataset-plotter-seq-signal-single: {"present": true, "display": "block", "visibility": "visible", "w": 0, "h": 0, "text": ""}
+[t=  38269ms]   dataset-plotter-seq-window-multi: {"present": true, "display": "block", "visibility": "visible", "w": 0, "h": 0, "text": "Select windows"}
+[t=  39280ms]   dataset-plotter-seq-arrange: {"present": true, "display": "inline-flex", "visibility": "visible", "w": 0, "h": 0, "text": "Small multiplesOverlay"}
+[t=  39986ms]   dataset-plotter-seq-target-toggle: {"present": true, "display": "block", "visibility": "visible", "w": 0, "h": 0, "text": "Show target"}
+[t=  40985ms]   dataset-plotter-seq-target-plot: {"present": true, "display": "none", "visibility": "visible", "w": 0, "h": 0, "text": ""}
+[t=  42545ms]   dataset-plotter-seq-grid-toggle: {"present": true, "display": "block", "visibility": "visible", "w": 0, "h": 0, "text": "Advanced: full-cross grid"}
+[t=  43891ms]   dataset-plotter-seq-grid-container: {"present": true, "display": "none", "visibility": "visible", "w": 0, "h": 0, "text": ""}
+[t=  44974ms]   dataset-plotter-seq-char-toggle: {"present": true, "display": "block", "visibility": "visible", "w": 0, "h": 0, "text": "\u25be Characterization"}
+[t=  45993ms]   dataset-plotter-seq-char-collapse: {"present": true, "display": "block", "visibility": "visible", "w": 0, "h": 0, "text": ""}
+[t=  47338ms]   dataset-plotter-seq-char-companion: {"present": true, "display": "none", "visibility": "visible", "w": 0, "h": 0, "text": "\u25be Characterization"}
+[t=  47338ms] ==============================================================================
+[t=  47338ms] captured 189 requests

@@ -1,0 +1,13 @@
+[t=     82ms] serving: {"ok": true, "canopy": "http://127.0.0.1:8052", "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded", "build_date": "2026-09-08T12:12:17Z", "version": "0.6.0", "read_at": "2026-09-08T12:34:46Z"}
+[t=    514ms] navigating to http://127.0.0.1:8052
+[t=    517ms]   serving: {"ok": true, "canopy": "http://127.0.0.1:8052", "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded", "build_date": "2026-09-08T12:12:17Z", "version": "0.6.0", "read_at": "2026-09-08T12:34:47Z"}
+[t=  11399ms]   welcome modal dismissed
+[t=  93382ms]   BASELINE 30.0s: store 0 -> 0; responses naming store=39 wrote=[71, 71, 71, 71, 71, 71, 71, 71, 71, 71, 71, 71] omitted=0 n_intervals=58
+[t=  94397ms]   disable fast-update-interval: {"ok": true, "via": "memoizedProps.setProps", "hops": 510}
+[t= 124311ms]   SETTLE 20.0s: tick stopped=True (n_intervals 59 -> 59); store seq [(0.0, 0), (2.9, 71)]; responses naming store=1 wrote=[71]
+[t= 124616ms]   single trigger (fast-update-interval.n_intervals -> 60): {"ok": true, "via": "memoizedProps.setProps", "hops": 510}
+[t= 212766ms]   WATCH 60.0s: store seq [(0.0, 71)] applied_at=None; responses naming store=0 wrote=[] console=[]
+[t= 213094ms] 
+[t= 213094ms]   => VERDICT: APPLIED-UNCONTENDED
+[t= 213094ms]      the store advanced to a non-empty length during settle, before any new trigger, with the fast lane disabled and at most one call in flight. The write path works when nothing supersedes it: SUPERSESSION is the mechanism, and the fix belongs at the trigger (its own Interval, or clientside gating), not in the handler.
+[t= 213094ms] results -> /tmp/juniper-e2e/f035_supersession_run1.json

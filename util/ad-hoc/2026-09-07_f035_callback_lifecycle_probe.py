@@ -432,10 +432,23 @@ def main() -> int:
             )
             res.update(snap)
             rd = _store(page, target) or {}
+            val = rd.get("value")
             res["independent_read"] = {
                 "ok": rd.get("ok"),
-                "len": len(rd["value"]) if isinstance(rd.get("value"), list) else None,
+                "via": rd.get("via"),
+                "len": len(val) if isinstance(val, list) else None,
+                # A dict-valued store (the topology store) has no list length. Report its
+                # hidden-unit count so a control run's read is comparable with cascor's
+                # own /v1/network -- the 2026-09-07 control was set aside on exactly this
+                # read (`hidden_units: 0`), taken on the Candidate Metrics tab, where the
+                # topology poll is tab-gated off and the store holds its mount default.
+                "hidden_units": (val.get("hidden_units") if isinstance(val, dict) else None),
+                "type": type(val).__name__,
             }
+            try:
+                res["serving"] = _seg17._w3.serving_commit()  # the commit the LEG reports (ledger still-owed item 7)
+            except Exception:  # noqa: BLE001 - provenance must never fail the measurement
+                res["serving"] = None
         finally:
             browser.close()
 

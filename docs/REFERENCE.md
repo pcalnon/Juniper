@@ -1287,7 +1287,7 @@ util/isolated_stack.bash --down
 
 | Utility | Purpose | Key Overrides |
 |---------|---------|---------------|
-| `util/isolated_stack.bash --up` | Create the data venv, then launch data → cascor → canopy (health-gated); a mid-leg failure tears the partial trio back down | `JUNIPER_E2E_DATA_PORT`, `JUNIPER_E2E_CASCOR_PORT`, `JUNIPER_E2E_CANOPY_PORT`, `JUNIPER_E2E_HEALTH_TIMEOUT`, `JUNIPER_E2E_DATA_EXTRAS`, `JUNIPER_E2E_RUN_DIR`, `JUNIPER_E2E_*_CONDA` / `*_DIR` |
+| `util/isolated_stack.bash --up` | Create the data venv, then launch data → cascor → canopy (health-gated); a mid-leg failure tears the partial trio back down. Both service legs stamp `JUNIPER_{CASCOR,CANOPY}_GIT_SHA` / `_BUILD_DATE` from the checkout they launch, so `/v1/health` reports the commit actually being served; `JUNIPER_E2E_CASCOR_WS_EXTRA_ORIGINS` adds origins to cascor's control-WS allowlist (a second canopy leg 403-loops without it) | `JUNIPER_E2E_DATA_PORT`, `JUNIPER_E2E_CASCOR_PORT`, `JUNIPER_E2E_CANOPY_PORT`, `JUNIPER_E2E_HEALTH_TIMEOUT`, `JUNIPER_E2E_DATA_EXTRAS`, `JUNIPER_E2E_RUN_DIR`, `JUNIPER_E2E_*_CONDA` / `*_DIR` |
 | `util/isolated_stack.bash --down` | Kill-by-port teardown + clean run / snapshot artifacts | same port / `RUN_DIR` / project overrides |
 | `util/isolated_stack.bash --status` | Probe each `/v1/health` and report listening PID | same |
 | `util/isolated_stack.bash --dry-run …` | Print every command; execute nothing (safe when ports are busy) | same |

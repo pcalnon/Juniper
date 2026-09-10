@@ -257,6 +257,22 @@ class TestLaunchLines(unittest.TestCase):
         # Canonical prefixed env var, NOT the deprecated bare CASCOR_SERVICE_URL alias.
         self.assertIn("JUNIPER_CANOPY_CASCOR_SERVICE_URL=http://127.0.0.1:", SCRIPT_TEXT)
 
+    def test_both_service_legs_stamp_their_serving_commit(self) -> None:
+        # 2026-09-08: each leg stamps the commit it is launched from into its env, and the
+        # service reports it on /v1/health as git_sha. Without this a source-run leg reports
+        # git_sha: null and no driver can record what the leg actually imported.
+        self.assertIn("JUNIPER_CASCOR_GIT_SHA=", SCRIPT_TEXT)
+        self.assertIn("JUNIPER_CANOPY_GIT_SHA=", SCRIPT_TEXT)
+        self.assertIn("JUNIPER_CASCOR_BUILD_DATE=", SCRIPT_TEXT)
+        self.assertIn("JUNIPER_CANOPY_BUILD_DATE=", SCRIPT_TEXT)
+
+    def test_cascor_allowlist_takes_extra_origins(self) -> None:
+        # 2026-09-08: a second canopy beside the trio (the :8052 verify leg) presents its own
+        # port as Origin; cascor must be told to admit it or that leg's control stream
+        # 403-loops forever, which is what happened from 2026-09-04 to 2026-09-08.
+        self.assertIn("JUNIPER_E2E_CASCOR_WS_EXTRA_ORIGINS", SCRIPT_TEXT)
+        self.assertIn("JUNIPER_CASCOR_WS_CONTROL_ALLOWED_ORIGINS=${CASCOR_WS_ALLOWED_ORIGINS}", SCRIPT_TEXT)
+
 
 class TestControlWsOriginPair(unittest.TestCase):
     """The control-WS Origin/allowlist pair (the '403 mystery' config fix)."""
@@ -364,6 +380,30 @@ class TestDryRunUp(unittest.TestCase):
             run_dir = Path(tmp) / "run"
             self._dry_up(run_dir)
             self.assertFalse(run_dir.exists(), "dry-run --up must not create the scratch run dir")
+
+    def test_dry_up_cascor_allowlist_admits_extra_origins(self) -> None:
+        # Default: exactly the trio's canopy origin, nothing appended (trailing space pins it).
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self._dry_up(Path(tmp) / "run").stdout
+            self.assertIn("JUNIPER_CASCOR_WS_CONTROL_ALLOWED_ORIGINS=http://127.0.0.1:8051 ", out)
+        # With the knob: the trio's origin first, then the extras, comma-joined -- the CSV
+        # form cascor's settings validator splits (api/settings.py _parse_ws_control_allowed_origins).
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self._dry_up(
+                Path(tmp) / "run",
+                env_extra={"JUNIPER_E2E_CASCOR_WS_EXTRA_ORIGINS": "http://127.0.0.1:8052,http://localhost:8052"},
+            ).stdout
+            self.assertIn("JUNIPER_CASCOR_WS_CONTROL_ALLOWED_ORIGINS=http://127.0.0.1:8051,http://127.0.0.1:8052,http://localhost:8052 ", out)
+            # The canopy leg's presented Origin is unaffected by the cascor-side knob.
+            self.assertIn("JUNIPER_CANOPY_CASCOR_WS_ORIGIN=http://127.0.0.1:8051", out)
+
+    def test_dry_up_announces_serving_commit_stamps(self) -> None:
+        # The fixture project dir is not a git checkout, so the stamps are announced EMPTY --
+        # which is the honest value (the service then reports git_sha: null), not an error.
+        with tempfile.TemporaryDirectory() as tmp:
+            out = self._dry_up(Path(tmp) / "run").stdout
+            self.assertIn("JUNIPER_CASCOR_GIT_SHA= JUNIPER_CASCOR_BUILD_DATE=<utc-now> uvicorn", out)
+            self.assertIn("JUNIPER_CANOPY_GIT_SHA= JUNIPER_CANOPY_BUILD_DATE=<utc-now> python main.py", out)
 
     def test_dry_up_honors_port_and_extras_overrides(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -513,6 +553,10 @@ mv -f "{launch_log}.partial" "{launch_log}"
   printf 'JUNIPER_CANOPY_WEBSOCKET__ALLOWED_ORIGINS=%s\\n' "${{JUNIPER_CANOPY_WEBSOCKET__ALLOWED_ORIGINS-}}"
   printf 'JUNIPER_CANOPY_RECURRENCE_SERVICE_URL=%s\\n' "${{JUNIPER_CANOPY_RECURRENCE_SERVICE_URL-}}"
   printf 'JUNIPER_CANOPY_SNAPSHOT_DIR=%s\\n' "${{JUNIPER_CANOPY_SNAPSHOT_DIR-}}"
+  printf 'JUNIPER_CASCOR_GIT_SHA=%s\\n' "${{JUNIPER_CASCOR_GIT_SHA-__UNSET__}}"
+  printf 'JUNIPER_CASCOR_BUILD_DATE=%s\\n' "${{JUNIPER_CASCOR_BUILD_DATE-__UNSET__}}"
+  printf 'JUNIPER_CANOPY_GIT_SHA=%s\\n' "${{JUNIPER_CANOPY_GIT_SHA-__UNSET__}}"
+  printf 'JUNIPER_CANOPY_BUILD_DATE=%s\\n' "${{JUNIPER_CANOPY_BUILD_DATE-__UNSET__}}"
 }} >"{env_log}.partial"
 mv -f "{env_log}.partial" "{env_log}"
 exit 0
@@ -563,6 +607,7 @@ exit 0
             CASCOR_PORT="{cascor_port}"
             CANOPY_PORT="{canopy_port}"
             CANOPY_ORIGIN="http://127.0.0.1:{canopy_port}"
+            CASCOR_WS_ALLOWED_ORIGINS="http://127.0.0.1:{canopy_port}"
             CANOPY_WS_ALLOWLIST="[\\"http://127.0.0.1:{canopy_port}\\",\\"http://localhost:{canopy_port}\\"]"
             CANOPY_SNAPSHOT_DIR="{snapshot_dir}"
             CASCOR_CONDA="{cascor_conda}"
@@ -648,6 +693,10 @@ class TestCascorUp(_CondaServiceUpHarness):
             # Empty LD_LIBRARY_PATH (not unset) — rust_mudgeon libtorch guard.
             self.assertIn("LD_LIBRARY_PATH=\n", env_text)
             self.assertIn("JUNIPER_DATA_URL=http://127.0.0.1:65101", env_text)
+            # 2026-09-08: the serving-commit stamp reaches the live process env. The staged
+            # src dir is not a git checkout, so the value is empty here; the KEY is the pin.
+            self.assertIn("JUNIPER_CASCOR_GIT_SHA=", env_text)
+            self.assertRegex(env_text, r"JUNIPER_CASCOR_BUILD_DATE=\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\n")
             self.assertIn(
                 "JUNIPER_CASCOR_WS_CONTROL_ALLOWED_ORIGINS=http://127.0.0.1:65051",
                 env_text,
@@ -746,6 +795,10 @@ class TestCanopyUp(_CondaServiceUpHarness):
             # W5 snapshot lifecycle is unreachable from the UI.
             self.assertIn("JUNIPER_CANOPY_SNAPSHOT_DIR=", env_text)
             self.assertRegex(env_text, r"JUNIPER_CANOPY_SNAPSHOT_DIR=\S*/cascor-snapshots\n")
+            # 2026-09-08: the serving-commit stamp reaches the live process env (empty here:
+            # the staged src dir is not a git checkout; the KEY is the pin).
+            self.assertIn("JUNIPER_CANOPY_GIT_SHA=", env_text)
+            self.assertRegex(env_text, r"JUNIPER_CANOPY_BUILD_DATE=\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\n")
 
             pid_path = run_dir / "juniper-canopy.pid"
             self.assertTrue(pid_path.is_file(), "canopy_up must write juniper-canopy.pid")
@@ -775,7 +828,12 @@ class TestCanopyUp(_CondaServiceUpHarness):
         cascor_body = _extract_isolated_fn("cascor_up")
         canopy_body = _extract_isolated_fn("canopy_up")
         self.assertIn("JUNIPER_CASCOR_WS_CONTROL_ALLOWED_ORIGINS=", cascor_body)
-        self.assertIn('JUNIPER_CASCOR_WS_CONTROL_ALLOWED_ORIGINS="${CANOPY_ORIGIN}"', cascor_body)
+        # 2026-09-08: the allowlist is the trio's origin PLUS any extra canopy origins
+        # (JUNIPER_E2E_CASCOR_WS_EXTRA_ORIGINS), composed at script level; the pair's
+        # co-location guard now pins that composed variable, and the composition itself
+        # is pinned to start from CANOPY_ORIGIN so the trio's own canopy can never drop out.
+        self.assertIn('JUNIPER_CASCOR_WS_CONTROL_ALLOWED_ORIGINS="${CASCOR_WS_ALLOWED_ORIGINS}"', cascor_body)
+        self.assertIn('CASCOR_WS_ALLOWED_ORIGINS="${CANOPY_ORIGIN}${JUNIPER_E2E_CASCOR_WS_EXTRA_ORIGINS:+,${JUNIPER_E2E_CASCOR_WS_EXTRA_ORIGINS}}"', SCRIPT_TEXT)
         self.assertIn("LD_LIBRARY_PATH=''", cascor_body)
         self.assertIn('echo "$!" >"${RUN_DIR}/juniper-cascor.pid"', cascor_body)
         self.assertIn("JUNIPER_CANOPY_DEMO_MODE=0", canopy_body)

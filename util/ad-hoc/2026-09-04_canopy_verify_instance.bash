@@ -27,6 +27,22 @@
 # in a run-dir `*.pid` is one of the reaper's two protection keys. Leave it in
 # place for the life of the instance.
 #
+# ...BUT THE KEY ONLY COUNTS INSIDE A PROTECTED ROOT. The reaper scans exactly two
+# roots for `*.pid` files -- `JUNIPER_EXP_RUN_ROOT` and `JUNIPER_E2E_RUN_DIR`
+# (default `${TMPDIR:-/tmp}/juniper-e2e`), `reap_pytest_orphans.bash:88-103`. This
+# script's original default, `/tmp/juniper-canopy-verify`, was in NEITHER, so the
+# pid file it wrote protected nothing and the note above was false for every leg
+# launched from 2026-09-04 to 2026-09-08. The run dir now defaults to the isolated
+# stack's own protected root; the verify leg's pid file lands beside the trio's.
+#
+# SERVING-COMMIT PROVENANCE. canopy's `/v1/health` reports `git_sha` /
+# `build_date` from `JUNIPER_CANOPY_GIT_SHA` / `JUNIPER_CANOPY_BUILD_DATE`
+# (`src/provenance.py`) -- stamped by the Dockerfile, and EMPTY for a source-run
+# leg. This script stamps them from the checkout it is launching, so a driver can
+# read the commit the leg is actually SERVING off the leg itself rather than off a
+# checkout that may have moved since launch ("a checkout is not a deployment").
+# Ledger still-owed item 7 (2026-09-07): no F-035 artifact carried a SHA.
+#
 # Usage:
 #   2026-09-04_canopy_verify_instance.bash up   <worktree-src-dir> [port]
 #   2026-09-04_canopy_verify_instance.bash down [port]
@@ -34,7 +50,7 @@
 set -euo pipefail
 
 ACTION="${1:-}"
-RUN_DIR="${CANOPY_VERIFY_RUN_DIR:-/tmp/juniper-canopy-verify}"
+RUN_DIR="${CANOPY_VERIFY_RUN_DIR:-${JUNIPER_E2E_RUN_DIR:-${TMPDIR:-/tmp}/juniper-e2e}}"
 
 case "$ACTION" in
 up)
@@ -60,7 +76,18 @@ up)
     export JUNIPER_CANOPY_SERVER__PORT="$PORT"
     export JUNIPER_CANOPY_CASCOR_SERVICE_URL="${JUNIPER_CANOPY_CASCOR_SERVICE_URL:-http://127.0.0.1:8202}"
     export JUNIPER_CANOPY_JUNIPER_DATA_URL="${JUNIPER_CANOPY_JUNIPER_DATA_URL:-http://127.0.0.1:8101}"
-    export JUNIPER_CANOPY_CASCOR_WS_ORIGIN="http://127.0.0.1:$PORT"
+    # THE ORIGIN CASCOR SEES. cascor's control WS admits only the origins in its
+    # own JUNIPER_CASCOR_WS_CONTROL_ALLOWED_ORIGINS, which the isolated stack sets
+    # to the :8051 canopy and nothing else. A verify leg that announces its OWN
+    # port here is rejected -- `control_security: origin 'http://127.0.0.1:8052'
+    # not in allowlist` -- and its control stream supervisor then retries forever,
+    # which is how every :8052 leg from 2026-09-04 to 2026-09-08 ran with that
+    # stream DOWN and nobody noticed (found 2026-09-08). Until the trio's cascor is
+    # launched with the verify port in its allowlist (isolated_stack.bash's
+    # JUNIPER_E2E_CASCOR_WS_EXTRA_ORIGINS, added the same day), present the
+    # origin cascor already admits. The browser-facing allowlist below stays the
+    # verify port -- that is the origin the page actually has.
+    export JUNIPER_CANOPY_CASCOR_WS_ORIGIN="${JUNIPER_CANOPY_CASCOR_WS_ORIGIN:-http://127.0.0.1:$PORT}"
     export JUNIPER_CANOPY_WEBSOCKET__ALLOWED_ORIGINS="[\"http://127.0.0.1:$PORT\",\"http://localhost:$PORT\"]"
     export JUNIPER_CANOPY_DEMO_MODE=0
     export JUNIPER_CANOPY_SNAPSHOT_DIR="${JUNIPER_CANOPY_SNAPSHOT_DIR:-/home/pcalnon/Development/python/Juniper/juniper-cascor/cascor-snapshots}"
@@ -69,11 +96,21 @@ up)
     export LIBTORCH=
     export LD_LIBRARY_PATH=
 
+    # Stamp the serving commit into the leg (see the header note). A src dir that
+    # is not inside a git checkout leaves the SHA empty rather than failing the
+    # launch -- `/v1/health` then reports `git_sha: null`, which is honest.
+    SHA="$(git -C "$SRC_DIR" rev-parse HEAD 2>/dev/null || true)"
+    export JUNIPER_CANOPY_GIT_SHA="${JUNIPER_CANOPY_GIT_SHA:-$SHA}"
+    export JUNIPER_CANOPY_BUILD_DATE="${JUNIPER_CANOPY_BUILD_DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
+    SHAFILE="$RUN_DIR/canopy-$PORT.sha"
+
     cd "$SRC_DIR"
     nohup /opt/miniforge3/envs/JuniperCanopy1/bin/python main.py >"$LOG" 2>&1 &
     echo $! >"$PIDFILE"
+    printf '%s\n' "${JUNIPER_CANOPY_GIT_SHA:-<none>}" >"$SHAFILE"
     echo "launched pid $(cat "$PIDFILE") on port $PORT"
     echo "  src : $SRC_DIR"
+    echo "  sha : ${JUNIPER_CANOPY_GIT_SHA:-<none>}  (also in $SHAFILE; served on /v1/health as git_sha)"
     echo "  log : $LOG"
     echo "  pid : $PIDFILE"
 

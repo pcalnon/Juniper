@@ -1,0 +1,73 @@
+{
+  "topostate": {
+    "wake": {
+      "already": false,
+      "woke": true,
+      "elapsed_s": 12.8,
+      "attempts": 1
+    },
+    "M-TOPOLOGY-18": {
+      "verdict": "PASS",
+      "empty_in_node_graph": true,
+      "populated_in_weight_matrix": true,
+      "fill_seconds": 6.0,
+      "store_keys_after": [
+        "hidden_units",
+        "input_size",
+        "output_bias",
+        "output_size",
+        "output_weights"
+      ]
+    },
+    "M-TOPOLOGY-13": {
+      "verdict": "PASS",
+      "plotly_relayout_events": 2,
+      "gesture": {
+        "ok": true,
+        "from": [
+          787.5999999999999,
+          451.59375
+        ],
+        "to": [
+          1212.4,
+          667.59375
+        ]
+      },
+      "before": {
+        "x": [
+          -0.7047700902449506,
+          10.704770090244951
+        ],
+        "y": [
+          -35.01247288503254,
+          33.51247288503254
+        ],
+        "dragmode": "zoom"
+      },
+      "after_zoom": {
+        "x": [
+          -5.270734851740439,
+          6.138805328749463
+        ],
+        "y": [
+          -7.602494577006507,
+          60.92245119305856
+        ],
+        "dragmode": "pan"
+      },
+      "after_rebuild": {
+        "x": [
+          -5.270734851740439,
+          6.138805328749463
+        ],
+        "y": [
+          -7.602494577006507,
+          60.92245119305856
+        ],
+        "dragmode": "zoom"
+      },
+      "range_changed": true,
+      "persisted_across_rebuild": true
+    }
+  }
+}

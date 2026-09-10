@@ -1,0 +1,26 @@
+[t=     75ms] serving: {"ok": true, "canopy": "http://127.0.0.1:8052", "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded", "build_date": "2026-09-08T12:12:17Z", "version": "0.6.0", "read_at": "2026-09-08T23:59:56Z"}
+[t=    509ms] navigating to http://127.0.0.1:8052
+[t=    511ms]   serving: {"ok": true, "canopy": "http://127.0.0.1:8052", "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded", "build_date": "2026-09-08T12:12:17Z", "version": "0.6.0", "read_at": "2026-09-08T23:59:57Z"}
+[t=  13350ms]   welcome modal dismissed
+[t=  49934ms]   initial: {"metrics_store_len": 0, "replay_state": {"mode": "stopped", "speed": 1, "current_index": 0, "start_index": 0, "end_index": null}, "position": "0 / 0", "play_text": "\u25b6", "interval_disabled": true, "interval_ms": 1000, "slider_value": 0, "controls": {"present": true, "display": "block", "h": 95}}
+[t=  55675ms]   screenshot: /tmp/juniper-e2e/shots/replay/REPLAY__initial.png
+[t=  80060ms]   M-METRICS-13 play: clicked=True play='▶'->'▶' pos='0 / 0'->'0 / 0' disabled=True->True interval=1000->1000 mode=stopped->stopped idx=0 reqs=40/2
+[t= 105591ms]   M-METRICS-13 pause: clicked=True play='▶'->'▶' pos='0 / 0'->'0 / 0' disabled=True->True interval=1000->1000 mode=stopped->stopped idx=0 reqs=49/2
+[t= 128294ms]   M-METRICS-16 2x: clicked=True play='▶'->'▶' pos='0 / 0'->'0 / 0' disabled=True->True interval=1000->1000 mode=stopped->stopped idx=0 reqs=51/3
+[t= 152899ms]   M-METRICS-16 4x: clicked=True play='▶'->'▶' pos='0 / 0'->'0 / 0' disabled=True->True interval=1000->1000 mode=stopped->stopped idx=0 reqs=43/2
+[t= 175720ms]   M-METRICS-16 1x: clicked=True play='▶'->'▶' pos='0 / 0'->'0 / 0' disabled=True->True interval=1000->1000 mode=stopped->stopped idx=0 reqs=48/3
+[t= 195791ms]   M-METRICS-14 step-forward: clicked=True play='▶'->'▶' pos='0 / 0'->'0 / 0' disabled=True->True interval=1000->1000 mode=stopped->stopped idx=0 reqs=40/2
+[t= 221551ms]   M-METRICS-12 step-back: clicked=True play='▶'->'▶' pos='0 / 0'->'0 / 0' disabled=True->True interval=1000->1000 mode=stopped->stopped idx=0 reqs=51/3
+[t= 246564ms]   M-METRICS-15 end: clicked=True play='▶'->'▶' pos='0 / 0'->'0 / 0' disabled=True->True interval=1000->1000 mode=stopped->stopped idx=0 reqs=46/2
+[t= 272801ms]   M-METRICS-11 start: clicked=True play='▶'->'▶' pos='0 / 0'->'0 / 0' disabled=True->True interval=1000->1000 mode=stopped->stopped idx=0 reqs=54/3
+[t= 301444ms]   M-METRICS-18 slider: handle focused=True value=0->10 pos='0 / 0'->'0 / 0' reqs naming replay=2
+[t= 307189ms]   screenshot: /tmp/juniper-e2e/shots/replay/REPLAY__after_drive.png
+[t= 317895ms] 
+[t= 317895ms]   => M-METRICS-13: FAIL
+[t= 317895ms]   => M-METRICS-16: FAIL
+[t= 317895ms]   => M-METRICS-14: FAIL (the click produced no replay-state write)
+[t= 317895ms]   => M-METRICS-12: FAIL (the click produced no replay-state write)
+[t= 317895ms]   => M-METRICS-15: FAIL (the click produced no replay-state write)
+[t= 317895ms]   => M-METRICS-11: FAIL (the click produced no replay-state write)
+[t= 317895ms]   => M-METRICS-18: BLOCKED-BY-F-035 (metrics store len 0 -> max_index 0; every index transition clamps to 0 by metrics_panel.py:1013/1060/1088)
+[t= 317896ms] results -> /tmp/juniper-e2e/replay_block.json
