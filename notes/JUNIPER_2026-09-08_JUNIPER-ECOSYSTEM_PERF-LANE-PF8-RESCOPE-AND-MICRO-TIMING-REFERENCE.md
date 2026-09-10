@@ -119,6 +119,17 @@ immaterial to what is measured, but unexamined. And start-time alignment is plau
 executor submits both cells back-to-back; the only serialisation point is the port lock's `mkdir`)
 and unmeasured until a pair actually runs.
 
+> **Measured 2026-09-10 — both steps ran.** Step 1: one PF-1-shape run is **4.52**
+> worker-equivalents under the default budget (bimodal: ~30% of the window at ~11 in the
+> listener, which is NumPy's OpenBLAS pool at full width, not torch) and **2.15** under the
+> pinned budget. Step 2, run because 4.52 is inside the band: three aligned parallel pairs against
+> six sequential controls, same budget, all twelve cells at 1770 — **+11.3% per step**, inside the
+> 20.5% band, outside the day's within-arm spread. The two unmeasured items above are now
+> measured: start offsets were 0.003–0.068 s with ≥ 89% of the drive windows shared, and each
+> parallel cell's own juniper-data instance stayed idle during training (its `data` column reads
+> ~0.01 worker-equivalents).
+> [`JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md`](JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md).
+
 Instrument: **mean step duration** (`step_sum / step_count`) from the resolving instrument, never
 `timings.drive` (poll-quantized; §1 of the sweep note). Design controls from §8.1 of the sweep
 note carry over unchanged: quiet cells bracket the arms, and **n ≥ 3 per arm** — a 20.5% quiet
