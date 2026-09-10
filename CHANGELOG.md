@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Perf lane — the initial output pass's ~11-core burst is libgomp under torch, not NumPy's
+  OpenBLAS, and cascor's parent thread pin binds only the thread that ran the constructor**
+  (`notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-BURST-LIBRARY-ATTRIBUTION.md`). The
+  discriminating test left open by §4.2 of
+  `notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md` was run, and it
+  **refutes that section's leading candidate**. Pinning `OPENBLAS_NUM_THREADS=2` alone leaves the
+  burst intact (16 threads, 13.7 cores) while the OpenBLAS pool demonstrably shrinks (alive threads
+  43 → 29); pinning `OMP_NUM_THREADS=2` alone removes it entirely (2 threads, 2.0 cores); and
+  `libopenblas` appears in **0.0%** of 614 native-profile samples against `libgomp`'s 47.6% and
+  `torch::autograd::Engine`'s 44.0%. All three listener arms ran the identical complete 4000-epoch
+  pass, so this is not a vacuous comparison. Root cause: cascor pins the parent with
+  `torch.set_num_threads(2)` in the network **constructor**
+  (`juniper-cascor/src/cascade_correlation/cascade_correlation.py:617` → `:1179-1180`), while the
+  service constructs in `_create_network_locked` (`api/lifecycle/manager.py:1538`) on the request
+  thread and trains in `_run_training` (`:2476`) on the `cascor-train` executor (`:2431`) — so the
+  thread doing the work keeps OpenMP's default width of 16. In one process, unchanged otherwise,
+  moving the pass off the constructor's thread takes it from 1.53 cores / 2 threads to 9.45 / 16,
+  and constructing on that same worker thread restores 1.48 / 2. `torch.get_num_threads()` reads 2
+  throughout — it reports the library global, not the width in force on the working thread.
+  Consequence: exporting `JUNIPER_CASCOR_BLAS_THREADS` from `runtime.blas_threads` would **mask**
+  this defect rather than repair it, so "implement the `runtime:` block" is not the whole fix; the
+  narrower repair is a cascor change and remains an owner decision. Two residuals are named rather
+  than papered over: what ends the burst after the initial pass (measured in both the listener and
+  one process — 16 `_retrain_output_layer` calls produce exactly one ≥10-thread block — and *not*
+  explained by the mechanism above, which predicted the opposite), and the exact PyTorch path that
+  re-widens off the constructor thread while a plain matmul does not. New under `util/ad-hoc/`:
+  `2026-09-10_first_pass_library_attribution.py`, `2026-09-10_listener_thread_census.py`,
+  `2026-09-10_listener_burst_probe.bash`, `2026-09-10_pyspy_stack_attribute.py`; new
+  `tests/test_pf8_burst_attribution.py` (14 tests) wired into `.github/workflows/ci.yml`, the
+  `AGENTS.md` test list and `docs/REFERENCE.md`. Also corrects a reading carried by the occupancy
+  note through six consensus rounds: its "four hundred `train_output_layer … Epoch N` lines" are
+  400 INFO lines at `epoch_display_frequency` = 10, i.e. **4000 epochs**, matching the cell's
+  `output_epochs: 4000` — the pass has no early exit.
 - **Perf lane — PF-8 located and its pair run; the experiment YAML's `runtime:` block binds nothing**
   (`notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md`). Step 1 of §1.3
   of `notes/JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md`
@@ -26,7 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and read by nothing on either path — an owner decision (implement or retire), not a fix — and
   **PF-3's `runtime.num_processes` matrix axis is therefore inert** (P2 item 2.2 blocked). Which
   library carries the burst is narrowed (NumPy's OpenBLAS pool the leading candidate), not
-  identified. Micro timing reference `0003` re-cut at 1-minute load 5.3 → 7.1 (the prior cuts were
+  identified. *(Superseded the same day by the entry above: it is libgomp under `libtorch_cpu`,
+  and OpenBLAS carries none of it.)* Micro timing reference `0003` re-cut at 1-minute load 5.3 → 7.1 (the prior cuts were
   at 9–10); the micro tier does not see that difference (median ratio 0.99). New under
   `util/ad-hoc/`: `2026-09-10_pf8_occupancy_sampler.py` (per-role `/proc` deltas at 1 s),
   `2026-09-10_pf8_occupancy_analyse.py` (drive-window reduction, sweep-curve readout, two-arm
