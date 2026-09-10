@@ -15,9 +15,10 @@
 # The headroom sweep (§8.4 of the 2026-09-02 instrument-resolution note) located the contention
 # knee between 6 and 8 SYNTHETIC workers, not in cores, because ambient occupancy was neither
 # zero nor constant. PF-8's remaining question is where ONE Juniper run sits on that axis: if it
-# occupies W worker-equivalents, a second concurrent run is a load of W workers on the first, and
-# its cost can be read off the sweep curve -- unless W lands in the ~4-8 band around the knee,
-# where only a two-arm measurement can answer. Nothing in the driver records occupancy, so this
+# occupies W cores -- read as W sweep workers only by an assumption §8.4 of that note disclaims --
+# a second concurrent run is a load of W workers on the first, and its cost can be read off the
+# sweep curve -- unless W lands in the ~4-8 band around the knee, where only a two-arm
+# measurement can answer. Nothing in the driver records occupancy, so this
 # suite is the PF-1 cell shape (the workload the sweep and the baseline both use) run with the
 # sampler alongside.
 #

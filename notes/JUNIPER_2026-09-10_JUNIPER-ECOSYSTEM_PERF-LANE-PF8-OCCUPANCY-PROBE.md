@@ -122,8 +122,8 @@ reading crosses 6.
 **What it loses.** A pid that exits inside an interval takes its last partial second with it. The
 `vanished` column counts those: 3–5 per cell across the day (3 in each default cell), all at the
 release of the candidate pool at the end of `fit()` — at or just after the last active sample,
-*inside* the analyser's window by 3–4 s in the default cells and by 0–5 s across the day (in five
-cells on the window's final sample) — so the lost tails belong to idle or nearly idle workers and
+*inside* the analyser's window by 3–4 s in the default cells and by 0–5 s across the day (in four
+of the fifteen cells on the window's final sample) — so the lost tails belong to idle or nearly idle workers and
 are bounded at under five cpu-seconds per run.
 
 The workload is PF-1's cell shape exactly — `spiral-smoke.yaml` at `(10, 10)` / 4000 / 4000
@@ -187,11 +187,12 @@ Three things, each with its own weight:
    step, `drive` 35 s against 55 — and the gap is one phase.** The initial output pass runs at
    11–14 ms per step pinned against 92–130 unpinned, about **8×**, and those 160 steps — 9% of
    1770 — carry 82–83% of the step-sum difference. Over the other 1610 steps the arms differ by
-   **+9 to +10%** (default slower): splitting each cell's per-poll cumulative series at step 160
-   with within-poll interpolation, the three default cells against this suite's three pinned
-   cells give +9.7%, against all six pinned controls +9.3%, and a split at the poll boundary
-   where `current_hidden_units` first exceeds 0 gives +10.4% — every version inside both the 20.5%
-   quiet band and the 13% between-run drift (§9, rounds 2 and 3). Same day, same workload, n = 3
+   **+9.3 to +10.4%** (default slower), depending on the split: at step 160 of each cell's
+   per-poll cumulative series with within-poll interpolation, the three default cells against
+   this suite's three pinned cells give +9.7% and against all six pinned controls +9.3%; at the
+   last poll before `current_hidden_units` first exceeds 0, the three default cells against all
+   six pinned controls give +10.4% — every version inside both the 20.5% quiet band and the 13%
+   between-run drift (§9, rounds 2–4). Same day, same workload, n = 3
    against 3, the direction the same in every cell. Report-only, as all speed is (decision 2 of §7
    of the sweep note). What it says about the lane's historical figures is narrower than "34%
    inflated": every service-path run's *initial pass* was oversubscribed about eightfold, and its
@@ -471,7 +472,7 @@ cascor stack on `:8202`. Ambient, not idle — the sweep's own standard (§8.2 o
 - **`0003` is ambient, not quiet.** A cut at a 1-minute load under 3 has still never been taken on
   this host, and `0003` does not supersede under the cascor procedure's quiet-host rule.
 - **The 34% pinned-vs-default difference is a between-suite comparison** taken forty minutes apart
-  under similar ambient, not interleaved cell-by-cell; and it is 83% one phase (§2.3).
+  under similar ambient, not interleaved cell-by-cell; and it is 82–83% one phase (§2.3).
 - **§1.3's ≥ 60 s cell length was not met** (35–45 s); the bridge was off, so the reason for it did
   not apply, but it is a departure from the design and is recorded as one.
 
@@ -530,8 +531,9 @@ claims, to hunt any consumer of the `runtime:` block, and to check amputation ag
 re-scope note and the 2026-09-09 handoff). Both ran against the tree frozen at `84143b1e`; the
 document was edited only after both had reported. Round 2, briefed on the corrections only, ran
 against the corrected tree at `e38caf06`; round 3, briefed on rows 18–27, against `a97fb91f`;
-round 4, briefed on what round 3 found, against the tree after those fixes. Each round's record
-below is written after that round reports.
+round 4, briefed on rows 28–35, against `526d0842`; round 5, briefed on what round 4 found,
+against the tree after those fixes. Each round's record below is written after that round
+reports.
 
 Verdicts, round 1: **A — PASS WITH FINDINGS** (48 claims, 45 exact matches, three corrections);
 **B — NOT SAFE AS WRITTEN, SAFE WITH FIXES** (claim 1 SURVIVES and is understated; claim 2
@@ -568,7 +570,7 @@ and found `eval_metrics_enabled` inert too; the `26 tests, OK` reproduction.
 
 **Round 2 — PASS WITH FINDINGS.** All 17 corrections present in the body and re-derived exactly
 (the contiguous block at indices 0/1–14/16 with `n_workers` 0 and `current_hidden_units` 0; 82–83%
-and +9 to +10%; +8.45 / +12.74 / +12.58% and p = 1/84; 4.0–5.7; 2.710; 4.9; twelve source-line
+and +9.3 to +10.4%; +8.45 / +12.74 / +12.58% and p = 1/84; 4.0–5.7; 2.710; 4.9; twelve source-line
 citations; the CHANGELOG's changed-file list against three commits). Ten defects the fix pass
 introduced or left, all fixed before round 3:
 
@@ -602,9 +604,22 @@ items the round-2 fix pass introduced or left, all fixed before round 4:
 | 34 | the `runtime` line census omitted `:171` and `:174` | fixed, §4.1 |
 | 35 | observations: the vanished margin's scope (default cells vs the day); §2.3's 3.3 vs §0's 3.5; "4.8" for two different quantities in §3.4 | fixed, §2.1, §2.3, §3.4 |
 
-**Round 4** (on rows 28–35 only): ROUND4_RESULT
+**Round 4 — PASS WITH FINDINGS** (on rows 28–35 only, against `526d0842`). Every one of the
+eight re-derived (the split variants at +9.67 / +9.29 / +10.42%; the leave-one-out values to four
+decimals; 400 epoch lines and 2, 3, 1, 2, 2, 2, 2, 2, 2, 2 s; the seven `runtime` lines; 22
+tables with no column mismatch). Five items, all fixed before round 5:
 
-**Termination.** Rounds continue until one changes no number, disposition or action; rounds 1–3
+| # | finding | disposition |
+|---|---|---|
+| 36 | "five cells on the window's final sample" — the artifact gives four (of fifteen) | fixed, §2.1 |
+| 37 | the "+9 to +10%" band excluded its own +10.4% variant | fixed — "+9.3 to +10.4%" on every surface |
+| 38 | the poll-boundary variant named neither its control set nor its side of the transition | fixed, §2.3 |
+| 39 | §7 still said "83% one phase" beside §2.3's 82–83% | fixed |
+| 40 | prose outside the two scripts still said "worker-equivalents" for what the reducer computes (the test's docstring, the probe suite's header) | fixed |
+
+**Round 5** (on rows 36–40 only): ROUND5_RESULT
+
+**Termination.** Rounds continue until one changes no number, disposition or action; rounds 1–4
 each did. **Residual uncertainty, stated plainly**: the burst's library is a leading candidate, not an identification;
 the pair's cost is three pairs on one day, and its between-pair spread is not independent of
 ambient; the sweep-axis reading of any occupancy figure rests on an assumption the sweep did not

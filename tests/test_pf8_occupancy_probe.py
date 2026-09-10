@@ -12,7 +12,8 @@ and ``util/ad-hoc/2026-09-10_pf8_occupancy_analyse.py`` (perf lane P2 item 4.1 r
 
 ``util/ad-hoc`` sits outside every pre-commit Python hook, and the probe's output is the number
 that decides whether a two-arm PF-8 pair is worth an owner's host time, so the arithmetic that
-turns ``/proc`` jiffies into "worker-equivalents" is pinned here rather than trusted.
+turns ``/proc`` jiffies into cores (read as sweep workers only by a stated assumption) is pinned
+here rather than trusted.
 
 What it pins
 ------------
@@ -26,9 +27,9 @@ What it pins
    seen with a ``starttime`` before the previous tick is a baseline (0), not a windfall of its
    whole history; a pid that exited is COUNTED as vanished, never invented.
 4. **``/proc/stat`` busy excludes iowait**, and busy cores scale by nproc.
-5. **The readout thresholds are the sweep's, with both edges pinned** — 3.99 and 8.01 worker-
-   equivalents both say "pair NOT worth running", 4.0 and 8.0 both say "worth running"; the
-   band names and the sweep percentages are the ones §8.4 published.
+5. **The readout thresholds are the sweep's, with both edges pinned** — 3.99 and 8.01 (on the
+   sweep's worker axis) both say "pair NOT worth running", 4.0 and 8.0 both say "worth running";
+   the band names and the sweep percentages are the ones §8.4 published.
 6. **The drive window keeps only rows whose interval midpoint is inside it**, and occupancy is
    Σcpu / Σwall — not a mean of per-second ratios, which would weight a short final tick like a
    full one.
