@@ -42,8 +42,10 @@ Item numbers refer to
 ## 1. Result in one table
 
 Every row is one process, the same 4000-epoch initial output pass over the same 320×2 spiral,
-BLAS variables **unset** unless stated. "threads" is the count burning above 0.30 cores in an
-interval, from `/proc/<pid>/task/<tid>/stat`.
+BLAS variables **unset** unless stated. "threads" is the count burning above 0.30 cores in a
+single 0.2–0.5 s interval, from `/proc/<pid>/task/<tid>/stat` — except the `unpinned4000.json`
+row, which predates the per-interval series and reports threads burning above 0.05 cores across
+the whole window; both readings give 2 there.
 
 | arrangement | cores | threads | ms/epoch | evidence |
 |---|---|---|---|---|
@@ -113,9 +115,10 @@ juniper-data**: the route materialises the in-process `spiral` generator
 | `openblas-only` | `OPENBLAS_NUM_THREADS=2` | 13.671 | 16 | 29 |
 | `omp-only` | `OMP_NUM_THREADS=2` | 1.995 | 2 | 16 |
 
-The `openblas-only` arm is the load-bearing one. Alive threads fall 43 → 29, a drop of 14 — the
-OpenBLAS pool **did** shrink from 16 to 2 — and the burst is **unchanged at 16 threads and 13.7
-cores**. The pool that shrank is not the pool that was burning.
+The `openblas-only` arm is the load-bearing one. Alive threads fall by **14** — 43 → 29 at each
+arm's peak interval, 44 → 30 at each window's maximum, the same drop either way — so the OpenBLAS
+pool **did** shrink from 16 to 2, and the burst is **unchanged at 16 threads and 13.7 cores**. The
+pool that shrank is not the pool that was burning.
 
 **This is not a vacuous pass.** All three arms ran the identical, complete initial pass: 4400
 `train_output_layer … Epoch` lines each, which is 4000 DEBUG lines (one per epoch) plus 400 INFO
