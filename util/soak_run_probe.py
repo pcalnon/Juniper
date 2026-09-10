@@ -346,8 +346,17 @@ SIBLING_REPO_SEGMENTS = (
     "juniper-recurrence/", "juniper-legacy/",
 )
 # Every checkout of juniper-ml -- worktrees included -- is the SAME document.
-_ML_ROOT_SEGMENTS = ("juniper-ml/", "juniper-ml--", "/juniper-ml")
+# BOTH ENTRIES END AT A SEGMENT BOUNDARY, and that is load-bearing: an earlier
+# version carried a bare "/juniper-ml", which is a PREFIX, so it matched
+# `/juniper-mlx/` and `/juniper-ml-scratch/` and claimed a third repo's file as
+# ours. Never test a repo name without its terminator.
+_ML_ROOT_SEGMENTS = ("juniper-ml/", "juniper-ml--")
 _CD_RE = re.compile(r"cd\s+(/[\w./-]+)")
+# Characters that can appear in a path token. Used to walk back from a match to
+# the START of the path it sits in -- a fixed-width text window is not a path,
+# and treating it as one lets a grep PATTERN that merely mentions our path
+# score as a read of it.
+_PATH_CHARS = re.compile(r"[\w./~-]")
 
 
 def _own_repo_occurrence(tool_inputs: list, doc: str) -> bool:
@@ -357,9 +366,14 @@ def _own_repo_occurrence(tool_inputs: list, doc: str) -> bool:
     notes/JUNIPER_2026-09-08_JUNIPER-ML_SOAK-RETRIEVAL-STANDARD-EVIDENCE-RECOVERY.md):
     all three P24 runs ran `cd .../juniper-deploy && grep -rn 3001 .` and matched
     `docs/REFERENCE.md` in juniper-deploy, whose own copy documents the same
-    Grafana port. The fact under test lives in juniper-ml's copy at :201, so the
-    pointer was never followed -- but a substring test cannot tell the two apart
-    and scored all three as follows.
+    Grafana port. A bare substring test cannot tell the two files apart.
+
+    BUT THE DECISION IS PER OCCURRENCE, NOT PER COMMAND. Two of those three runs
+    ALSO read juniper-ml's own copy -- one with an explicit
+    `sed -n '145,175p' juniper-ml/docs/REFERENCE.md` -- so they ARE follows. A
+    first version of this guard discarded the whole tool input on a foreign `cd`
+    and threw those reads away, which is a false-negative generator on the
+    scoring path. Decide from the path token each match sits in.
 
     Deliberately narrow. This removes hits on a DIFFERENT document; it does not
     touch the over-inclusiveness pinned by
@@ -377,21 +391,34 @@ def _own_repo_occurrence(tool_inputs: list, doc: str) -> bool:
     """
     for raw in tool_inputs:
         text = raw if isinstance(raw, str) else json.dumps(raw)
-        # `cd /…/juniper-deploy && grep …` makes every relative path in this
-        # command a sibling's. Note the cd target carries no trailing slash,
-        # which is why the path-segment test alone missed the real P24 shape.
+        # `cd /…/juniper-deploy && grep …` makes every UNQUALIFIED relative path
+        # in this command a sibling's. The cd target carries no trailing slash,
+        # which is why a path-segment test alone missed the real P24 shape.
         cd = _CD_RE.search(text)
-        if cd and not any(r in cd.group(1) + "/" for r in _ML_ROOT_SEGMENTS):
-            continue
+        foreign_cwd = bool(cd) and not any(
+            r in cd.group(1) + "/" for r in _ML_ROOT_SEGMENTS
+        )
         start = 0
         while True:
             idx = text.find(doc, start)
             if idx < 0:
                 break
             start = idx + len(doc)
-            prefix = text[max(0, idx - 60):idx]
-            if not any(seg in prefix for seg in SIBLING_REPO_SEGMENTS):
-                return True
+            # Walk back to the beginning of the PATH TOKEN this match sits in.
+            # Whichever repo segment appears inside that token decides, so
+            # precedence is by proximity to the match rather than by the order
+            # the segment lists happen to be tested in.
+            head = idx
+            while head > 0 and _PATH_CHARS.match(text[head - 1]):
+                head -= 1
+            token = text[head:idx]
+            if any(seg in token for seg in SIBLING_REPO_SEGMENTS):
+                continue                      # explicitly a sibling's copy
+            if any(seg in token for seg in _ML_ROOT_SEGMENTS):
+                return True                   # explicitly OURS, whatever the cwd
+            if not foreign_cwd:
+                return True                   # unqualified, and cwd is ours
+            # Unqualified under a foreign cwd -> a sibling's. Keep looking.
     return False
 
 
