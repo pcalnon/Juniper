@@ -1001,7 +1001,7 @@ For a relocation decision the pooled rate is a **mixture**. Characterisation run
 
 - Heterogeneity test (15 probes, 40 seeded runs, 26 follows, 20,000 draws): statistic 30.84, **p = 0.0017**. The probes do not share one rate. Use the stratum, not the pooled rate, for a specific section.
   **The `0.0017` is labelled with the wrong test.** §6 of [`notes/JUNIPER_2026-09-04_JUNIPER-ML_SOAK-HANDOFF-CONSENSUS-VALIDATION.md`](../notes/JUNIPER_2026-09-04_JUNIPER-ML_SOAK-HANDOFF-CONSENSUS-VALIDATION.md) records that it came from a **parametric bootstrap** — resampling from `Binomial(n, pooled)` — not the label shuffle "permutation test" names. The conclusion survives and a true shuffle is far more extreme; the figure is kept here only because it is what the design conversation reports.
-- **Per-probe membership is mostly unresolved at n=2–4.** P23 left the "never-follow" group on its third run (0/2 → follow → 1/3). Do not treat "P14 never follows" as a property from 0/3 — `wilson(0,3)` is `[0.000, 0.561]`. **Two probes are the exception**: `P15` and `P19` are 0/4, upper bound `0.490`, which does exclude 50%. (Corrected 2026-09-09; this line previously said no probe's interval excludes 50%, and that was false for both.) **Three** probes exclude the pooled 0.605 — `P14` (0/3, upper 0.561) as well as `P15` and `P19`. The old sentence asserted no probe excluded 50% *or the pooled rate*; both halves were false.
+- **Per-probe membership is not resolved at n=2–4.** P23 left the "never-follow" group on its third run (0/2 → follow → 1/3). No probe's 95% CI excludes 50% or the pooled rate. Do not treat "P14 never follows" as a property from 0/3.
 
 `analyse()` has **no era filter**. Ledger §15.4 says not to pool post-intervention runs with the pre-`2026-08-31` ones. Split on this tree with the ledger's own `wilson()` after `analyse()`'s invalidate/rescore/`in_scope` filters:
 
@@ -1013,9 +1013,7 @@ For a relocation decision the pooled rate is a **mixture**. Characterisation run
 
 **Neither corpus is a clean read, and the post-only slice is not the safe alternative it looks like.** §15.4 of the ledger forbids pooling across the intervention boundary *and* says "the four probes are the only ones this intervention touches" — but 4 of the 8 post-intervention runs are on probes rung 1 never touched (P02, P06, P15, P19 are treated; P14, P21×2, P23 are not). Wiring the stopper to the post-only corpus is **not** a plumbing fix: `IN-PROGRESS` there is purely the `runs < TARGET_PROBE_RUNS` n-gate firing before any test, and keying on it would stop the spend control refusing — ~27 further billed runs with no `--force`. That choice is an owner decision.
 
-Per-probe (effective outcome after rescores; Wilson on follows/n): `P14` 0/3 → [0.000, 0.561]; `P15` / `P19` 0/4 → [0.000, 0.490]; `P21` 1/4 → [0.046, 0.699]; `P23` 1/3 → [0.061, 0.792]; `P02` 3/4 → [0.301, 0.954].
-
-**`P15` and `P19` DO exclude 50%** — 0/4 gives an upper bound of `0.490`. It takes n≥4 with zero follows: `wilson(0,3)` is `[0.000, 0.561]`, which does not. Every other probe's interval spans 0.5, so per-probe membership is unresolved *for the rest*; the blanket "none excludes 50%" that stood here until 2026-09-09 was false for two probes and is withdrawn.
+Per-probe (effective outcome after rescores; Wilson on follows/n): `P14` 0/3 → [0.000, 0.562]; `P15` / `P19` 0/4 → [0.000, 0.490]; `P21` 1/4 → [0.046, 0.699]; `P23` 1/3 → [0.061, 0.792]; `P02` 3/4 → [0.301, 0.954]. **None excludes 50%.**
 
 **Do not drive the ambiguous probes to n≈8–10.** Design-conversation §9.4 recommended that band; it cannot resolve stratum membership at the observed 1/3 rate. Re-derived with this repo's `wilson()`: 3/8 [0.137, 0.694], 3/10 [0.108, 0.603], 9/26 [0.194, 0.538] — none excludes 50%. First exclude is **10/31** [0.186, 0.499]. `--probe-id` still picks a named probe if an owner later authorises one; the default / timer path will not.
 
@@ -1043,12 +1041,12 @@ Verified against `origin/main` 2026-09-09 (`python3 util/soak_ledger.py status` 
 
 **Tool inputs only — `+ answer` was removed by juniper-ml#1644.** Reciting the path in the answer no longer scores as a pointer hit. This section documented the defect as live for two days after the fix; the code is `_own_repo_occurrence(parsed["tool_inputs"], doc)`, and model prose is not consulted at all. That is the point of the instrument: an agent that names the file without reading it is the strongest example of *not* following the pointer.
 
-**A sibling repo's `docs/REFERENCE.md` is no longer a hit** (juniper-ml#1855). 7 of the 8 sibling repos ship a file at that path, so the old bare substring test credited a *different document*: all three P24 runs ran `cd …/juniper-deploy && grep -rn 3001 .` and matched juniper-deploy's copy, while P24's fact — *"Grafana defaults to `3001`, not `3000`, deliberately"* — is in **this** file, under [Ecosystem Compatibility](#ecosystem-compatibility). **Two of those three also read this file** (one by an explicit `sed` on `juniper-ml/docs/REFERENCE.md`), so a sibling hit does not by itself mean the pointer was not followed — the check must decide per occurrence, from the path token, not per command. Both the `cd` target and the path segment before the match are now checked, per tool input. A juniper-ml **worktree** path still counts — same document.
+**A sibling repo's `docs/REFERENCE.md` is no longer a hit** (juniper-ml#1855). 7 of the 8 sibling repos ship a file at that path, so the old bare substring test credited a *different document*: all three P24 runs ran `cd …/juniper-deploy && grep -rn 3001 .` and matched juniper-deploy's copy, while P24's fact — *"Grafana defaults to `3001`, not `3000`, deliberately"* — is in **this** file, under [Ecosystem Compatibility](#ecosystem-compatibility). Both the `cd` target and the path segment before the match are now checked, per tool input. A juniper-ml **worktree** path still counts — same document.
 
 Two known limits remain, both open:
 
 - **Half of what §4 calls a FOLLOW is invisible.** §4 of the ledger defines it as "opened the destination, **grepped it**, or otherwise read it", and scores from the session's tool log — inputs *and* results. `grep -rn tool_result` across the three soak scripts returns **0**, so a directory-scoped grep that returns this document's content without naming it is protocol-conformant retrieval scored as a non-follow.
-- **A filename-only result is not reading it.** A `grep -rln` returns the path with no content. Whether that counts is the retrieval-standard question, unratified — see [`notes/JUNIPER_2026-09-08_JUNIPER-ML_SOAK-RETRIEVAL-STANDARD-EVIDENCE-RECOVERY.md`](../notes/JUNIPER_2026-09-08_JUNIPER-ML_SOAK-RETRIEVAL-STANDARD-EVIDENCE-RECOVERY.md), which re-audits all 43 rows by mechanism and puts the rate at **24/43 = 55.8%** [0.411, 0.696] against the recorded 60.5%.
+- **A filename-only result is not reading it.** A `grep -rln` returns the path with no content. Whether that counts is the retrieval-standard question, unratified — see [`notes/JUNIPER_2026-09-08_JUNIPER-ML_SOAK-RETRIEVAL-STANDARD-EVIDENCE-RECOVERY.md`](../notes/JUNIPER_2026-09-08_JUNIPER-ML_SOAK-RETRIEVAL-STANDARD-EVIDENCE-RECOVERY.md), which re-audits all 43 rows by mechanism and puts the rate at **22/43 = 51.2%** [0.368, 0.654] against the recorded 60.5%.
 
 P06's task contains `--dest docs/REFERENCE.md`, so the path appears whether or not the doc was read — that over-inclusiveness is deliberately pinned, not fixed. The channel only `suggests`; a human supplies `--outcome`.
 
@@ -1061,16 +1059,6 @@ Keep `stream.jsonl` if parse crashes: some events carry `message` as a bare stri
 Pidfile must be under `$JUNIPER_EXP_RUN_ROOT/soak-probes/` (`JUNIPER_EXP_RUN_ROOT` default `~/.local/state/juniper-experiments`). `collect_protected_pids` walks only that root and `$JUNIPER_E2E_RUN_DIR`. A pidfile under `reports/soak/runs/` grants nothing.
 
 User units in `util/systemd/`, **not system units**: the probe must see `~/.claude/projects/.../memory/MEMORY.md`, and a system unit runs as root with a different `HOME` and measures nothing (the same class that ruled out cloud routines).
-
-```bash
-mkdir -p ~/.config/systemd/user
-cp util/systemd/juniper-soak-probe.* ~/.config/systemd/user/
-systemctl --user daemon-reload
-systemctl --user enable --now juniper-soak-probe.timer   # or the .path unit
-systemctl --user start juniper-soak-probe                # one-off; no [Install] on the service
-```
-
-Enable the **timer** or **path** unit, not the service. An `[Install]` block on the service is deliberately absent: enabling it would fire an extra uncoordinated probe at every login.
 
 - `ExecStart=/usr/bin/python3 util/soak_run_probe.py --timeout 900` — the reaper candidate filter matches cmdline text `/JuniperC[a-z0-9]+/`; a conda interpreter is reapable from the same cwd. `/usr/bin/python3` is not a candidate.
 - `TimeoutStartSec=1500` must exceed dispatch (120s) + claude (900s) + `--reveal` (120s) = 1140s. If systemd wins the race it cgroup-kills the wrapper **before** `status.json` is written ("crash, not timeout").
@@ -6843,7 +6831,7 @@ Release runbooks:
 
 ## Flood-Remediation CI Gates
 
-Operator surface for the flood-remediation CI layers landed in [#869](https://github.com/pcalnon/juniper-ml/pull/869) / [#880](https://github.com/pcalnon/juniper-ml/pull/880) (Proposal P2 / flood analysis §4 items 1–2 + 8 phases 2–4). These jobs catch **serial same-file damage** that per-PR green checks miss. The CLIs they invoke are the `juniper-ci-tools` console scripts (`juniper-symbol-loss-check` / `juniper-docs-additions-check` — install with `pip install "juniper-ci-tools>=0.8.0,<0.9.0"`; the inline `util/sequence_safety/` copy was retired in ml#1024); predicted-merge triage for open fleet PRs is `util/fleet_triage/predict_merge.py` (see AGENTS.md Key Files).
+Operator surface for the flood-remediation CI layers landed in [#869](https://github.com/pcalnon/juniper-ml/pull/869) / [#880](https://github.com/pcalnon/juniper-ml/pull/880) (Proposal P2 / flood analysis §4 items 1–2 + 8 phases 2–4). These jobs catch **serial same-file damage** that per-PR green checks miss. The CLIs they invoke are the `juniper-ci-tools` console scripts (`juniper-symbol-loss-check` / `juniper-docs-additions-check` — install with `pip install "juniper-ci-tools>=0.8.0,<0.10.0"`; the inline `util/sequence_safety/` copy was retired in ml#1024); predicted-merge triage for open fleet PRs is `util/fleet_triage/predict_merge.py` (see AGENTS.md Key Files).
 
 Design context: [`notes/JUNIPER_2026-07-28_JUNIPER-ML_CURSOR-PR-FLOOD-REMEDIATION-ANALYSIS.md`](../notes/JUNIPER_2026-07-28_JUNIPER-ML_CURSOR-PR-FLOOD-REMEDIATION-ANALYSIS.md).
 
