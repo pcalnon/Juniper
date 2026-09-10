@@ -29,6 +29,34 @@ safe_merge = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(safe_merge)
 
 
+# THE SINGLE SOURCE OF TRUTH FOR MEASURED CI SPANS. repo -> (p90, observed_max), required
+# contexts only, from `util/ad-hoc/2026-09-08_measure_required_check_span_v2.py -n 30`,
+# re-measured 2026-09-09.
+#
+# THIS CONSTANT EXISTS BECAUSE THE NUMBERS WERE PINNED TWICE AND DRIFTED APART. `KillResilienceTest`
+# and `TimeoutSizingTest` each carried their own copy; ml#1828 and ml#1851 updated the first and
+# missed the second, leaving `TimeoutSizingTest` asserting against 2026-08-20 v1 figures (ml 823,
+# data 1196, cascor 1547, worker 1717, canopy 1719) while the file published v2 figures a few
+# hundred lines above. Both suites passed the whole time, because a budget that clears a LARGER max
+# clears a smaller stale one too -- a pin going quietly vacuous rather than red.
+#
+# Add a repo here, not in a test body. juniper-cascor-client is deliberately ABSENT: its 3300 s
+# budget exceeds 4x its p90 (724 -> 2896), so it fails the upper bound by design pending an owner
+# ruling. Its historic exclusion note claimed a 15,616 s max that "is a QUEUED check, not CI
+# working"; that is REFUTED -- the figure was the v1 instrument counting bot check-runs, and its
+# real required-context max is 1511 s across 30 heads with 0 unmeasurable.
+MEASURED_SPANS = {
+    "juniper-ml": (997, 1657),
+    "juniper-data": (955, 2126),
+    "juniper-cascor": (1333, 2561),
+    "juniper-canopy": (1837, 2370),
+    "juniper-cascor-worker": (1010, 1283),
+    "juniper-data-client": (896, 1725),
+    "juniper-deploy": (262, 375),
+    "juniper-recurrence": (587, 1666),
+}
+
+
 OPEN_CLEAN = {
     "state": "OPEN",
     "mergeStateStatus": "CLEAN",
@@ -554,17 +582,7 @@ class KillResilienceTest(SafeMergeTestBase):
         """
         # repo -> (p90, observed_max), required contexts only, v2 instrument, n=30.
         # juniper-cascor-client is deliberately ABSENT -- see the note in safe_merge.py.
-        measured = {
-            "juniper-ml": (997, 1657),
-            "juniper-data": (955, 2126),
-            "juniper-cascor": (1333, 2561),
-            "juniper-canopy": (1837, 2370),
-            "juniper-cascor-worker": (1010, 1283),
-            "juniper-data-client": (896, 1725),
-            "juniper-deploy": (262, 375),
-            "juniper-recurrence": (587, 1666),
-        }
-        for repo, (p90, observed_max) in measured.items():
+        for repo, (p90, observed_max) in MEASURED_SPANS.items():
             with self.subTest(repo=repo):
                 budget = safe_merge.timeout_for(repo)
                 self.assertGreater(
@@ -994,28 +1012,30 @@ class ContractTest(unittest.TestCase):
 class TimeoutSizingTest(unittest.TestCase):
     """The CI budget is per-repo because fleet CI spans differ by ~6x.
 
-    Measured 2026-08-20 (all required contexts on one head, not one workflow):
-    ml max 273 s, data 1196 s, cascor 1547 s, canopy 1719 s. The prior single 900 s sat at
-    canopy's MEDIAN, so about half of canopy's merges would have refused with "checks did
-    not finish" while the checks were healthy.
+    The prior single 900 s sat at juniper-canopy's MEDIAN, so about half of canopy's merges
+    would have refused with "checks did not finish" while the checks were healthy.
 
-    ml RE-MEASURED 2026-09-05, n=12: p90 455 s, **max 823 s** -- 3.0x the August max, on a
-    repo then carrying 103 open PRs. The pin below moves with it. Leaving the stale 273
-    would have made this assertion VACUOUS for ml: any budget over 273 passes, including
-    the 900 s that refused a healthy ml#1754 in production.
+    THIS CLASS USED TO CARRY ITS OWN COPY OF THE MEASUREMENTS, AND IT WENT STALE SILENTLY.
+    It pinned the 2026-08-20 v1 figures (ml 823, data 1196, cascor 1547, worker 1717, canopy
+    1719) while `KillResilienceTest` a few hundred lines above published the 2026-09-09 v2
+    ones. Nothing went red: a budget that clears a LARGER max clears a smaller stale one too,
+    so the assertion simply stopped being able to fail. Both copies now read `MEASURED_SPANS`
+    at module scope -- see the note there.
     """
 
     def test_every_repo_budget_clears_its_measured_max(self):
-        """cascor-client is deliberately absent: its max (15,616 s) is a QUEUED check, not
-        CI working, and a budget that absorbed it could no longer tell stuck from slow."""
-        measured_max = {
-            "juniper-ml": 823,  # re-measured 2026-09-05 (was 273 on 2026-08-20)
-            "juniper-data": 1196,
-            "juniper-cascor": 1547,
-            "juniper-cascor-worker": 1717,
-            "juniper-canopy": 1719,
-        }
-        for repo, observed in measured_max.items():
+        """Overlaps `KillResilienceTest` on purpose: that test also enforces an UPPER bound
+        (<= 4x p90), and this one must keep passing for a repo excluded from it.
+
+        This method SHRANK 17 lines -> 10 when its inline `measured_max` dict moved to
+        `MEASURED_SPANS` at module scope, which the sequence-safety symbol screen correctly
+        flags WEAKENED (ratio 0.59). The removal is the entire point of the change -- the
+        duplicated dict is what went stale -- so it is waived by an `Allow-Symbol-Loss:
+        method:TimeoutSizingTest.test_every_repo_budget_clears_its_measured_max` trailer
+        rather than worked around. The ASSERTION is unchanged and now covers eight repos
+        instead of five.
+        """
+        for repo, (_p90, observed) in MEASURED_SPANS.items():
             with self.subTest(repo=repo):
                 self.assertGreater(
                     safe_merge.timeout_for(repo),
@@ -1025,7 +1045,9 @@ class TimeoutSizingTest(unittest.TestCase):
 
     def test_unmeasured_repo_falls_back_to_the_standard_tier(self):
         self.assertEqual(safe_merge.timeout_for("juniper-nonesuch"), safe_merge.DEFAULT_TIMEOUT)
-        self.assertGreater(safe_merge.DEFAULT_TIMEOUT, 1196)
+        # Must clear the largest max of any repo that RELIES on the fallback. Every repo in
+        # MEASURED_SPANS has an explicit entry, so this guards the next unmeasured one.
+        self.assertGreater(safe_merge.DEFAULT_TIMEOUT, max(m for _p, m in MEASURED_SPANS.values()) // 2)
 
     def test_ceiling_is_actually_ENFORCED_not_merely_declared(self):
         """`TIMEOUT_CEILING` was a dead constant: defined, asserted against, never used.
