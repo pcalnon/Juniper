@@ -1,0 +1,55 @@
+# PF-8 two-run concurrency, PARALLEL arm: two identical PF-1-shape cells launched together by
+# run_suite's parallel mode, each on its own data + cascor stack, under the H-11 thread budget
+# run_suite pins for max_parallel 2 (OMP/MKL/OPENBLAS 2, CASCOR_NUM_PROCESSES 4, recorded per cell).
+#
+# Project:     juniper-ml
+# Sub-Project: ad-hoc tooling
+# Author:      Paul Calnon
+# Created:     2026-09-10
+# Status:      ad-hoc -- investigation (perf lane P2 item 4.2, step 2 of §1.3 of the 2026-09-08
+#              re-scope note: run only because the step-1 occupancy probe landed inside the ~4-8
+#              worker-equivalent band)
+# Retire when: RETAINED -- ad-hoc scripts are kept as provenance of record (owner policy 2026-08-25)
+# Related:     notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md
+#
+# WHY THIS LIVES UNDER util/ad-hoc AND NOT util/experiments/suites/perf
+#
+# `tests/test_experiment_suite_yamls.py` loads every checked-in suite in CI, where no cascor
+# sibling exists to read the parallel version floor from, and `load_suite` fails CLOSED there --
+# so a parallel cascor suite under suites/perf/ turns the R-6 drift gate red on every CI run
+# (§1.5 of the re-scope note; P2 item 4.2). Where the committed instrument lives is the owner's
+# call; this file is the headroom sweep's precedent (util/ad-hoc/2026-09-02_headroom_sweep_suite.yaml).
+#
+# WHY TWO CELLS AND NOT SIX
+#
+# One suite of six cells at max_parallel 2 would not give three aligned pairs: the pool starts the
+# next cell the moment one finishes, so cells 3..6 overlap staggered rather than paired. Three
+# separate runs of this two-cell suite give three pairs whose start times are as aligned as the
+# executor makes them (both cells are submitted back-to-back; the only serialisation point is the
+# port lock's mkdir). Start alignment is measured from the sampler's trace, not assumed.
+#
+# THE CONTROL ARM IS THE SAME TWO CELLS RUN SEQUENTIALLY under the same four variables exported
+# by hand -- util/ad-hoc/2026-09-10_pf8_occupancy_probe_suite.yaml run with
+#   OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 CASCOR_NUM_PROCESSES=4
+# (run_suite exports the budget only in parallel mode; an unpinned control would differ in budget,
+# not only in concurrency, and compare_baseline's thread_budget identity would rightly refuse it).
+#
+# The two epoch keys are single-element matrix lists so they stay a MATCHED PAIR; the two
+# descriptions are the matrix axis that makes two cells.
+schema_version: 1
+suite:
+  name: pf8-two-run-parallel
+  description: "P2 4.2 parallel arm: two identical PF-1-shape cells at once, H-11 budget pinned"
+  app: cascor
+  base_config: [/home/pcalnon/Development/python/Juniper/juniper-cascor/conf/experiments/spiral-smoke.yaml]
+  seed_policy: fixed
+execution: {mode: parallel, max_parallel: 2, continue_on_failure: true, per_run_timeout_seconds: 1200}
+matrix:
+  training.params.max_hidden_units: [10]
+  training.params.max_iterations: [10]
+  training.params.max_epochs: [4000]
+  training.params.output_epochs: [4000]
+  experiment.description:
+    - "PF-8 parallel arm cell A"
+    - "PF-8 parallel arm cell B"
+outputs: {suite_dir: null, aggregate: [csv, markdown]}

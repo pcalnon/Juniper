@@ -1,0 +1,62 @@
+# PF-8 occupancy probe: three ordinary PF-1-shape cells, run sequentially while
+# util/ad-hoc/2026-09-10_pf8_occupancy_sampler.py records the cascor process tree's CPU at 1 s.
+#
+# Project:     juniper-ml
+# Sub-Project: ad-hoc tooling
+# Author:      Paul Calnon
+# Created:     2026-09-10
+# Status:      ad-hoc -- investigation (perf lane P2 item 4.1 residue: the PF-8 occupancy probe,
+#              step 1 of §1.3 of the 2026-09-08 re-scope note)
+# Retire when: RETAINED -- ad-hoc scripts are kept as provenance of record (owner policy 2026-08-25)
+# Related:     notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md
+#
+# WHY THIS EXISTS
+#
+# The headroom sweep (§8.4 of the 2026-09-02 instrument-resolution note) located the contention
+# knee between 6 and 8 SYNTHETIC workers, not in cores, because ambient occupancy was neither
+# zero nor constant. PF-8's remaining question is where ONE Juniper run sits on that axis: if it
+# occupies W cores -- read as W sweep workers only by an assumption §8.4 of that note disclaims --
+# a second concurrent run is a load of W workers on the first, and its cost can be read off the
+# sweep curve -- unless W lands in the ~4-8 band around the knee, where only a two-arm
+# measurement can answer. Nothing in the driver records occupancy, so this
+# suite is the PF-1 cell shape (the workload the sweep and the baseline both use) run with the
+# sampler alongside.
+#
+# WHY THREE CELLS, AND WHY A MATRIX AXIS
+#
+# One cell gives an n=1 occupancy figure. Three ordinary repeats cost ~5 min and give a spread,
+# which is what decides whether the figure sits clearly inside or outside the band. The repeats
+# are a matrix axis, not `include` entries: `include` cells do NOT inherit the matrix, and an
+# `include`-only suite also emits the bare base-config cell (trap 6 of the 2026-09-09 handoff).
+# Single-element lists keep the two epoch keys a MATCHED PAIR (both or neither; never one).
+#
+# The cells run under cascor's DEFAULT thread budget -- no CASCOR_NUM_PROCESSES, no BLAS pins --
+# because that is what an ordinary PF-1 run is. Note the default candidate pool is
+# min(candidate_pool_size 4, cores) - 1 = 3 processes (`_calculate_optimal_process_count`), while
+# the parallel arm of a PF-8 pair pins CASCOR_NUM_PROCESSES=4 via `thread_budget_env`. The SAME
+# file run with the four variables exported in the shell --
+#   OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 CASCOR_NUM_PROCESSES=4
+# -- is the pinned probe and the pair's CONTROL arm (2026-09-10_pf8_pair_driver.bash does that).
+# Measured 2026-09-10: 4.52 cores default -- one ~11-core block in the listener for the INITIAL
+# output pass (before the candidate pool exists), then ~1.8 -- and 2.15 pinned; step_count 1770
+# either way. The three BLAS variables remove the block; which library carries it is narrowed
+# (NumPy's OpenBLAS pool the leading candidate), not identified. The YAML's own
+# `runtime.blas_threads: 2` is read by nothing on either path (§4 of the note).
+schema_version: 1
+suite:
+  name: pf8-occupancy-probe
+  description: "P2 4.1 residue: cascor process-tree occupancy of one PF-1-shape run, 3 repeats, sampled at 1 s"
+  app: cascor
+  base_config: [/home/pcalnon/Development/python/Juniper/juniper-cascor/conf/experiments/spiral-smoke.yaml]
+  seed_policy: fixed
+execution: {mode: sequential, continue_on_failure: true, per_run_timeout_seconds: 1200}
+matrix:
+  training.params.max_hidden_units: [10]
+  training.params.max_iterations: [10]
+  training.params.max_epochs: [4000]
+  training.params.output_epochs: [4000]
+  experiment.description:
+    - "PF-8 occupancy probe repeat 1"
+    - "PF-8 occupancy probe repeat 2"
+    - "PF-8 occupancy probe repeat 3"
+outputs: {suite_dir: null, aggregate: [csv, markdown]}
