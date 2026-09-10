@@ -355,7 +355,7 @@ def main(argv: "list[str] | None" = None) -> int:
         try:
             args.pid_file.unlink()
         except OSError:
-            pass
+            pass  # best-effort: the pid file is advisory and may already be gone
     return 0
 
 

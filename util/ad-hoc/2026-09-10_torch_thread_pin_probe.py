@@ -31,7 +31,6 @@ import json
 import os
 import subprocess  # nosec B404 - launches this file's own child mode with a fixed interpreter
 import sys
-import time
 
 CHILD_CODE = r"""
 import json, os, sys, time
