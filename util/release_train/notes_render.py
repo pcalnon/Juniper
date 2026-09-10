@@ -291,7 +291,11 @@ def _render_standard(pypi_name: str, version: str, bump: str, date: str, section
     )
     if not final:
         lines.extend(_remaining_sections_comment(template_text, STANDARD_FILLED_SECTIONS, repo_root))
-    return "\n".join(lines) + "\n"
+    # Exactly ONE trailing newline. The section lists end with a "" separator that is
+    # load-bearing when a remaining-sections comment follows (not final), but produces a
+    # trailing BLANK line otherwise -- which pre-commit's end-of-file-fixer rewrites, so
+    # the archive PR fails its own hook run (juniper-ml#1874).
+    return "\n".join(lines).rstrip("\n") + "\n"
 
 
 def _render_security(pypi_name: str, version: str, bump: str, date: str, sections: "OrderedDict[str, list]", template_text: str, repo_root: "Path | None", changelog_url: "str | None" = None, final: bool = False) -> str:
@@ -344,7 +348,11 @@ def _render_security(pypi_name: str, version: str, bump: str, date: str, section
     )
     if not final:
         lines.extend(_remaining_sections_comment(template_text, SECURITY_FILLED_SECTIONS, repo_root))
-    return "\n".join(lines) + "\n"
+    # Exactly ONE trailing newline. The section lists end with a "" separator that is
+    # load-bearing when a remaining-sections comment follows (not final), but produces a
+    # trailing BLANK line otherwise -- which pre-commit's end-of-file-fixer rewrites, so
+    # the archive PR fails its own hook run (juniper-ml#1874).
+    return "\n".join(lines).rstrip("\n") + "\n"
 
 
 # ── relative-link rewrite (central-archive correctness) ──────────────────────
