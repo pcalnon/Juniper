@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-09-10
+
 ### Fixed
 
 - **`crossval/splits.py`'s module docstring described a void premise.** It said folds are "derived
@@ -17,8 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   index the whole dataset the caller rebuilds from `train` / `val` / `test` (reference implementation:
   `juniper_recurrence_model.data.derive_full_split`, juniper-recurrence#150), that the rebuild's row
   ORDER matters because folds slice by index, and that a legacy `*_full` may still be used as-is.
-  Docstring only — `walk_forward_folds` is unchanged; the published 0.3.1 wheel carries the stale text
-  until the next release.
+  Docstring only — `walk_forward_folds` is unchanged. The published 0.3.1 wheel carried the stale
+  text, because this fix landed after 0.3.1 shipped and carried no version bump — repo and PyPI
+  both read 0.3.1 while their contents differed. **This release is what closes that gap.**
 
 ## [0.3.1] - 2026-07-28
 
