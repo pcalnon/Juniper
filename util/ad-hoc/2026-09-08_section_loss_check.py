@@ -23,7 +23,20 @@ An "atom" is a high-signal token a reader would notice missing:
 
   * inline code spans -- identifiers, paths, flags, env vars, exit codes;
   * markdown link targets;
-  * bare `word/word.ext` paths outside code spans.
+  * bare `word/word.ext` paths outside code spans;
+  * **every non-blank line inside a fenced code block.**
+
+THE FOURTH ONE WAS ADDED AFTER THIS TOOL MISSED A REAL LOSS. The first three
+extractions all key on markdown *decoration* -- a backtick, a `](`, a dotted path. A
+```bash block has none of that: its lines are bare commands. So when juniper-ml#1837
+collapsed four copies of the Pointer-Follow Soak section it deleted all THREE copies of
+the systemd install recipe (`mkdir -p ~/.config/systemd/user` ... `systemctl --user
+enable --now juniper-soak-probe.timer`) and left zero, and this tool reported the change
+clean. Collapsing N duplicates must leave one; it left none, and the instrument built to
+catch exactly that could not see it.
+
+A fenced line is compared with its indentation stripped and internal whitespace
+collapsed, because a merge legitimately re-indents a block.
 
 Prose is deliberately NOT compared: a merge legitimately rewrites sentences, and diffing
 prose would bury the real findings under hundreds of rewordings. Anything this reports is
@@ -50,6 +63,42 @@ BARE_PATH = re.compile(r"\b((?:[\w.-]+/)+[\w.-]+\.(?:py|md|bash|sh|json|jsonl|ya
 IGNORE = {"---", "--", "|", "..."}
 
 
+def fenced_lines(text: str) -> set:
+    """Every non-blank line inside a fenced block, whitespace-normalised.
+
+    Uses real CommonMark fence matching, NOT a boolean toggle. A closing fence must be a
+    BARE run of backticks at least as long as the opener; a run carrying an info string
+    (```bash) can only ever OPEN. A naive toggle treats that inner ```bash as a close and
+    then silently drops the lines after it -- verified: on a ````markdown block wrapping a
+    ```bash block, a toggle collects the wrapper's prose but MISSES `echo hello`.
+
+    Under-collecting is the one thing a LOSS check may never do: a line it fails to collect
+    on the BEFORE side can be deleted without the check noticing, which is exactly the
+    failure this function was added to close. `~~~` fences count too (four tracked files
+    use them), and a fence closes only on its OWN character -- a ``` block is not ended
+    by a ~~~ line.
+    """
+    out = set()
+    fence_len = 0      # 0 == not inside a fence
+    fence_char = ""    # a ``` fence is closed only by backticks, ~~~ only by tildes
+    for line in text.splitlines():
+        stripped = line.lstrip()
+        char = "`" if stripped.startswith("```") else ("~" if stripped.startswith("~~~") else "")
+        if char:
+            run = len(stripped) - len(stripped.lstrip(char))
+            rest = stripped[run:].strip()
+            if fence_len == 0:
+                fence_len, fence_char = run, char   # opener (info string allowed)
+                continue
+            if char == fence_char and not rest and run >= fence_len:
+                fence_len, fence_char = 0, ""       # bare closer, same char, long enough
+                continue
+            # an info-string run, or the other fence char, is CONTENT not a delimiter
+        if fence_len and line.strip():
+            out.add(" ".join(line.split()))
+    return out
+
+
 def atoms(text: str) -> set[str]:
     found: set[str] = set()
     for m in CODE_SPAN.finditer(text):
@@ -60,6 +109,7 @@ def atoms(text: str) -> set[str]:
         found.add(m.group(1).strip())
     for m in BARE_PATH.finditer(text):
         found.add(m.group(1).strip())
+    found |= fenced_lines(text)
     return found
 
 

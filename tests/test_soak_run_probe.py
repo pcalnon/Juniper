@@ -140,8 +140,9 @@ class RetrievalChannel(unittest.TestCase):
         # Measured on all three P24 runs (2026-09-08 re-audit): the session ran
         # `cd .../juniper-deploy && grep -rn 3001 .` and matched juniper-deploy's
         # OWN docs/REFERENCE.md. 7 of the 8 sibling repos ship one. The fact under
-        # test is in juniper-ml's copy, so the pointer was never followed -- but a
-        # substring test scored all three as follows.
+        # test is in juniper-ml's copy. Only THIS run has a sibling hit and
+        # nothing else; the other two P24 runs also read juniper-ml's own file
+        # and are follows, so the sibling test must decide per occurrence.
         parsed = {
             "tool_inputs": [
                 json.dumps(
@@ -184,6 +185,97 @@ class RetrievalChannel(unittest.TestCase):
         ch = mod.retrieval_channel(parsed, "docs/REFERENCE.md#x")
         self.assertTrue(ch["pointer_doc_referenced"])
         self.assertEqual(ch["suggests"], "follow")
+
+    def test_a_read_from_the_ecosystem_parent_is_still_a_hit(self) -> None:
+        # THE FALSE-NEGATIVE THIS CLASS EXISTS TO PREVENT. A subject that works
+        # from the ecosystem parent and names our file explicitly has read it:
+        #     cd /…/Juniper && sed -n '145,175p' juniper-ml/docs/REFERENCE.md
+        # The parent directory matches no `juniper-ml` root segment, so testing
+        # the cd target FIRST discarded the whole input and threw the read away.
+        # Two of the three P24 runs are this shape, and the discarded reads are
+        # what produced the original 51.2% mechanism-checked headline (the true
+        # figure is 55.8%). An explicitly qualified path outranks the cwd.
+        parsed = {
+            "tool_inputs": [
+                json.dumps(
+                    {
+                        "command": "cd /home/pcalnon/Development/python/Juniper " "&& sed -n '145,175p' juniper-ml/docs/REFERENCE.md",
+                    }
+                )
+            ],
+            "answer": "",
+        }
+        ch = mod.retrieval_channel(parsed, "docs/REFERENCE.md#ecosystem-compatibility")
+        self.assertTrue(ch["pointer_doc_referenced"])
+        self.assertEqual(ch["suggests"], "follow")
+
+    def test_a_sibling_named_from_the_ecosystem_parent_is_still_not_a_hit(self) -> None:
+        # The other direction of the same rule: an explicitly qualified SIBLING
+        # path stays foreign even though the cwd is neutral.
+        parsed = {
+            "tool_inputs": [
+                json.dumps(
+                    {
+                        "command": "cd /home/pcalnon/Development/python/Juniper " "&& grep -rn 3001 juniper-deploy/docs/REFERENCE.md",
+                    }
+                )
+            ],
+            "answer": "",
+        }
+        ch = mod.retrieval_channel(parsed, "docs/REFERENCE.md#ecosystem-compatibility")
+        self.assertFalse(ch["pointer_doc_referenced"])
+
+    def test_our_path_as_a_grep_PATTERN_is_not_a_hit(self) -> None:
+        # Adversarial review found this: the first fix compared a fixed-width
+        # TEXT window, not a path. A subject reading juniper-deploy's file while
+        # SEARCHING FOR our path string scored as a read of ours.
+        parsed = {
+            "tool_inputs": [
+                json.dumps(
+                    {
+                        "command": "cd /home/pcalnon/Development/python/Juniper/juniper-deploy " "&& grep -rn 'juniper-ml/docs' docs/REFERENCE.md",
+                    }
+                )
+            ],
+            "answer": "",
+        }
+        ch = mod.retrieval_channel(parsed, "docs/REFERENCE.md#x")
+        self.assertFalse(ch["pointer_doc_referenced"])
+
+    def test_a_repo_whose_name_merely_starts_with_juniper_ml_is_not_ours(self) -> None:
+        # `/juniper-ml` without a terminator is a PREFIX: it matched
+        # `juniper-mlx` and `juniper-ml-scratch`. Both segment forms now end at
+        # a boundary.
+        for other in ("juniper-mlx", "juniper-ml-scratch"):
+            parsed = {
+                "tool_inputs": [
+                    json.dumps(
+                        {
+                            "command": "cd /home/pcalnon/Development/python/Juniper/juniper-deploy " f"&& sed -n 1p /home/pcalnon/Development/python/Juniper/{other}/docs/REFERENCE.md",
+                        }
+                    )
+                ],
+                "answer": "",
+            }
+            ch = mod.retrieval_channel(parsed, "docs/REFERENCE.md#x")
+            self.assertFalse(ch["pointer_doc_referenced"], other)
+
+    def test_reading_both_copies_in_one_command_counts_as_a_hit(self) -> None:
+        # Precedence must be by PROXIMITY to the match, not by which segment
+        # list is tested first. Testing the sibling list first over a shared
+        # window made this False.
+        parsed = {
+            "tool_inputs": [
+                json.dumps(
+                    {
+                        "command": "cd /home/pcalnon/Development/python/Juniper && diff " "juniper-deploy/docs/REFERENCE.md juniper-ml/docs/REFERENCE.md",
+                    }
+                )
+            ],
+            "answer": "",
+        }
+        ch = mod.retrieval_channel(parsed, "docs/REFERENCE.md#x")
+        self.assertTrue(ch["pointer_doc_referenced"])
 
     def test_this_repos_own_worktree_path_is_still_a_hit(self) -> None:
         # A worktree of juniper-ml is the SAME document. Only a sibling repo is

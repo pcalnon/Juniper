@@ -21,7 +21,7 @@ the only outstanding item that can move the headline rate. It anticipated the an
 *"Under the protocol's own standard (inputs ∪ results, item D) the rate stays 60.5%."*
 
 **That expectation is not supported by the transcripts.** Applying the protocol's own
-§4 definition and then checking what each hit actually *is* gives **51.2%**, below the
+§4 definition and then checking what each hit actually *is* gives **55.8%**, below the
 as-recorded rate — and the evidence recovery **strengthens** the `BET-FAILING` verdict
 rather than putting it back in play.
 
@@ -85,35 +85,60 @@ was additionally confirmed by hand against each transcript's `description` and m
 
 ## 4. Finding 1 — two of the eight do not survive
 
+> **CORRECTED 2026-09-09 after Lane A review.** The first version of this section said
+> **all three** P24 runs read juniper-deploy's copy, and put the mechanism-checked rate at
+> 51.2%. Both were wrong, from one cause: the classifier tested the `cd` target **before**
+> the per-occurrence path prefix, so it discarded the whole input when a subject worked
+> from the **ecosystem parent** (`cd /…/Juniper && sed -n … juniper-ml/docs/REFERENCE.md`)
+> — a directory that matches no `juniper-ml` root segment. Genuine reads of *our* file were
+> thrown away. The bug was live in shipped code (`util/soak_run_probe.py`) as well as in the
+> re-audit tool; both are fixed, and `tests/test_soak_run_probe.py` now pins both directions.
+
 | | rows |
 |---|---|
 | hit is the document's own text | **6** |
 | filename only (`grep -rln`) — never read | **1** — 2026-08-22T21:41:09 `P21-pidfile-key-prefix-guard` |
 | a **sibling repo's** `docs/REFERENCE.md` | **1** — 2026-08-22T21:41:09 `P24-grafana-port-3001-deliberate` |
 
-Four rows in total disagree with their recorded outcome, and the defect is **not confined
-to the output-scored subset** — two of the three P24 rows were input-scored:
+**Two** rows in total disagree with their recorded outcome:
 
 | ts | probe | recorded | evidence |
 |---|---|---|---|
-| 2026-08-22T02:41:59 | P24 | follow | `foreign=3` |
 | 2026-08-22T21:41:09 | P21 | follow | `filename=1` |
 | 2026-08-22T21:41:09 | P24 | follow | `foreign=2` |
-| 2026-08-22T21:54:21 | P24 | follow | `foreign=5` |
 
-**P24 is the clearest case.** Its pointer is `docs/REFERENCE.md#ecosystem-compatibility`
-and juniper-ml's `docs/REFERENCE.md:201` carries the fact verbatim
-(*"Grafana defaults to `3001`, not `3000`, deliberately"*). All three runs instead ran
-`cd /home/pcalnon/Development/python/Juniper/juniper-deploy && grep -rn "3001…"`, whose
-output names `docs/REFERENCE.md:50` **relative to juniper-deploy**. The subject reached
-the right answer without ever opening the destination. 7 of the 8 sibling repos ship
-their own `docs/REFERENCE.md` (all but juniper-recurrence, measured 2026-09-08), and
-`hit = doc in blob` (`util/soak_run_probe.py:358`) is a substring test that cannot tell
-them apart.
+**P24 is the instructive case, and not in the way first reported.** Its pointer is
+`docs/REFERENCE.md#ecosystem-compatibility`, and juniper-ml's own copy carries the fact
+verbatim under [Ecosystem Compatibility](../docs/REFERENCE.md) (*"Grafana defaults to
+`3001`, not `3000`, deliberately"*).
+
+**All three runs did read juniper-deploy's copy** — that observation was right and is
+unchanged. What was wrong was the *inference* drawn from it: two of the three **also** read
+juniper-ml's own file, so reading the sibling did not mean failing to follow the pointer.
+`soak-C-P24` went further and ran `sed -n '145,175p' juniper-ml/docs/REFERENCE.md`, opening
+the destination by name. Those two are follows; only `soak-A-P24` (2026-08-22T21:41:09) has
+a sibling hit and nothing else.
+
+The underlying hazard is still real: 7 of the 8 sibling repos ship their own
+`docs/REFERENCE.md` (all but juniper-recurrence, measured 2026-09-08), and a bare substring
+test cannot tell them apart. But the fix for it must not be ordered so that a qualified
+path loses to a neutral cwd — that trades a false positive for a false negative, which is
+how 51.2% happened.
 
 ## 5. Finding 2 — the ledger is an unscreened answer sheet
 
-**8 of the 43 runs read `reports/soak/pointer_follow_soak.jsonl` itself.**
+**8 of the 43 runs touched `reports/soak/pointer_follow_soak.jsonl`; exactly ONE read its
+contents.**
+
+> **CORRECTED 2026-09-09 after Lane A review.** The first version said all 8 "read the
+> ledger". Opening all eight shows seven saw only the **filename** — in a porcelain status
+> listing, a diff stat, an `ls -t reports/*/`, or a `grep -l` file list. That is the same
+> content-vs-filename distinction this document insists on for `docs/REFERENCE.md`, not
+> applied to its own new measurement. The one genuine content leak is
+> `P18-health-interval-non-positive` (2026-08-22), a **pilot-era manual run**. Both
+> 2026-09-04 automated rows are filename sightings, so the claim that the leak is
+> *demonstrated live on the automated path* is **withdrawn**. What stands: the hazard is
+> real, unscreened, and reachable from any unscoped recursive grep.
 
 The ledger records, per observation, the probe's `pointer`, its scored `outcome`, and a
 `note` restating the answer in prose. A subject running an unscoped
@@ -149,15 +174,17 @@ violated by the instrument's own record. The affected runs:
 | 2026-09-04T09:10:51 | P06-expect-removals-scope | follow |
 | 2026-09-04T09:52:49 | P19-port-check-fail-opens | source-recovered |
 
-Note the last row: the leak is **not** confined to the pilot era. It is live on the
-automated path, so any resumed campaign inherits it.
+Two of the eight rows are 2026-09-04 automated runs (P06, P19), so the *sighting* is not
+confined to the pilot era — but both are filename-only, and the single demonstrated content
+leak is a pilot-era manual run. The hazard is unscreened on every path; it has been
+**demonstrated** on one.
 
 ## 6. Finding 3 — what the rate becomes
 
 | standard | rate | Wilson 95% | margin to the 0.75 boundary |
 |---|---|---|---|
 | as recorded | 26/43 = **60.5%** | [0.456, 0.736] | **0.0137** |
-| survives a mechanism check | 22/43 = **51.2%** | [0.368, 0.654] | **0.0962** |
+| survives a mechanism check | 24/43 = **55.8%** | [0.411, 0.696] | **0.0543** |
 | input-scored only (the floor) | 18/43 = **41.9%** | [0.284, 0.567] | 0.1833 |
 
 The middle row is the new one. It is **not a third standard**: it applies the protocol's
@@ -167,7 +194,7 @@ document at all.
 **Consequence for the verdict.** §4.5 of
 `notes/JUNIPER_2026-09-04_JUNIPER-ML_SOAK-HANDOFF-CONSENSUS-VALIDATION.md` warns that
 `BET-FAILING` is one observation deep, with margin **0.0137** to the boundary. Under the
-mechanism check that margin becomes **0.0962** — seven times larger. The verdict is more
+mechanism check that margin becomes **0.0543** — four times larger. The verdict is more
 robust than the 09-04 review could establish, and the direction is opposite to what the
 handoff anticipated: recovering this evidence does not put the bet back in play.
 
@@ -214,7 +241,8 @@ python3 -m unittest tests.test_soak_probe_evidence
 
 The three false-positive mechanisms in §3 are defects in
 `util/ad-hoc/2026-08-21_soak_probe_evidence.py`'s `scan()` and in
-`util/soak_run_probe.py:358`'s `hit = doc in blob`. Hardening them changes screen
+`util/soak_run_probe.py`'s `retrieval_channel` (the line number this cited went stale within
+the day — address it by symbol). Hardening them changes screen
 behaviour and needs its pinned tests updated, so it belongs in its own PR. The screen is
 **unwired** (item F), so the blind spots cost nothing live today — but
 `util/soak_run_probe.py` is not unwired, and its substring test is the one that scored
