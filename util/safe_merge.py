@@ -256,10 +256,23 @@ REPO_TIMEOUTS = {
     # #1828 1657, #1830 1529, #1831 1041, #1829 997 -- every one merged during a burst of
     # concurrent sessions; the next longest, #1816 at 773, is exactly yesterday's max.
     #
-    # This is WITHIN-span stretch (required contexts queueing between first-start and
-    # last-end), which this tool does wait through, and so is distinct from the pre-start
-    # queue the note above says not to absorb. It is also not hypothetical: 1500 REFUSED
-    # ml#1828 live, on a PR whose 17 required contexts every one passed.
+    # TWO JUSTIFICATIONS WITHDRAWN 2026-09-10; the VALUE stands on the measurement above.
+    #
+    # (1) This entry called ml's stretch WITHIN-span and "so distinct from the pre-start
+    #     queue the note above says not to absorb", on the discriminator "which this tool
+    #     does wait through". That discriminator DOES NOT DISCRIMINATE -- the note above
+    #     says in terms that the pre-start delay is waited through as well. What actually
+    #     separates them is measurement SCOPE: the span starts at the first required
+    #     context's `started_at`, so pre-start queue never enters this number and no raise
+    #     can absorb it, while within-span stretch is what the number is made of.
+    #
+    # (2) "Every one merged during a burst of concurrent sessions" was offered as evidence
+    #     that ml's growth is CONTENTION. ml#1831 added a 181-line suite to three
+    #     `Regression Tests` legs INSIDE this window, so ml's CI also genuinely got heavier
+    #     -- by this arc's own hand. Both causes are present; the span cannot separate them.
+    #
+    # What is not withdrawn: 1500 REFUSED ml#1828 live, on a PR whose 17 required contexts
+    # every one passed.
     "juniper-ml": 2800,
     # p90 955, max 2126 -> window (2126, 3820].
     "juniper-data": 2400,
@@ -288,9 +301,15 @@ REPO_TIMEOUTS = {
     # p90 262, max 375 -> window (375, 1048], mid 711. First measurement; was DEFAULT_TIMEOUT 2400.
     "juniper-deploy": 700,
     # p90 587, max 1666 -> window (1666, 2348], mid 2007. RAISED 700 -> 2000 on 09-09, ONE
-    # DAY after 700 was set from p90 258 / max 352. Unlike ml this is NOT a contention
-    # artifact: PRs 152/153/156/159/161 all merged since and span 1666/723/1119/587/403 on
-    # the same 10 required contexts, so recurrence's CI genuinely got heavier.
+    # DAY after 700 was set from p90 258 / max 352.
+    #
+    # WITHDRAWN 2026-09-10: "Unlike ml this is NOT a contention artifact." The contrast is
+    # false at the ml end -- ml's growth is not purely contention either (see that entry).
+    # And the evidence cited does not establish the claim at this end: PRs 152/153/156/159/161
+    # span 1666/723/1119/587/403 on the SAME 10 required contexts, and a 4x spread across an
+    # unchanged context set reads as contention exactly as well as it reads as heavier CI.
+    # The span separates neither cause, in either repo. The budget rests on max 1666.
+    #
     # juniper-recurrence is absent from the parent CLAUDE.md's repo table, which is why no
     # earlier sweep measured it.
     "juniper-recurrence": 2000,

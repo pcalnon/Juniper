@@ -1064,6 +1064,8 @@ jobs:
           python3 -m unittest -v tests/test_markdown_structure_screen.py
           # tests/test_pf8_occupancy_probe.py: the PF-8 occupancy probe's arithmetic, which decides whether a two-arm pair is worth an owner's host time. /proc/<pid>/stat split around the LAST ')' (comm may hold spaces and parens); roles follow the process tree; a pid counts from birth only if born inside the interval and an exited one is counted as vanished, never invented; busy excludes iowait; both edges of the ~4-8 worker-equivalent band pinned (3.99 / 8.01 say NO, 4.0 / 8.0 say YES); occupancy is sum-over-sum, not a mean of ratios.
           python3 -m unittest -v tests/test_pf8_occupancy_probe.py
+          # tests/test_pf8_burst_attribution.py: the PF-8 burst-attribution trio, which overturned a published conclusion (the probe note's "leading candidate" was NumPy's OpenBLAS pool; it is libgomp under torch). /proc/<tid>/stat split around the LAST ')'; a thread that exits mid-window is reported, never invented; py-spy folded stacks attributed by SAMPLE count, not line count; library patterns anchored to lib*.so so a bare "omp" cannot match "compiled"/"component"/"Compute"; libopenblas and libgomp told apart; every `env -u` precedes every NAME=VALUE in every arm (env(1) stops accepting options at the first assignment, and the mis-ordered arm kills the listener at startup); the port check refuses when ss is absent rather than reading every port as free.
+          python3 -m unittest -v tests/test_pf8_burst_attribution.py
 
       - name: Run bash regression tests
         run: |

@@ -15,9 +15,12 @@ unittest **is** the gate for that module.
 
 The three things a gate like this gets wrong, each pinned here:
 
-* **Red on arrival.** ``main`` carries 102 structural problems across 21 files -- 11 under
-  ``notes/``, 6 under ``notes/legacy/``, 3 under ``prompts/``, 1 under ``notes/code-review/``,
-  and none at all under ``docs/``. A gate demanding zero is unmergeable from the
+* **Red on arrival.** ``main`` carries pre-existing structural problems: **63 across 14 files**
+  measured at ``e173ea81`` on 2026-09-10 -- 5 under ``notes/``, 6 under ``notes/legacy/``,
+  3 under ``prompts/``, and **zero** under both ``notes/code-review/`` and ``docs/``. That count
+  is a MOVING FLOOR, not a backlog: 104/23, 102/21, 63/14, 73/15, 63/14 across six days. No test
+  here asserts it -- every fixture below is synthetic -- so re-measure before quoting it
+  elsewhere. A gate demanding zero is unmergeable from the
   first commit, so the comparison must be per-file and per-PR: a file the PR does not touch is
   not the PR's problem, and a file it touches must not come out worse than it went in.
 * **Vacuous pass.** The underlying screen silently skips anything not ending ``.md``. A bad glob,
@@ -111,7 +114,8 @@ class DeltaGateTest(unittest.TestCase):
                 return code, buf.getvalue()
 
     def test_untouched_broken_file_does_not_fail_the_pr(self):
-        # The whole reason the gate can ship today: `main` carries 102 problems and a PR that
+        # The whole reason the gate can ship today: `main` carries a standing count of these
+        # problems (63 at `e173ea81`, and it moves -- see the module docstring) and a PR that
         # does not touch them is not the PR's problem.
         code, out = self.run_gate(
             {"legacy.md": BROKEN_TABLE, "touched.md": CLEAN_TABLE},
