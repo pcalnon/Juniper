@@ -125,10 +125,11 @@ def reduce_rows(rows: "list[dict]") -> dict:
     busy = statistics.fmean(r["host_busy_cores"] for r in rows)
     ambient = statistics.fmean(r["host_busy_cores"] - (r["total"] / r["wall_dt"] if r["wall_dt"] > 0 else 0.0) for r in rows)
     workers = Counter(int(r["n_workers"]) for r in rows).most_common(1)[0][0]
-    # The run is not a constant load: output-layer training runs in the listener with the
-    # runtime-default BLAS pool, the candidate phase in the pool workers. Report how much of the
-    # window sits at or above the sweep's knee, and the mean occupancy on each side of it, so a
-    # bimodal trace is not read as its mean alone.
+    # The run is not a constant load: under the default budget the INITIAL output-layer pass runs
+    # in the listener at the runtime-default pool width (~11 cores, measured 2026-09-10), and every
+    # later pass and the candidate phases sit near 2. Report how much of the window sits at or
+    # above the sweep's knee, and the mean occupancy on each side of it, so a bimodal trace is not
+    # read as its mean alone.
     high = [r for r in rows if r["wall_dt"] > 0 and r["cascor_tree"] / r["wall_dt"] >= KNEE_LOW]
     low = [r for r in rows if r["wall_dt"] > 0 and r["cascor_tree"] / r["wall_dt"] < KNEE_LOW]
     plateau = [r for r in rows if r["wall_dt"] > 0 and r["cascor_tree"] / r["wall_dt"] >= KNEE_HIGH]

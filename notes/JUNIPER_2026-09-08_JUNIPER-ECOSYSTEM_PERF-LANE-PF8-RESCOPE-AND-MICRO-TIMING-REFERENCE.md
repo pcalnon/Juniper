@@ -119,15 +119,18 @@ immaterial to what is measured, but unexamined. And start-time alignment is plau
 executor submits both cells back-to-back; the only serialisation point is the port lock's `mkdir`)
 and unmeasured until a pair actually runs.
 
-> **Measured 2026-09-10 — both steps ran.** Step 1: one PF-1-shape run is **4.52**
-> worker-equivalents under the default budget (bimodal: ~30% of the window at ~11 in the
-> listener, which is NumPy's OpenBLAS pool at full width, not torch) and **2.15** under the
-> pinned budget. Step 2, run because 4.52 is inside the band: three aligned parallel pairs against
-> six sequential controls, same budget, all twelve cells at 1770 — **+11.3% per step**, inside the
-> 20.5% band, outside the day's within-arm spread. The two unmeasured items above are now
-> measured: start offsets were 0.003–0.068 s with ≥ 89% of the drive windows shared, and each
-> parallel cell's own juniper-data instance stayed idle during training (its `data` column reads
-> ~0.01 worker-equivalents).
+> **Measured 2026-09-10 — both steps ran.** Step 1: one PF-1-shape run consumes **4.52 cores**
+> under the default budget — one ~11-core block in the listener for the *initial* output pass
+> (before the candidate pool exists), then ~1.8 — and **2.15** under the pinned budget; the
+> "one core = one sweep worker" equation this section makes is an assumption §8.4 of the sweep
+> note disclaims, and the pair below measured the externality directly instead. Step 2, run
+> because 4.52 is inside the band (§1.1 above had said ≤ 6 adds nothing, and the result agrees):
+> three aligned parallel pairs against six sequential controls, same budget, all twelve cells at
+> 1770 — **+11.3% per step, +9 to +13% leaving one pair out**, inside the 20.5% band, outside the
+> day's within-arm spread by one pair's margin. The two unmeasured items above are now measured:
+> start offsets were 0.003–0.068 s with ≥ 89% of the drive windows shared, and each parallel
+> cell's own juniper-data instance stayed idle during training (its `data` column reads ~0.01
+> cores). The ≥ 60 s cell length below was not met (35–45 s); the bridge was off.
 > [`JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md`](JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md).
 
 Instrument: **mean step duration** (`step_sum / step_count`) from the resolving instrument, never

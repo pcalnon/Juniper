@@ -6,18 +6,21 @@ Project: juniper-ml
 Sub-Project: ad-hoc tooling
 Author: Paul Calnon
 Created: 2026-09-10
-Status: ad-hoc — investigation (perf lane P2 item 4.1 residue: why the cascor listener drew ~11 cores during output passes under the default budget and ~2 under the pinned one)
+Status: ad-hoc — investigation (perf lane P2 item 4.1 residue: why the cascor listener drew ~11 cores during its INITIAL output pass under the default budget and ~2 under the pinned one)
 Retire when: RETAINED — ad-hoc scripts are kept as provenance of record (owner policy 2026-08-25)
 Related: notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md
 
 WHY THIS EXISTS
 
 cascor's parent process calls `torch.set_num_threads(max(2, worker_thread_count * 2))`
-(`cascade_correlation.py:1179-1180`) and its service tier deliberately leaves OMP/MKL/OPENBLAS
-unset (`parallelism/blas_threads.py`). The occupancy probe measured the listener at ~11
-worker-equivalents during output-layer passes with the variables unset and ~2 with them exported
-at 2. This isolates the mechanism: the same matmul loop, in a fresh interpreter, with and without
-the variables, after `torch.set_num_threads(2)`, reporting cpu-seconds per wall-second.
+(`cascade_correlation.py:1179-1180`, from the constructor) and its service tier deliberately
+leaves OMP/MKL/OPENBLAS unset (`parallelism/blas_threads.py`). The occupancy probe measured the
+listener at ~11 cores during the INITIAL output-layer pass with the variables unset and ~2 with
+them exported at 2 (the ten later passes run at ~2 either way). This isolates what the pin can
+and cannot bound: the same matmul loop, in a fresh interpreter, with and without the variables,
+after `torch.set_num_threads(2)`, reporting cpu-seconds per wall-second. It shows WHICH pool the
+variables reach; it does not identify which library the listener's burst runs in, and its loop
+counts are host-load-sensitive (one run 57 vs 79, a re-run 94 vs 85).
 
     /opt/miniforge3/envs/JuniperCascor1/bin/python util/ad-hoc/2026-09-10_torch_thread_pin_probe.py
 """

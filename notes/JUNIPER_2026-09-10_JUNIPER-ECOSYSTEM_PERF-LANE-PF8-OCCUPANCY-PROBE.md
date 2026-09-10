@@ -1,4 +1,4 @@
-# Perf lane — PF-8 located: one run is 4.5 worker-equivalents unpinned and 2.2 pinned, a second run costs +11.3%, and the experiment YAML's `runtime:` block binds nothing
+# Perf lane — PF-8 located: one run consumes 4.5 cores unpinned and 2.2 pinned, a second concurrent pinned run costs +9 to +13% per step, and the experiment YAML's `runtime:` block binds nothing
 
 Successor to §1.3 of the re-scope note
 ([`JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md`](JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md))
@@ -7,19 +7,23 @@ and to §1 items 2 and 3 of the 2026-09-09 handoff
 Item numbers refer to the P2 plan
 ([`JUNIPER_2026-09-02_JUNIPER-ECOSYSTEM_PERF-LANE-P2-PLAN.md`](JUNIPER_2026-09-02_JUNIPER-ECOSYSTEM_PERF-LANE-P2-PLAN.md))
 unless stated otherwise; "the sweep note" is
-[`JUNIPER_2026-09-02_JUNIPER-ECOSYSTEM_PF1-INSTRUMENT-RESOLUTION-AND-HEADROOM-SWEEP.md`](JUNIPER_2026-09-02_JUNIPER-ECOSYSTEM_PF1-INSTRUMENT-RESOLUTION-AND-HEADROOM-SWEEP.md).
+[`JUNIPER_2026-09-02_JUNIPER-ECOSYSTEM_PF1-INSTRUMENT-RESOLUTION-AND-HEADROOM-SWEEP.md`](JUNIPER_2026-09-02_JUNIPER-ECOSYSTEM_PF1-INSTRUMENT-RESOLUTION-AND-HEADROOM-SWEEP.md);
+"the re-scope note" and "the 2026-09-09 handoff" are the two documents linked above. Validated
+under the consensus procedure; the record and every correction it produced are in §9.
 
 **Four things happened, in the order §1.3 of the re-scope note required.** The micro timing
-reference was re-cut at the quietest condition this arc has seen (§1). The occupancy probe — step 1
+reference was re-cut at the best condition this arc has seen (§1). The occupancy probe — step 1
 of §1.3 — ran, twice: once under cascor's default thread budget and once under the four-variable
 budget `run_suite` pins for a parallel arm, and the two answers differ by 2× (§2). Because the
 default-budget figure landed inside the ~4–8 band, step 2 ran too: the two-arm concurrency pair,
 three parallel pairs bracketed by six sequential controls, all twelve cells at `step_count` 1770
-(§3). And the probe's most consequential finding is not a number but a wiring fact: the
-`runtime:` block every experiment YAML carries — `blas_threads`, `num_processes` — is validated by
-the driver, accepted by the service, and **read by nothing on either path**; what the cascor
-listener actually burns during output passes is NumPy's bundled OpenBLAS pool at the host's full
-width, which `torch.set_num_threads` cannot touch (§4).
+(§3). And the probe's most consequential finding is a wiring fact: the `runtime:` block every
+experiment YAML carries — `blas_threads`, `num_processes` — is validated by the driver, accepted by
+the service, and **read by nothing on either path**, which among other things makes the second
+matrix axis of the approved PF-3 suite a no-op (§4). What the cascor listener burns for the first
+seventeen seconds of every unpinned run is an ~11-core burst confined to the **initial** output
+pass, which the three BLAS environment variables remove and which `torch.set_num_threads` does not
+reach; which library carries it is narrowed, not identified (§4.2).
 
 ---
 
@@ -27,13 +31,13 @@ width, which `torch.set_num_threads` cannot touch (§4).
 
 | item | state after this document |
 |---|---|
-| **4.1 residue** (occupancy probe, S) | **DONE** — §2. One PF-1-shape run under the default budget occupies **4.52** sweep-worker equivalents during training (3 cells, 1.1% spread), **bimodal**: ~30% of the window at ~11, the rest at ~1.8. Under the pinned budget, **2.15**, never above the knee |
-| **4.2** (the two-arm pair) | **EXECUTED from `util/ad-hoc/`** — §3. Parallel / control mean step = **1.1125**, i.e. a second run costs **+11.3%** at the pinned budget; inside the sweep's 20.5% quiet band, outside today's within-arm spread. Advisory, as 4.3 said it could only ever be. Where a *committed* instrument would live (the §1.5 CI hazard) is still the owner's call, and is now **optional** — §6 |
-| **2.4 follow-up** (quiet re-cut `0003`) | **DONE at ambient, not idle** — §1. Cut at 1-minute load 5.3 → 7.1 against 9–10 for `0001` / `0002`; the micro tier does not see that difference (median ratio 0.99). `0003` is the cut to compare against |
-| **2.1** (PF-2's inert axis) | Untouched — owner. §4 adds one constraint: fix the thread budget explicitly in any re-scope, because the budget moves step time by a third and `step_count` not at all |
-| **2.2** (PF-3, ~6.7 h) | Untouched — no idle window (§5) |
-| `epochs_completed` exact-match (handoff §1 item 1, third bullet) | Untouched — owner. §1 adds evidence: in every pairwise comparison of the three micro cuts, the benchmarks outside ±20.5% are dominated by the candidate tier, whose epoch count is emergent |
-| **NEW owner question** | Should the launcher export the thread budget the `runtime:` block already declares? §4.3 — it changes what every existing YAML means, so it is a baseline-cutting decision, not a fix |
+| **4.1 residue** (occupancy probe, S) | **DONE** — §2. One PF-1-shape run under the default budget consumes **4.52** cores during training (cpu-seconds per wall-second; 3 cells, 1.1% spread), as one ~11-core block for the initial output pass followed by ~1.8 for the other ten passes. Under the pinned budget, **2.15**, never above 3.3. The sweep-worker unit those figures are read against is assumed, not measured (§2.1) |
+| **4.2** (the two-arm pair) | **EXECUTED from `util/ad-hoc/`** — §3. Parallel / control mean step = 1.1125, **+11.3% per step at the pinned budget; +8.5 to +12.7% leaving one of the three pairs out**; inside the sweep's 20.5% quiet band, outside today's within-arm spread by a margin one pair wide. Advisory, as 4.3 said it could only be. Where a *committed* instrument would live (the §1.5 CI hazard) is still the owner's call, and is now **optional** — §6 |
+| **2.4 follow-up** (quiet re-cut `0003`) | **DONE at ambient, not idle** — §1. Cut at 1-minute load 5.3 → 7.1 against 9–10 for `0001` / `0002`; the micro tier does not see that difference (median ratio 0.99). It does **not** supersede under the cascor procedure's quiet-host rule; it is recommended as the compare target as the best-conditioned cut |
+| **2.1** (PF-2's inert axis) | Untouched — owner. §4 adds one constraint: fix the thread budget explicitly in any re-scope, because the budget moves step time and `step_count` not at all |
+| **2.2** (PF-3, ~6.7 h, approval standing) | **BLOCKED — its second matrix axis is inert.** `pf3-cascor-pool-scaling.yaml` varies `runtime.num_processes: [1, 2, 4]`, which nothing reads (§4.1, §4.3), so as written the approved run is four pool sizes run three times each and cannot produce its speedup curve. Do not launch it until the `runtime:` block is ruled — §6 |
+| `epochs_completed` exact-match (2026-09-09 handoff §1 item 1, third bullet) | Untouched — owner. §1 adds evidence: in every pairwise comparison of the three micro cuts, the benchmarks outside ±20.5% are dominated by the candidate tier, whose epoch count is emergent |
+| **NEW owner question** | Implement or retire the `runtime:` block — §4.3, §6 item 4. It changes what every existing YAML means, so it is a baseline-cutting decision, not a fix |
 
 ---
 
@@ -42,7 +46,8 @@ width, which `torch.set_num_threads` cannot touch (§4).
 Cut 2026-09-10T09:35Z from the clean cascor primary at `a51b7c58` (`origin/main`; the holder check
 the 2026-09-09 handoff's §5 requires came back empty), with `util/ad-hoc/2026-09-08_loadavg_sampler.py`
 recording beside it (`~/.local/state/juniper-experiments/baselines/cascor-micro/loadavg-20260910.tsv`).
-77 tests passed in 39.5 s; 71 benchmarks saved, the same 71 as `0001` and `0002`; `machine_info.juniper`
+77 tests passed in 39.5 s (the pytest summary of the session's run; the saved JSON records only
+the 71 benchmark stats); 71 benchmarks saved, the same 71 as `0001` and `0002`; `machine_info.juniper`
 identical to both.
 
 | run | sha | 1m / 5m / 15m load at save | trace during the run (1-minute, 5 s samples) |
@@ -52,11 +57,12 @@ identical to both.
 | **`0003`** | **`a51b7c58`** | **7.07 / 5.80 / 5.89** | **5.17 → 7.31**, back to 5.48 within a minute of the end |
 
 **This is not a quiet host** — the sweep note's own quiet blocks ran at 5.9–18.6, and the
-1-minute figure at save is the benchmarks' own load on top of a ~5.3 ambient. It is the
-best-conditioned of the three cuts, and by the rule the cascor procedure states
-(`juniper-cascor/docs/testing/REFERENCE.md` § Micro timing reference: *"re-cutting on a quiet host
-supersedes it"*) it is the cut to compare against: `--benchmark-compare=0003`, never
-`--benchmark-compare-fail` (owner, item 2.5).
+1-minute figure at save is the benchmarks' own load on top of a ~5.3 ambient. The cascor
+procedure's rule (`juniper-cascor/docs/testing/REFERENCE.md` § Micro timing reference) is that
+*re-cutting on a quiet host* supersedes an earlier cut; `0003` is not that cut, and does not
+supersede under that rule. It is the best-conditioned of the three, and this document recommends
+it as the compare target on that basis, until a cut at a 1-minute load under 3 exists:
+`--benchmark-compare=0003`, never `--benchmark-compare-fail` (owner, item 2.5).
 
 **What the three cuts say about each other**, benchmark by benchmark from the saved JSON
 (`util/ad-hoc/2026-09-10_micro_reference_compare.py`; median of each benchmark's rounds; no re-run):
@@ -83,58 +89,86 @@ the owner's `epochs_completed` exact-match question.
 
 ## 2. Step 1 — the occupancy probe
 
-### 2.1 The instrument
+### 2.1 The instrument, its unit, and its limits
 
 `util/ad-hoc/2026-09-10_pf8_occupancy_sampler.py` watches the run root for run directories, reads
 each run's `juniper-cascor.pid` / `juniper-data.pid` once the launcher writes them, finds the driver
 by its `--run-dir` argument, and once a second walks `/proc/<pid>/stat` for the three process trees,
 writing cpu-seconds per role per interval: `cascor_uvicorn` (the listener), `cascor_forkserver`,
 `cascor_workers` (the forkserver's descendants — the candidate pool), `cascor_other`, `data`,
-`driver`, plus the whole host's busy cores from `/proc/stat` and the 1-minute load. Divided by wall
-seconds that is occupancy, and **1.0 is one sweep worker** (one saturated core, the unit §8.4 of the
-sweep note is drawn in). It is `/proc` deltas, not `ps %CPU`, which is a lifetime average.
-`util/ad-hoc/2026-09-10_pf8_occupancy_analyse.py` aligns the trace with each cell's drive window
-(the first and last `ts_unix` of the driver's `metrics_series.csv`) and reduces it.
-`tests/test_pf8_occupancy_probe.py` pins the arithmetic (26 tests, CI-wired).
+`driver`, plus the whole host's busy cores from `/proc/stat` and the 1-minute load. It is `/proc`
+deltas, not `ps %CPU`, which is a lifetime average; a process's `stat` aggregates all its threads,
+so a wide BLAS pool inside the listener is captured. `util/ad-hoc/2026-09-10_pf8_occupancy_analyse.py`
+aligns the trace with each cell's drive window (the first and last `ts_unix` of the driver's
+`metrics_series.csv`) and reduces it. `tests/test_pf8_occupancy_probe.py` pins the arithmetic
+(26 tests, CI-wired).
 
-What it cannot do: a pid that exits inside an interval takes its last partial second with it. The
-`vanished` column counts those (3–5 per cell, all at teardown, none inside a drive window), so the
-loss is bounded at under five cpu-seconds per run and falls outside the measured window anyway.
+**The unit.** Occupancy is cpu-seconds per wall-second — **cores consumed by this run**. §1.3 of
+the re-scope note equates one core with one sweep worker (a `sha256sum` process), and this
+document reads its figures on the sweep's axis in §2.2. That equation is an assumption the sweep
+note does not license: its §8.4 says the knee is *"located in worker count, not in cores"* and
+that converting one to the other *"would need per-core occupancy sampled during each cell, which
+this sweep does not collect"*. The sweep's abscissa is additional saturated workers on top of an
+ambient; the probe's is a run's own consumption; equating them assumes a run's consumption equals
+its externality on a neighbour — true of a steady CPU-bound worker, untested for a listener that
+runs one ~11-core burst and then idles at two. The measurement stands in cores; the sweep-axis
+reading is conditional on that assumption, and §3 measured the externality directly instead.
+
+**The window.** The driver's first-to-last poll trails the last training activity by four or five
+5-second polls of near-zero occupancy, so the same trace read over the active portion only gives
+**4.9** rather than 4.5 for the default budget (Lane B, §9). Neither reading crosses 6.
+
+**What it loses.** A pid that exits inside an interval takes its last partial second with it. The
+`vanished` column counts those: 3–5 per cell, all at the release of the candidate pool at the end
+of `fit()` — one or two ticks *after* the last active sample and *inside* the analyser's window by
+that margin — so the lost tails belong to idle workers and are bounded at under five cpu-seconds
+per run.
 
 The workload is PF-1's cell shape exactly — `spiral-smoke.yaml` at `(10, 10)` / 4000 / 4000
 (`util/ad-hoc/2026-09-10_pf8_occupancy_probe_suite.yaml`, three repeats as a matrix axis) — so that
 `compare_baseline` can say whether the probe measured the baseline's workload. It did:
 **`PASS`, `step_count` 1770 / 1770 against `pf1-2026-09-04b`** (speed reported −21.1%, not gated).
 
-### 2.2 Under cascor's default thread budget: 4.52, and bimodal
+### 2.2 Under cascor's default thread budget: 4.52, as one block and a floor
 
 Suite `pf8-occupancy-probe-20260910T093641Z`, no thread variable set (the manifests record all four
-as `null`), so the listener ran with the runtime-default BLAS pool and the candidate pool with
-cascor's own default of `min(candidate_pool_size 4, cores) − 1 = 3` processes.
+as `null`), so the listener ran with the runtime-default pools and the candidate pool with cascor's
+own default of `min(candidate_pool_size 4, cores) − 1 = 3` processes.
 
-| cell | `step_count` | mean step ms | `drive` s | cascor tree, worker-eq | p95 / max (1 s) | share of window ≥ 6 / ≥ 8 | occupancy ≥ 6 / < 6 | ambient cores | load 1m |
+| cell | `step_count` | mean step ms | `drive` s | cascor tree, cores | p95 / max (1 s) | share of window ≥ 6 / ≥ 8 | occupancy ≥ 6 / < 6 | ambient cores | load 1m |
 |---|---|---|---|---|---|---|---|---|---|
 | c000 | 1770 | 28.36 | 55.20 | **4.524** | 11.57 / 12.38 | 0.31 / 0.31 | 10.64 / 1.80 | 3.63 | 7.54 |
 | c001 | 1770 | 28.39 | 55.19 | **4.541** | 12.61 / 12.78 | 0.29 / 0.27 | 11.42 / 1.75 | 4.21 | 8.76 |
 | c002 | 1770 | 27.89 | 55.21 | **4.490** | 12.33 / 12.66 | 0.29 / 0.27 | 11.20 / 1.77 | 3.71 | 8.93 |
 
-**Mean 4.52 worker-equivalents, spread 1.1%** across three cells — the occupancy of this workload
-is as reproducible as its step count. **But the mean is a bimodal trace's mean.** About 30% of each
-training window sits at 10.6–11.4 cores, all of it in the *listener* process (the forkserver's
-children never exceed ~2 in total), and the remaining 70% sits at ~1.8. The 1-second p95 is
-11.6–12.6. §4 says what the high mode is.
+**Mean 4.52 cores, spread 1.1%** across three cells — the occupancy of this workload is as
+reproducible as its step count. **But the mean is the mean of one block and a floor, not of a
+scattered mixture.** In every cell the high mode is a single contiguous run of samples at the start
+of the window — indices 0/1 to 14/16 of 52, about seventeen seconds — during which no candidate
+worker is alive and `current_hidden_units` is 0: it is the **initial output-layer pass**, 160 of
+the 1770 steps, at 95–130 ms per step (per-poll `step_sum / step_count` from the series). The
+moment the first candidate pool appears (three forkserver children) the listener drops to ≤ 2
+cores and stays there through the remaining ten output passes, which run at ~20 ms per step; the
+forkserver's children peak at 2.7 cores in any second and the `data` and `driver` trees never
+exceed 0.01. So the "bimodality" is a phase structure: one pass at ~11 cores, ten at ~2.
 
-Read on the sweep's axis, 4.52 is below the 6-worker point, where §8.4 measured +19.9% inside a
-20.5% band — "below what this host can measure", not "free" — and it is inside the ~4–8 band §1.3
-of the re-scope note set for running step 2. That is why §3 exists.
+Read on the sweep's axis under §2.1's assumption, 4.52 is below the 6-worker point, where §8.4 of
+the sweep note measured +19.9% inside a 20.5% band — "below what this host can measure", not
+"free" — and inside the ~4–8 band §1.3 of the re-scope note set for running step 2. That test
+was applied as written, and §3 exists because it passed. Two things must be said beside it. A load
+of ~11 for a third of the window and ~1.8 for the rest, read against a curve that rises from +19.9%
+at 6 to +86% at 8, is not the same as a steady 4.5: for its first seventeen seconds a second
+start-aligned unpinned run would put about 22 cores on 16, past the plateau, and for the rest it
+would sit far below the knee. And §1.1 of the same re-scope note had already said that a run at
+≤ 6 workers adds nothing the sweep did not know — the pair's result in §3 agrees with §1.1.
 
-### 2.3 Under the budget `run_suite` pins for a parallel arm: 2.15, and a third faster
+### 2.3 Under the budget `run_suite` pins for a parallel arm: 2.15, and the first pass 8× faster
 
 The same suite file with the four variables `thread_budget_env("cascor", 2)` would export on this
 host — `OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 CASCOR_NUM_PROCESSES=4` — set in the
 shell (suite `pf8-occupancy-probe-20260910T094028Z`; the manifests record all four).
 
-| cell | `step_count` | mean step ms | `drive` s | cascor tree, worker-eq | p95 / max | share ≥ 6 | ambient cores | load 1m |
+| cell | `step_count` | mean step ms | `drive` s | cascor tree, cores | p95 / max | share ≥ 6 | ambient cores | load 1m |
 |---|---|---|---|---|---|---|---|---|
 | c000 | 1770 | 18.44 | 35.12 | **2.150** | 3.03 / 3.11 | 0 | 4.40 | 6.63 |
 | c001 | 1770 | 18.48 | 35.16 | **2.130** | 2.96 / 3.10 | 0 | 4.65 | 8.01 |
@@ -142,26 +176,30 @@ shell (suite `pf8-occupancy-probe-20260910T094028Z`; the manifests record all fo
 
 Three things, each with its own weight:
 
-1. **2.15 worker-equivalents, never above 3.3 in any second.** The bimodality is gone: with the
-   listener's pool capped, the run is a near-constant load of about two cores. Below the band, so
-   by §1.3's rule alone the pair would *not* have been worth running at this budget.
+1. **2.15 cores, never above 3.3 in any second.** The block is gone: with the pools capped, the run
+   is a near-constant load of about two cores from its first sample. Below the band, so by §1.3's
+   rule alone the pair would *not* have been worth running at this budget (§3.1).
 2. **The pinned run is faster — mean step 18.4–18.9 ms against 27.9–28.4, i.e. 34% faster per
-   step, `drive` 35 s against 55.** Same day, same workload, n = 3 against 3, the direction the same
-   in every cell, and the gap (34%) outside both the 20.5% quiet band and the 13% between-run
-   drift. Report-only, as all speed is (decision 2 of §7 of the sweep note); but it means every
-   service-path timing this lane has recorded, the PF-1 baseline included, was taken with the
-   listener oversubscribed.
-3. **`step_count` is 1770 in all six cells.** The thread budget moves the step *time* by a third
-   and the work count by nothing — exactly the split the gate was designed around. And
-   `compare_baseline` **REFUSED** this suite against `pf1-2026-09-04b` (exit 2: *"host identity
-   differs from the baseline (thread_budget)"*), which is the identity precondition doing precisely
-   what §2.2 of the P2 plan says it must: a pinned run is a different regime, not a 48% speed-up.
+   step, `drive` 35 s against 55 — and the gap is one phase.** The initial output pass runs at
+   12–14 ms per step pinned against 95–130 unpinned, about **8×**, and those 160 steps — 9% of
+   1770 — carry 83% of the step-sum difference. Over the other 1610 steps the arms differ by
+   **+9.2%** (default slower), inside both the 20.5% quiet band and the 13% between-run drift
+   (recomputed from all six cells' series during validation, §9). Same day, same workload, n = 3
+   against 3, the direction the same in every cell. Report-only, as all speed is (decision 2 of §7
+   of the sweep note). What it says about the lane's historical figures is narrower than "34%
+   inflated": every service-path run's *initial pass* was oversubscribed about eightfold, and its
+   later passes were within a tenth of the pinned rate.
+3. **`step_count` is 1770 in all six cells.** The thread budget moves the step *time* and the work
+   count by nothing — exactly the split the gate was designed around. And `compare_baseline`
+   **REFUSED** this suite against `pf1-2026-09-04b` (exit 2: *"host identity differs from the
+   baseline (thread_budget)"*), which is the identity precondition doing precisely what §2.2 of the
+   P2 plan says it must: a pinned run is a different regime, not a 48% speed-up.
 
 ---
 
 ## 3. Step 2 — the two-run pair
 
-### 3.1 Design
+### 3.1 Design, and what authorised it
 
 Per §1.3–§1.4 of the re-scope note, executed by `util/ad-hoc/2026-09-10_pf8_pair_driver.bash`
 (one background launch, one log, the load average around every suite):
@@ -179,27 +217,47 @@ Per §1.3–§1.4 of the re-scope note, executed by `util/ad-hoc/2026-09-10_pf8_
   `drive`. The sampler ran throughout (`suites/pf8-occupancy-trace-20260910.tsv`; a copy as
   `occupancy.tsv` in each suite directory; the reduced pair in `suites/pf8-pair-analysis-20260910.json`).
 
+Two departures from §1.3, stated rather than dropped. It asked for cells of **≥ 60 s**; today's
+4000-epoch pair ran 35–45 s of drive (faster than when it was calibrated), no cell met it, and the
+reason for it — scrapeability with the Grafana bridge on — did not apply because the bridge was
+off; `step_sum` is fully resolved at these lengths (§2 of the sweep note). And the band test that
+authorised step 2 was applied to the **default**-budget figure (4.52), while the only arm a
+parallel suite can run is the **pinned** one, whose occupancy (2.15, §2.3) sits below the band;
+§1.1 of the re-scope note had already said a run at ≤ 6 adds nothing. So the pair's value is the
+direct measurement it produced — start alignment, the idle data services, and the cost — not the
+band logic that scheduled it.
+
 ### 3.2 Result
 
-| arm | cells | `step_count` | mean step ms | min – max | within-arm spread | cascor tree per cell, worker-eq | thread env |
+| arm | cells | `step_count` | mean step ms | min – max | within-arm spread | cascor tree per cell, cores | thread env |
 |---|---|---|---|---|---|---|---|
 | parallel (3 pairs) | 6 | 1770 in all | **20.72** | 20.15 – 21.91 | 8.7% | 2.02 | pinned, identical to control |
 | control (3 before + 3 after) | 6 | 1770 in all | **18.63** | 18.30 – 19.15 | 4.7% | 2.11 | pinned |
 
-**Identity holds before the comparison is read**: same four-variable budget in all twelve manifests,
-same `step_count` in all twelve cells — the two checks `compare_baseline` would apply, applied.
+**Identity holds before the comparison is read**: the same four-variable budget in all twelve
+manifests and the same `step_count` in all twelve cells — two of the checks `compare_baseline`
+applies; its others (workload fingerprint, a single completion reason, work countable) hold here
+too, since every cell `early_stopped` and the suites differ only in `execution` and the
+description.
 
 **Parallel / control = 1.1125: a second concurrent run costs +11.3% per step**, at this budget, on
 this day. The two arms do not overlap (the slowest control cell, 19.15 ms, is below the fastest
-parallel cell, 20.15 ms), and the two runs together put **4.01–4.06** worker-equivalents on the host
-— the pair total the parallel arm actually imposed, against the 4.52 a *single* unpinned run
-imposes.
+parallel cell, 20.15 ms), and the two runs together put **4.01–4.06** cores on the host — the pair
+total the parallel arm actually imposed, against the 4.52 a *single* unpinned run imposes.
+
+**The parallel arm has three effective observations, not six.** Its six cells are three
+simultaneous pairs of an identical seed-fixed config: within-pair spread 0.2–1.3%, between-pair
+7.9%. Leaving one pair out, the ratio reads **+8.5% / +12.7% / +12.6%**; an exact one-sided
+permutation of the three pair means against the six controls gives p = 1/84. The honest statement
+is **+9 to +13% per step over three pairs**, with +11.3% the point estimate. The control arm's
+before and after halves differ by 0.26% (18.60 vs 18.65 ms), so drift did not produce it.
 
 **Start alignment, which the re-scope note left as an assumption, is measured**: the two cells'
 drive windows began 0.068 s, 0.046 s and 0.003 s apart and shared 40.1 s in every pair (100% of
 both windows in two pairs; 89% of the longer one in the first, whose cell B ran one poll longer).
 The parallel executor submits both cells back-to-back and the port lock's `mkdir` is the only
-serialisation point; that is enough.
+serialisation point; that is enough. Each cell's own juniper-data instance read ≤ 0.01 cores
+throughout training.
 
 ### 3.3 Two readings, both true
 
@@ -208,97 +266,132 @@ serialisation point; that is enough.
   can measure"*): +11.3% is inside the band. Across sessions, days and ambient conditions, this
   host cannot distinguish a second run from drift.
 - **By today's brackets**: the controls that bracket the parallel runs spread 4.7%, the parallel
-  cells 8.7%, and +11.3% clears both with the arms disjoint. On the day, with n = 6 against 6, the
-  cost is resolved and real.
+  cells 8.7%, the arms are disjoint, and the point estimate clears both — but the leave-one-pair-out
+  low end (+8.5%) sits just under the 8.7% within-arm spread, so on the day the cost is resolved
+  by three pairs and would not be by two.
 
 PF-8 was never going to change a gate (item 4.3: the work half is settled, speed is ungated), so the
 finding is what §1.3 said it would be — **advisory**: two pinned PF-1-shape runs may share this
 host at a per-step cost of about a tenth, which is below the band the lane treats as noise between
 sessions. Nothing here supports running two *unpinned* runs concurrently: each would burst to ~11
-cores for a third of its window (§2.2), and two such bursts overlapping is 22 cores on 16 — the
-plateau of §8.4 or past it — but that configuration was not run, because the parallel arm cannot be
-unpinned (`run_suite` always exports the budget in parallel mode), and the note does not guess.
+cores for its first seventeen seconds, the start offsets above say those bursts would coincide,
+and two of them is ~22 cores on 16 — the plateau of §8.4 or past it. That configuration was not
+run, because the parallel arm cannot be unpinned (`run_suite` always exports the budget in parallel
+mode), and this document does not guess its number.
 
 ### 3.4 Host condition
 
 Ambient (host busy cores minus this run's own trees) was 3.6–4.2 during the default probe,
-4.4–5.7 during the controls, and about 6 during the parallel runs — where the *partner* run is
-inside the ambient figure, so the true ambient there is ~4. Between cells the host ran 4.8 busy
-cores at a 1-minute load of 6.6 (223 host-only samples). The sweep's quiet blocks ran at loads of
+4.0–5.7 during the six control cells, and about 6 during the parallel runs — where the *partner*
+run is inside the ambient figure, so the true ambient there is ~4, if anything quieter than the
+controls (which makes the pair's estimate conservative). Between cells the host ran 4.8 busy cores
+at a 1-minute load of 6.6 (223 host-only samples). The sweep's quiet blocks ran at loads of
 5.9–18.6. This was ambient, not idle, throughout; the load was recorded beside every measurement.
 
 ---
 
-## 4. Why the listener burns eleven cores, and why nothing in the YAML can stop it
+## 4. Why nothing in the YAML can bound the listener, and what the first-pass burst is and is not
 
 ### 4.1 The `runtime:` block is read by nothing
 
 `spiral-smoke.yaml` — the base config of PF-1, PF-2, PF-3 and both probes — declares
-`runtime: {blas_threads: 2}`, and the P1 design and the re-scope note both describe the workload as
-*"a candidate pool of 4 with `runtime.blas_threads: 2`"*. Traced through every consumer on
-2026-09-10:
+`runtime: {blas_threads: 2}`, and §1.1 of the re-scope note
+([`JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md`](JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md))
+describes the workload as *"a candidate pool of 4 with `runtime.blas_threads: 2`"* (an earlier
+draft of this paragraph attributed the phrase to the P1 design as well; it is not there — Lane A,
+§9). `pf3-cascor-pool-scaling.yaml` goes further and uses `runtime.num_processes: [1, 2, 4]` as
+the second axis of its 4×3 matrix. Traced through every consumer on 2026-09-10:
 
 | layer | what it does with `runtime:` | where |
 |---|---|---|
 | driver `run_experiment.py` | validates the key set (`RUNTIME_KEYS = {num_processes, blas_threads, eval_metrics_enabled}`) and **reads none of them** | `util/experiments/run_experiment.py:171`, `:607-609`; no other reference in the file |
+| suite runner `run_suite.py` | writes dotted overrides into the cell YAML; its parallel-mode budget is hard-coded in `thread_budget_env`, never read from the block | `util/experiments/run_suite.py:306`, `:352-359` |
 | launcher `experiment_stack.bash` | exports no thread variable; the cascor bring-up line carries `JUNIPER_CASCOR_CONFIG_FILE` and the run's provenance variables only | `util/experiment_stack.bash:647` (the announced command), `:633` |
 | cascor service | accepts `runtime` as a known top-level block and projects **only `service:`** into Settings — *"the other blocks belong to the driver / launcher layers and are deliberately ignored here"* | `juniper-cascor/src/api/settings.py:142-144` |
 | cascor direct CLI | reads `dataset.params` and `training.params` from the file, nothing else | `juniper-cascor/src/main.py:305-320` |
-| cascor thread policy | *"Default: do nothing, leaving the runtime's own choice"*; `JUNIPER_CASCOR_BLAS_THREADS=<n>` opts in, and the launcher never sets it | `juniper-cascor/src/parallelism/blas_threads.py` module docstring |
+| cascor thread policy | *"Default: do nothing, leaving the runtime's own choice"*; `JUNIPER_CASCOR_BLAS_THREADS=<n>` opts in (`api/__init__.py:14-16`), and the launcher never sets it | `juniper-cascor/src/parallelism/blas_threads.py` module docstring |
 
-So `runtime.blas_threads: 2` and `runtime.num_processes` are **decorative on both paths**: a
-documented intent (`settings.py` calls the block "process-env territory") that no layer ever
-implemented. The manifests are honest about it — `environment.thread_env` records all four
-variables as `null` for every unpinned run — but nothing warns that the YAML asked for something
-the run did not get.
+So `runtime.blas_threads`, `runtime.num_processes` and `runtime.eval_metrics_enabled` are
+**decorative on both paths**: a documented intent (`settings.py` calls the block "process-env
+territory") that no layer ever implemented. The manifests are honest about it —
+`environment.thread_env` records all four variables as `null` for every unpinned run, including
+all 27 headroom-sweep runs, the five cells of `pf1-cascor-spiral-repeats-20260903T040803Z` and the
+seven of the PF-2 probe — but nothing warns that the YAML asked for something the run did not get.
 
-### 4.2 What the listener's high mode is: NumPy's OpenBLAS, not torch
+### 4.2 What the first-pass burst is, and what the evidence does and does not identify
 
-cascor pins its own torch pools: the parent to `max(2, 2 × worker_thread_count)` threads
-(`cascade_correlation.py:1179-1180`) and each candidate worker to `worker_thread_count`
-(`:4152-4153`). Those pins hold — the probe's candidate workers never exceeded ~2 cores in total.
-The listener's 11-core bursts are something the pins do not reach. Isolated in a fresh interpreter
-per case (`util/ad-hoc/2026-09-10_torch_thread_pin_probe.py`, 1024² float32 matmuls for 2 s,
-cpu-seconds per wall-second from `/proc/self/stat`, JuniperCascor1: torch 2.11.0+cu130 on MKL
-2024.2, numpy 2.4.4 on its bundled `scipy-openblas64`):
+What is established:
 
-| case | `torch.get_num_threads()` | cores consumed |
-|---|---|---|
-| torch, variables unset, no pin | 8 | 6.7 |
-| torch, variables unset, `torch.set_num_threads(2)` | 2 | **1.9** |
-| torch, `OMP/MKL/OPENBLAS=2` | 2 | 1.9 |
-| **NumPy, variables unset, no pin** | 8 | **11.5** |
-| **NumPy, variables unset, `torch.set_num_threads(2)`** | 2 | **10.9** |
-| NumPy, `OMP/MKL/OPENBLAS=2` | 2 | **2.0** |
+1. **It is confined to the initial output-layer pass** (§2.2): `current_hidden_units` 0, no
+   candidate pool alive, the listener alone at 10.6–11.4 cores, 95–130 ms per step; the ten later
+   output passes in the same process, same environment, run at ~20 ms per step with the listener
+   at ≤ 2 cores. cascor's own log for a default cell is silent for exactly that block, between
+   *"Network created"* and the first *"Starting training of Candidate Units"*.
+2. **The three BLAS variables remove it** (§2.3): with `OMP/MKL/OPENBLAS_NUM_THREADS=2` in the
+   process environment the first pass runs at 12–14 ms per step and the listener never exceeds
+   ~2 cores.
+3. **cascor's own torch pins are in place before it**: the parent pins `torch.set_num_threads(max(2,
+   2 × worker_thread_count))` = 2 in `_init_multiprocessing`, called from the constructor
+   (`cascade_correlation.py:617` → `:1179-1180`; `worker_thread_count` defaults to 1), and each
+   candidate worker pins itself to 1 (`:4152-4153`) — consistent with the pool's children never
+   exceeding 2.7 cores in total.
+4. **Direct probes in a fresh interpreter** (`util/ad-hoc/2026-09-10_torch_thread_pin_probe.py`,
+   1024² float32 matmuls for 2 s, cpu-seconds per wall-second from `/proc/self/stat`,
+   JuniperCascor1: torch 2.11.0+cu130 on MKL 2024.2, numpy 2.4.4 on its bundled `scipy-openblas64`):
 
-`torch.set_num_threads(2)` bounds torch's own operators to two cores and leaves NumPy's OpenBLAS
-pool at the host's full width; only the environment variable — read once, when the library loads —
-reaches it. The listener's measured high mode (10.6–11.4) matches the NumPy figure, and pinning the
-three variables at 2 removed it entirely (§2.3). And the NumPy loop at 16 threads completed
-**fewer** matmuls in its two seconds (57) than at two threads (79): on a host with 8 physical
-cores, hyper-threading, and a 4–5-core ambient load, a 16-thread OpenBLAS pool is oversubscribed
-before the run's own candidate pool is counted — which is the 34% of §2.3.
+   | case | `torch.get_num_threads()` | cores consumed |
+   |---|---|---|
+   | torch, variables unset, no pin | 8 | 6.7 |
+   | torch, variables unset, `torch.set_num_threads(2)` | 2 | **1.9** |
+   | torch, `OMP/MKL/OPENBLAS=2` | 2 | 1.9 |
+   | **NumPy, variables unset, no pin** | 8 | **11.5** |
+   | **NumPy, variables unset, `torch.set_num_threads(2)`** | 2 | **10.9** |
+   | NumPy, `OMP/MKL/OPENBLAS=2` | 2 | **2.0** |
 
-This is attribution by magnitude and by a direct probe of the libraries, not by profiling the
-listener's stack; which NumPy calls in cascor's output-layer path carry the work is not identified
-here.
+   and, at the workload's real shape — a 2→2 linear layer trained over 320 rows — unpinned torch
+   burns **7.5 cores for no wall-time gain** (Lane B, §9; the OpenMP pool spins on ops too small
+   to parallelise).
+
+What follows, and only this: `torch.set_num_threads(2)` bounds torch's own operators and leaves
+NumPy's OpenBLAS pool at the runtime default — an environment variable read once at library load
+is the only thing that reaches it — so **the three variables, and only they, bound the burst**.
+Its magnitude (10.6–11.4) sits between an unpinned torch loop at the real shape (7.5) and an
+unpinned NumPy matmul (11–13), so the probes do not discriminate the library. If the parent pin is
+effective inside the listener during the first pass — and it is applied before it — torch is the
+less likely source and NumPy's OpenBLAS pool the leading candidate. That is the extent of the
+attribution: **not identified** are the call site, why only the initial pass (the same
+`train_output_layer` runs ten more times at 2 cores), and whether `torch.get_num_threads()` reads 2
+inside the listener while the burst runs. The discriminating test is a profile of the listener's
+first pass, or reading both pool sizes from inside the process; neither was done.
+
+**The probe does not settle throughput either**: in this session's run the 16-thread NumPy loop
+completed fewer matmuls in its two seconds (57) than the 2-thread one (79), but a re-run during
+validation reversed that order (94 against 85) while reproducing the core figures (12.8 / 12.2 /
+2.0). The single-process probe is a load-sensitive instrument for *which pool* is busy, not for
+how fast it is; the 34% of §2.3 rests on the six suite cells, and "oversubscribed on 8 physical
+cores with a 4–5-core ambient" is the plausible mechanism for it, not a measured one.
 
 ### 4.3 What follows, and what is deliberately not done
 
 - **Every service-path figure in this lane — PF-1's calibration, its five-repeat baseline
   `pf1-2026-09-04b`, the 21-cell headroom sweep, the PF-2 probe — was taken with the listener's
-  OpenBLAS pool at 16 threads.** They remain valid measurements of that regime, and their
-  `step_count`s are untouched (1770 in all fifteen cells of this session, pinned or not). Their
-  *speeds* describe an oversubscribed listener.
-- **Fixing it is an owner decision, not a bug fix.** The obvious change — the launcher exporting
-  `JUNIPER_CASCOR_BLAS_THREADS` (or the three variables) from `runtime.blas_threads` and
+  pools at the runtime default.** Their `step_count`s are untouched (1770 in all fifteen probe
+  cells of this session, pinned or not). Their *speeds* carry an initial pass that ran about 8×
+  slower than pinned and later passes within a tenth of it (§2.3).
+- **PF-3 as written cannot produce its deliverable.** Its second matrix axis,
+  `runtime.num_processes: [1, 2, 4]`, is inert (§4.1), so the approved ~6.7 h run would be four
+  pool sizes run three times each with no process-count variation at all. It must not be launched
+  until the block is ruled; if the block is implemented, `CASCOR_NUM_PROCESSES` exported per cell
+  from `runtime.num_processes` is exactly the export PF-3 needs.
+- **Fixing the block is an owner decision, not a bug fix.** The obvious change — the launcher
+  exporting `JUNIPER_CASCOR_BLAS_THREADS` (or the three variables) from `runtime.blas_threads` and
   `CASCOR_NUM_PROCESSES` from `runtime.num_processes` — would make every existing experiment YAML
   mean something different from what it has meant in every run to date, change the speed regime of
   every suite, and require a new run-tier baseline (`compare_baseline` would correctly refuse the
   old one on `thread_budget`). It touches the launcher, the driver's environment capture, cascor's
   policy module, and every document that quotes a service-path timing. Nothing here does it.
 - The candidate pool's own budget is a second knob with a measured cost: cascor#531 found a
-  BLAS cap *slowed* the candidate phase 1.52× and changed its epoch count. The output-layer phase
+  BLAS cap *slowed* the candidate phase 1.52× and changed its epoch count. The initial output pass
   measured here moves the other way. Any budget decision needs both phases measured under it; this
   document measured one.
 
@@ -320,12 +413,12 @@ cascor stack on `:8202`. Ambient, not idle — the sweep's own standard (§8.2 o
 
 ---
 
-## 6. Owner decisions — three carried, one new
+## 6. Owner decisions — three carried, two new
 
 1. **PF-2's axis** (2026-09-09 handoff §1 item 1, first bullet) — unchanged. One constraint added
    by §2.3: whatever the scenario becomes, its suite must fix the thread budget explicitly, because
-   the budget moves step time by a third and the work count not at all; a scenario that inherits
-   "whatever the shell had" measures the shell.
+   the budget moves step time and the work count not at all; a scenario that inherits "whatever the
+   shell had" measures the shell.
 2. **Item 4.2's CI hazard** (second bullet) — now **optional**. The pair has run from `util/ad-hoc/`
    (the headroom sweep's precedent) and PF-8's advisory answer is on record. A committed
    `suites/perf/` pair is needed only if PF-8 is to be re-run routinely; if it is, the recommended
@@ -338,23 +431,34 @@ cascor stack on `:8202`. Ambient, not idle — the sweep's own standard (§8.2 o
    meaning changes) or retire it (drop the keys from the schema so a config cannot ask for what it
    will not get). Either is a decision about what every experiment config *means*; §4.3 says why it
    is not taken here.
+5. **NEW — PF-3 (item 2.2) is blocked on that decision.** Its `runtime.num_processes` axis is a
+   no-op today; the approved ~6.7 h of host time would measure nothing on that axis. Rule item 4
+   first, then re-express or re-approve PF-3.
 
 ---
 
 ## 7. What this document does not settle
 
-- **n is 3 per probe budget and 6 per arm, on one day.** The 1.1% / 1.8% occupancy spreads and the
-  disjoint arms are strong for one day; §3.3's second reading does not survive a different day's
-  ambient without repeats, and says so.
+- **n is 3 per probe budget and three effective pairs against six controls, on one day.** The
+  1.1% / 1.8% occupancy spreads and the disjoint arms are strong for one day; the leave-one-pair-out
+  range (+8.5 to +12.7%) is the honest width, and §3.3's second reading would not survive a
+  different day's ambient without repeats.
 - **The pair ran only at the pinned budget.** Two unpinned runs — the configuration an operator who
-  launches two ordinary PF-1 suites would actually create — were not measured, and §3.3 says what
-  the occupancy trace predicts for them without claiming it.
-- **The NumPy attribution is by magnitude and library probe**, not by a profile of the listener.
+  launches two ordinary PF-1 suites would actually create — were not measured; §3.3 says what the
+  phase structure and the start alignment predict for them without claiming it.
+- **The first-pass burst is narrowed, not attributed.** NumPy's OpenBLAS pool is the leading
+  candidate by the pin logic and the magnitude match; no profile, no call site, and no in-process
+  reading of either pool's size (§4.2).
+- **The sweep-worker unit is assumed.** A run's cores are not the sweep's synthetic workers (§2.1);
+  the pair measured the externality directly, and that measurement is the one to quote.
+- **The occupancy figure depends on the window definition by ~8%** (4.5 first-to-last poll, 4.9
+  active portion); neither crosses the knee.
 - **`0003` is ambient, not quiet.** A cut at a 1-minute load under 3 has still never been taken on
-  this host.
-- **The 34% pinned-vs-default speed difference is a between-suite comparison** taken forty minutes
-  apart under similar ambient; it is consistent in all six cells and far outside the bands, but it
-  was not interleaved cell-by-cell.
+  this host, and `0003` does not supersede under the cascor procedure's quiet-host rule.
+- **The 34% pinned-vs-default difference is a between-suite comparison** taken forty minutes apart
+  under similar ambient, not interleaved cell-by-cell; and it is 83% one phase (§2.3).
+- **§1.3's ≥ 60 s cell length was not met** (35–45 s); the bridge was off, so the reason for it did
+  not apply, but it is a departure from the design and is recorded as one.
 
 ---
 
@@ -396,3 +500,55 @@ Retained on this host, untracked: `~/.local/state/juniper-experiments/suites/pf8
 `suites/pf8-two-run-parallel-20260910T{094518,094629,094736}Z/`, `suites/pf8-occupancy-trace-20260910.tsv`,
 `suites/pf8-pair-analysis-20260910.json`, `suites/pf8-pair-driver-20260910T094518Z.log`, and
 `baselines/cascor-micro/` run `0003` with `loadavg-20260910.tsv`.
+
+---
+
+## 9. Consensus validation
+
+Validated under
+[`JUNIPER_2026-08-30_JUNIPER-ECOSYSTEM_INDEPENDENT-AGENT-CONSENSUS-PROCEDURE.md`](JUNIPER_2026-08-30_JUNIPER-ECOSYSTEM_INDEPENDENT-AGENT-CONSENSUS-PROCEDURE.md).
+Sized as a document of record closing items 4.1 and 4.2 with a novel instrument, universal-shaped
+claims ("read by nothing on either path"), and blocks of n ≤ 3: **one Lane A** (artifact-first
+execution of every §8 command and every table, plus an independent per-role recomputation from the
+raw trace as a check on the reducer) and **one Lane B** (briefed to refute the four headline
+claims, to hunt any consumer of the `runtime:` block, and to check amputation against §1.3 of the
+re-scope note and the 2026-09-09 handoff). Both ran against the tree frozen at `84143b1e`; the
+document was edited only after both had reported. Round 2 re-checked the corrections below on the
+corrected tree.
+
+Verdicts, round 1: **A — PASS WITH FINDINGS** (48 claims, 45 exact matches, three corrections);
+**B — NOT SAFE AS WRITTEN, SAFE WITH FIXES** (claim 1 SURVIVES and is understated; claim 2
+WEAKENED; claim 3 SURVIVES, WEAKENED; claim 4 REFUTED as stated, PLAUSIBLE-UNPROVEN at its core).
+
+| # | finding | lane | disposition |
+|---|---|---|---|
+| 1 | control-arm ambient stated 4.4–5.7; the six cells span 4.0–5.7 | A | fixed, §3.4 |
+| 2 | "the P1 design and the re-scope note both describe" the workload with `runtime.blas_threads: 2`; only the re-scope note does | A | fixed, §4.1 |
+| 3 | the probe's loop count (57 vs 79) reversed on a re-run (94 vs 85) | A, B | fixed — §4.2 now says the probe does not settle throughput |
+| 4 | the "sweep-worker" unit is disclaimed by §8.4 of the sweep note, which locates the knee in worker count, not cores | B (HIGH) | fixed — §2.1 states the assumption; §0 and §7 say the pair measured the externality directly |
+| 5 | the high mode is one contiguous block — the initial output pass — read as a mean against a convex curve | B (HIGH) | fixed — §2.2 rewritten around the phase structure; the read-off qualified; the unpinned-pair prediction now uses the measured start alignment |
+| 6 | the attribution "NumPy's OpenBLAS during output passes" is refuted as stated: ten of eleven passes run at 2 cores, and unpinned torch at the real op shape burns 7.5 cores | B (HIGH) | fixed — §4.2 rewritten: confined to the initial pass; removed by the three variables; library narrowed, not identified; the lead, §0, the CHANGELOG, the P2 plan and the reference rows re-worded |
+| 7 | the 34% is 83% one phase (the first 160 steps at 8×); the other 91% of steps differ by +9.2%, inside both bands | B (HIGH) | fixed — §2.3 item 2 and §4.3 localise it |
+| 8 | PF-3's second matrix axis is `runtime.num_processes` and is therefore inert; the approved ~6.7 h run cannot produce its deliverable | B (HIGH) | fixed — §0 row 2.2, §4.3, §6 item 5; P2 plan row 2.2 |
+| 9 | "none inside a drive window" — the vanished pids are inside the analyser's window in every cell | B (MED) | fixed, §2.1 |
+| 10 | `0003` declared superseding under a quiet-host rule whose precondition it fails | B (MED) | fixed — §0, §1, §7: recommended as the compare target, not superseding |
+| 11 | "n = 6 against 6" overstates independence: three simultaneous pairs; leave-one-out +8.5 / +12.7 / +12.6% | B (MED) | fixed — §3.2, §3.3, §7 and the title carry the range |
+| 12 | §1.3's ≥ 60 s cell control dropped silently | B (MED) | fixed, §3.1 and §7 |
+| 13 | the band gate was applied to the default figure while the pinned arm sits outside the band, and §1.1 of the re-scope note had predicted the outcome | B (MED) | fixed, §2.2 and §3.1 |
+| 14 | the CHANGELOG entry names two changed documents by role and omits `AGENTS.md` | B (MED) | fixed in `CHANGELOG.md` |
+| 15 | "the two checks `compare_baseline` would apply" understates the comparator | B (MED) | fixed, §3.2 |
+| 16 | occupancy is window-definition dependent (4.5 vs 4.9); "never exceed ~2" (max 2.7); "16 threads" inferred, not read | B (LOW) | fixed, §2.1, §2.2, §4.2 |
+| 17 | the procedure's §7 record (lanes, entry points, iterations, dissent) was absent | B (LOW) | this section |
+
+**Attacks that failed, recorded so they are not re-run**: mean-of-means vs pooled step time
+(identical at equal step counts, and `stats_summary` computes the pooled figure); ordering / drift
+(before vs after controls 0.26%); ambient asymmetry (the parallel arm's external ambient was, if
+anything, lower); thread aggregation and double counting in the sampler; the consumer hunt for the
+`runtime:` block, which found none and found `eval_metrics_enabled` inert too; the `26 tests, OK`
+reproduction.
+
+**Termination.** Round 2 was run on the corrections only, as §4 of the procedure requires when
+round 1 produces them; its result is recorded in the PR (`juniper-ml#1877`) and, if it changed
+anything, in this table. **Residual uncertainty, stated plainly**: the burst's library is a
+leading candidate, not an identification; the pair's cost is three pairs on one day; the
+sweep-axis reading of any occupancy figure rests on an assumption the sweep did not test.

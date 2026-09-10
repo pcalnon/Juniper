@@ -10,27 +10,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Perf lane — PF-8 located and its pair run; the experiment YAML's `runtime:` block binds nothing**
-  (`notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md`). Step 1 of the
-  re-scope note's §1.3 ran: one PF-1-shape run occupies **4.52** sweep-worker equivalents under
-  cascor's default thread budget (3 cells, 1.1% spread; bimodal — ~30% of the drive window at ~11
-  cores in the listener) and **2.15** under the four-variable budget `run_suite` pins for a parallel
-  arm, which is 34% faster per step at an identical `step_count` 1770. Step 2 ran because 4.52 is
-  inside the ~4–8 band: three aligned parallel pairs against six sequential controls, same budget,
-  all twelve cells at 1770 — **a second concurrent pinned run costs +11.3% per step**, inside the
-  sweep's 20.5% quiet band and outside the day's within-arm spread; advisory, as item 4.3 said. The
-  listener's high mode is NumPy's OpenBLAS pool at the host's full width, which
-  `torch.set_num_threads` does not bound and which the YAML's `runtime.blas_threads` never sets:
-  the block is validated by the driver, accepted by the service, and read by nothing on either
-  path — an owner decision (implement or retire), not a fix. Micro timing reference `0003` re-cut
-  at 1-minute load 5.3 → 7.1 (the prior cuts were at 9–10); the micro tier does not see that
-  difference (median ratio 0.99). New under `util/ad-hoc/`: `2026-09-10_pf8_occupancy_sampler.py`
-  (per-role `/proc` deltas at 1 s), `2026-09-10_pf8_occupancy_analyse.py` (drive-window
-  reduction, sweep-curve readout, two-arm comparison with identity checks),
-  `2026-09-10_pf8_occupancy_probe_suite.yaml`, `2026-09-10_pf8_two_run_parallel_suite.yaml`,
-  `2026-09-10_pf8_pair_driver.bash`, `2026-09-10_micro_reference_compare.py`,
-  `2026-09-10_torch_thread_pin_probe.py`; `tests/test_pf8_occupancy_probe.py` (26 tests, wired
-  into `ci.yml`). P2 plan rows 4.1 / 4.2 and §4, the re-scope note's §1.3, `docs/REFERENCE.md`
-  and `util/experiments/suites/perf/README.md` PF-8 rows updated.
+  (`notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md`). Step 1 of §1.3
+  of `notes/JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md`
+  ran: one PF-1-shape run consumes **4.52 cores** under cascor's default thread budget (3 cells,
+  1.1% spread) as one ~11-core block in the listener for the *initial* output pass (160 of 1770
+  steps, before the candidate pool exists) then ~1.8 for the rest, and **2.15** under the
+  four-variable budget `run_suite` pins for a parallel arm — 34% faster per step overall, 8× on
+  that initial pass and +9% on the other 91% of steps, at an identical `step_count` 1770. Step 2
+  ran because 4.52 is inside the ~4–8 band: three aligned parallel pairs against six sequential
+  controls, same budget, all twelve cells at 1770 — **a second concurrent pinned run costs +11.3%
+  per step, +9 to +13% leaving one pair out**, inside the sweep's 20.5% quiet band and outside the
+  day's within-arm spread; advisory, as item 4.3 said. The burst is removed by the three BLAS
+  variables, which `torch.set_num_threads` does not reach and which the YAML's
+  `runtime.blas_threads` never sets: the block is validated by the driver, accepted by the service,
+  and read by nothing on either path — an owner decision (implement or retire), not a fix — and
+  **PF-3's `runtime.num_processes` matrix axis is therefore inert** (P2 item 2.2 blocked). Which
+  library carries the burst is narrowed (NumPy's OpenBLAS pool the leading candidate), not
+  identified. Micro timing reference `0003` re-cut at 1-minute load 5.3 → 7.1 (the prior cuts were
+  at 9–10); the micro tier does not see that difference (median ratio 0.99). New under
+  `util/ad-hoc/`: `2026-09-10_pf8_occupancy_sampler.py` (per-role `/proc` deltas at 1 s),
+  `2026-09-10_pf8_occupancy_analyse.py` (drive-window reduction, sweep-curve readout, two-arm
+  comparison with identity checks), `2026-09-10_pf8_occupancy_probe_suite.yaml`,
+  `2026-09-10_pf8_two_run_parallel_suite.yaml`, `2026-09-10_pf8_pair_driver.bash`,
+  `2026-09-10_micro_reference_compare.py`, `2026-09-10_torch_thread_pin_probe.py`;
+  `tests/test_pf8_occupancy_probe.py` (26 tests, wired into `.github/workflows/ci.yml`). Changed:
+  `notes/JUNIPER_2026-09-02_JUNIPER-ECOSYSTEM_PERF-LANE-P2-PLAN.md` (rows 2.2, 4.1, 4.2, the §3
+  graph and a §4 hazard), `notes/JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md`
+  (a dated blockquote in §1.3), `docs/REFERENCE.md` (PF-8 row, test reference),
+  `util/experiments/suites/perf/README.md` (PF-8 row), `AGENTS.md` (test list, Last Updated).
 
 - **Perf lane — Wave 4 re-scoped, the micro timing reference established, PF-2 probed**
   (`notes/JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md`).

@@ -36,9 +36,11 @@
 # file run with the four variables exported in the shell --
 #   OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 CASCOR_NUM_PROCESSES=4
 # -- is the pinned probe and the pair's CONTROL arm (2026-09-10_pf8_pair_driver.bash does that).
-# Measured 2026-09-10: 4.52 worker-equivalents default (bimodal, ~30% of the window at ~11 in the
-# listener -- NumPy's OpenBLAS pool at full width), 2.15 pinned, step_count 1770 either way.
-# The YAML's own `runtime.blas_threads: 2` is read by nothing on either path (§4 of the note).
+# Measured 2026-09-10: 4.52 cores default -- one ~11-core block in the listener for the INITIAL
+# output pass (before the candidate pool exists), then ~1.8 -- and 2.15 pinned; step_count 1770
+# either way. The three BLAS variables remove the block; which library carries it is narrowed
+# (NumPy's OpenBLAS pool the leading candidate), not identified. The YAML's own
+# `runtime.blas_threads: 2` is read by nothing on either path (§4 of the note).
 schema_version: 1
 suite:
   name: pf8-occupancy-probe
