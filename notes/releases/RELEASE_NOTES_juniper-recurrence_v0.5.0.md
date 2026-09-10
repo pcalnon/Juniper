@@ -138,4 +138,3 @@ None known at time of release.
 
 - [Full Changelog](https://github.com/pcalnon/juniper-recurrence/blob/juniper-recurrence-v0.5.0/juniper-recurrence/CHANGELOG.md)
 - Archive target: `notes/releases/RELEASE_NOTES_juniper-recurrence_v0.5.0.md`
-
