@@ -6371,7 +6371,10 @@ milliseconds after `State transition: ResumeReady -> Started`** — and every pe
 `WS emission summary` for the rest of both growth runs reads **`0 active connections`**. The payload that
 failed was the state frame carrying the NumPy-typed tunables of F-CASCOR-003, so #632 removes *this*
 trigger; the swallow-and-forget stays. It is a P1 on its own because the failure is invisible from both
-sides: cascor logs nothing at the send, and canopy (F-CANOPY-049) reports the dead stream healthy. Any
+sides: cascor's own log is silent for the failure that matters here — the serialisation branch swallows
+the exception with no log at all (the *timeout* branch does warn) — and canopy (F-CANOPY-049) reports the
+dead stream healthy. One counter does move, and it is the one to read: both branches increment
+`send_failures`, which `/v1/metrics/transport` serves alongside `active_connections`. Any
 future non-serialisable value in any broadcast reproduces it. Reproduction without training:
 `util/ad-hoc/2026-09-08_cascor_ws_drop_probe.py` connects a raw client and triggers a state broadcast via
 `/resume` of the network the leg already holds.
@@ -6380,17 +6383,42 @@ future non-serialisable value in any broadcast reproduces it. Reproduction witho
 After F-CASCOR-004 dropped both legs, `juniper-canopy-8052.log` kept printing `Metrics relay summary:
 0 frame(s) in last 60s … status=healthy; last-frame-age=13.6s; reconnects=2` **every minute for ten
 minutes** — the age frozen at the value it had when frames stopped, the reconnect count unchanged — and the
-`:8051` leg the same with `4.0s`. Because the server never sent a close frame, the client's `recv()` never
-raised and the liveness mixin never saw a dead peer. Nothing downstream can tell: `/api/state` kept
+`:8051` leg the same with `4.0s`. Nothing downstream can tell: `/api/state` kept
 `candidate_pool_status: Inactive` and `phase_started_at: ""` through a live candidate phase while cascor's
 own status showed both; in the browser `ws-metrics-buffer` `gen` stayed 0 and `ws-liveness-store` read
 `metrics_live: false` for the whole run, so the WS-primary append path never engaged and the REST poll
 (F-CANOPY-035's subject) was the store's only feeder. **This is why the 2026-09-08 growth windows could
 not verify F-CANOPY-036 or F-CANOPY-026 and why `ws-cascade-add-buffer` never advanced** (M-TOPOLOGY-16
-below). A relay whose liveness is "the socket has not raised" is not measuring liveness; the server's
-per-endpoint active-connection gauge (`cascor_ws_connections_active{endpoint="training"}`) is the number
-that told the truth. Evidence: `…_live_run_48.json` (`ws_metrics_gen` / `ws_metrics_live` /
-`canopy_state` per sample) and the two leg logs archived as `…_relay_summaries_8051_8052.txt`.
+below).
+
+**MECHANISM CORRECTED 2026-09-09 by round-1 validation — the first reading was wrong, and its fix would
+have been a no-op or a regression.** This entry originally said the relay never noticed because "the
+server never sent a close frame, so `recv()` never raised and the liveness mixin never saw a dead peer",
+and asked for a rule that treats silence as death. **The relay already has that rule**: `StreamHealth`
+turns `degraded` once `now - last_activity` exceeds `RELAY_STALE_AFTER_SECONDS` (60 s). It never fires
+because the relay **manufactures the activity it is checking for**: its frame-wait timeout branch calls
+`mark_activity()` whenever `_stream_is_alive(...)` is true, and that consults the cascor client's
+`is_alive(window)` — "connected, and a frame seen within the window" — where the client's automatic pong
+counts cascor's transport-level **heartbeat pings** as inbound frames. The liveness poll runs every
+`RELAY_LIVENESS_POLL_SECONDS` (30 s), deliberately inside the 60 s bound, so the stale clock is re-armed
+twice a period, forever. That also explains the detail the first reading could not: an age **frozen** at
+13.6 s, which a live `now - last_activity` cannot produce but a fixed 30 s re-arm against a 60 s summary
+loop can. **The fix is to distinguish a heartbeat from a payload**, not to add a rule — and it must not
+simply delete `mark_activity()`, which was added for a documented healthy-but-idle case that will
+otherwise churn reconnects. cascor's per-endpoint active-connection gauge
+(`cascor_ws_connections_active{endpoint="training"}`) is still the number that told the truth.
+
+**One observation moved out of this entry.** The browser-side `ws-liveness-store.metrics_live` reading
+belongs to a *different* module — a clientside callback comparing the WS bridge's `metrics_age_ms`
+against a 5 s window — and shares no code with the server-side `StreamHealth`. Filing them as one rule
+would point a successor at one module when there are two. Window 3 makes the separation concrete:
+`metrics_live` read `False` at four of five samples **while frames were arriving** and the buffer's `gen`
+advanced 3 → 5 → 9, which is the opposite failure from this entry's, and is plausibly the probe's own
+doing (its samples run on a topology page whose main thread it blocks for ~20 s a call, which stops the
+1 Hz clientside recompute). Not chased.
+
+Evidence: `…_live_run_48.json` (`ws_metrics_gen` / `ws_metrics_live` / `canopy_state` per sample), the two
+leg logs archived as `…_relay_summaries_8051_8052.txt`, and `…_live_run_52.json` for the window-3 samples.
 
 ### F-CANOPY-035 — the discriminating test, and what it did to the 09-07 chain
 
@@ -6476,11 +6504,21 @@ nothing either**:
 **F-CANOPY-048 — the replay controls never apply: `handle_replay_controls`' output is retired every time, including the data-independent play toggle and the speed buttons (P2, canopy repo, OPEN; found 2026-09-08; supersedes the BLOCKED reading of M-METRICS-11..16/-18).**
 Nine Inputs feed `handle_replay_controls`, one of them `replay-slider.value`; `update_replay_ui` rewrites
 `replay-slider.value` on **every** write of `metrics-panel-metrics-store` — the 1 Hz fast-lane rewrite that
-F-CANOPY-035 is about — and reads `replay-state` as an Input in turn. So the replay panel sits in a 1 Hz
-loop (`metrics-store` → `update_replay_ui` → `slider.value` → `handle_replay_controls` → `replay-state` →
-`update_replay_ui`), every invocation of the controls callback is displaced by the next tick's before its
-response applies, and a click's invocation is just one more casualty — the same class as F-035, one panel
-over. The slider's own `value` did change (a clientside prop write), which shows the click reached the
+F-CANOPY-035 is about — and reads `replay-state` as an Input in turn.
+
+> **MECHANISM RESTATED 2026-09-09 by round-1 validation.** This paragraph first called that cycle a
+> *1 Hz value-rewrite loop*, in which each invocation of the controls callback is displaced by the next
+> tick's rewrite. **That cannot be what happened here**, and the run says so: `metrics-panel-metrics-store`
+> read length **0 before and after every step** of the re-drive (F-CANOPY-035, one panel over, is exactly
+> the claim that its writes never land), a store that never changes never triggers `update_replay_ui`, and
+> only **2–3 of 40–54 requests** per window named replay at all — there is no 1 Hz replay traffic to
+> displace anything. The reading that survives is a **claimed-Input promotion block**, the mechanism this
+> repo already documents for F-CANOPY-025: `replay-slider.value` is an *output claimed by*
+> `update_replay_ui`, which is queued behind the metrics store on every tick whether or not its response
+> ever applies, and dash-renderer will not promote `handle_replay_controls` while one of its Inputs is
+> claimed by a pending callback. Same family as F-035, same fix at the trigger; different sentence.
+> Corroborating detail the loop story gets wrong: M-METRICS-18's slider `value` moved 0 → 10 and **stayed**
+> — a rewrite "on every write" would have snapped it back within a second. The slider's own `value` did change (a clientside prop write), which shows the click reached the
 component; what never landed was the server response. This is the segment-15 "zero wire output across 196
 responses" reading, now with the mechanism. Matrix: M-METRICS-11/-12/-13/-14/-15/-16 → **FAIL**
 (driven, no effect); M-METRICS-18 stays **BLOCKED** (its observable is the index, clamped by F-035).
