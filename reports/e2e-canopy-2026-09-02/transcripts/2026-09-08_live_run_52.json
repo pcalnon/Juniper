@@ -1,0 +1,452 @@
+{
+  "canopy": "http://127.0.0.1:8052",
+  "cascor": "http://127.0.0.1:8202",
+  "serving": {
+    "ok": true,
+    "canopy": "http://127.0.0.1:8052",
+    "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded",
+    "build_date": "2026-09-08T12:12:17Z",
+    "version": "0.6.0",
+    "read_at": "2026-09-09T00:23:30Z"
+  },
+  "started_at": "2026-09-09T00:23:30Z",
+  "start_hidden": 48,
+  "samples": [
+    {
+      "t": 0.0,
+      "cascor": {
+        "ok": true,
+        "fsm": "STARTED",
+        "phase": "Output",
+        "status": "Started",
+        "phase_started_at": "2026-09-09T00:24:23.907315+00:00",
+        "hidden": 0,
+        "epoch": 51,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 0
+      },
+      "canopy_state": {
+        "status": "Started",
+        "phase": "output",
+        "candidate_pool_status": "Inactive",
+        "candidate_pool_phase": "Idle",
+        "candidate_pool_size": 0,
+        "phase_started_at": "2026-09-09T00:24:23.907315+00:00",
+        "current_epoch": 0,
+        "is_running": null
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "",
+      "dom_hidden": "0",
+      "glow": {
+        "present": true,
+        "n_traces": 2651,
+        "glow": []
+      },
+      "buffer_gen": 0,
+      "metrics_store_len": 53,
+      "ws_metrics_gen": 3,
+      "ws_metrics_live": true
+    },
+    {
+      "t": 43.1,
+      "cascor": {
+        "ok": true,
+        "fsm": "STARTED",
+        "phase": "Candidate",
+        "status": "Started",
+        "phase_started_at": "2026-09-09T00:24:39.406962+00:00",
+        "hidden": 51,
+        "epoch": 54,
+        "cand_epoch": 301,
+        "cand_total": 3000,
+        "candidates_trained": 8
+      },
+      "canopy_state": {
+        "status": "Started",
+        "phase": "candidate",
+        "candidate_pool_status": "Training",
+        "candidate_pool_phase": "Training",
+        "candidate_pool_size": 8,
+        "phase_started_at": "2026-09-09T00:24:39.406962+00:00",
+        "current_epoch": 54,
+        "is_running": null
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "Phase Duration: 0m 18s",
+      "dom_hidden": "48",
+      "glow": {
+        "present": true,
+        "n_traces": 2651,
+        "glow": []
+      },
+      "buffer_gen": 6,
+      "metrics_store_len": 59,
+      "ws_metrics_gen": 5,
+      "ws_metrics_live": false
+    },
+    {
+      "t": 70.3,
+      "cascor": {
+        "ok": true,
+        "fsm": "COMPLETED",
+        "phase": "Idle",
+        "status": "Completed",
+        "phase_started_at": "2026-09-09T00:24:39.406962+00:00",
+        "hidden": 52,
+        "epoch": 56,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 8
+      },
+      "canopy_state": {
+        "status": "Completed",
+        "phase": "output",
+        "candidate_pool_status": "Inactive",
+        "candidate_pool_phase": "Idle",
+        "candidate_pool_size": 8,
+        "phase_started_at": "2026-09-09T00:24:39.406962+00:00",
+        "current_epoch": 56,
+        "is_running": null
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "Phase Duration: 0m 49s",
+      "dom_hidden": "48",
+      "glow": {
+        "present": true,
+        "n_traces": 2651,
+        "glow": []
+      },
+      "buffer_gen": 8,
+      "metrics_store_len": 63,
+      "ws_metrics_gen": 9,
+      "ws_metrics_live": false
+    },
+    {
+      "t": 89.1,
+      "cascor": {
+        "ok": true,
+        "fsm": "COMPLETED",
+        "phase": "Idle",
+        "status": "Completed",
+        "phase_started_at": "2026-09-09T00:24:39.406962+00:00",
+        "hidden": 52,
+        "epoch": 56,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 8
+      },
+      "canopy_state": {
+        "status": "Completed",
+        "phase": "output",
+        "candidate_pool_status": "Inactive",
+        "candidate_pool_phase": "Idle",
+        "candidate_pool_size": 8,
+        "phase_started_at": "2026-09-09T00:24:39.406962+00:00",
+        "current_epoch": 56,
+        "is_running": null
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "Phase Duration: 0m 59s",
+      "dom_hidden": "52",
+      "glow": {
+        "present": true,
+        "n_traces": 3136,
+        "glow": [
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Glow"
+        ]
+      },
+      "buffer_gen": 8,
+      "metrics_store_len": 63,
+      "ws_metrics_gen": 9,
+      "ws_metrics_live": false
+    },
+    {
+      "t": 115.1,
+      "cascor": {
+        "ok": true,
+        "fsm": "COMPLETED",
+        "phase": "Idle",
+        "status": "Completed",
+        "phase_started_at": "2026-09-09T00:24:39.406962+00:00",
+        "hidden": 52,
+        "epoch": 56,
+        "cand_epoch": 0,
+        "cand_total": 0,
+        "candidates_trained": 8
+      },
+      "canopy_state": {
+        "status": "Completed",
+        "phase": "output",
+        "candidate_pool_status": "Inactive",
+        "candidate_pool_phase": "Idle",
+        "candidate_pool_size": 8,
+        "phase_started_at": "2026-09-09T00:24:39.406962+00:00",
+        "current_epoch": 56,
+        "is_running": null
+      },
+      "cards": 0,
+      "hist_store": 0,
+      "badge": "Inactive",
+      "phase_duration": "Phase Duration: 0m 59s",
+      "dom_hidden": "52",
+      "glow": {
+        "present": true,
+        "n_traces": 3136,
+        "glow": [
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Edges",
+          "New Unit Glow"
+        ]
+      },
+      "buffer_gen": 8,
+      "metrics_store_len": 63,
+      "ws_metrics_gen": 9,
+      "ws_metrics_live": false
+    }
+  ],
+  "events": [
+    {
+      "t": 0.0,
+      "what": "fsm None -> STARTED"
+    },
+    {
+      "t": 0.0,
+      "what": "phase None -> Output"
+    },
+    {
+      "t": 43.1,
+      "what": "phase Output -> Candidate"
+    },
+    {
+      "t": 70.3,
+      "what": "fsm STARTED -> COMPLETED"
+    },
+    {
+      "t": 70.3,
+      "what": "phase Candidate -> Idle"
+    }
+  ],
+  "f026_samples": [
+    {
+      "t": 43.1,
+      "phase_started_at": "2026-09-09T00:24:39.406962+00:00",
+      "elapsed_s": 52.8,
+      "displayed_s": 18.0,
+      "displayed_text": "Phase Duration: 0m 18s",
+      "delta_s": -34.8
+    },
+    {
+      "t": 70.3,
+      "phase_started_at": "2026-09-09T00:24:39.406962+00:00",
+      "elapsed_s": 71.6,
+      "displayed_s": 49.0,
+      "displayed_text": "Phase Duration: 0m 49s",
+      "delta_s": -22.6
+    },
+    {
+      "t": 89.1,
+      "phase_started_at": "2026-09-09T00:24:39.406962+00:00",
+      "elapsed_s": 91.4,
+      "displayed_s": 59.0,
+      "displayed_text": "Phase Duration: 0m 59s",
+      "delta_s": -32.4
+    },
+    {
+      "t": 115.1,
+      "phase_started_at": "2026-09-09T00:24:39.406962+00:00",
+      "elapsed_s": 114.8,
+      "displayed_s": 59.0,
+      "displayed_text": "Phase Duration: 0m 59s",
+      "delta_s": -55.8
+    }
+  ],
+  "glow_first_seen": 89.1,
+  "cards_first_seen": null,
+  "server_growth": [
+    {
+      "t": 0.0,
+      "hidden": 50
+    },
+    {
+      "t": 43.1,
+      "hidden": 52
+    }
+  ],
+  "dom_growth": [
+    {
+      "t": 0.0,
+      "hidden": "0"
+    },
+    {
+      "t": 43.1,
+      "hidden": "48"
+    },
+    {
+      "t": 89.1,
+      "hidden": "52"
+    }
+  ],
+  "store_len_seq": [
+    {
+      "t": 0.0,
+      "from": null,
+      "to": 53
+    },
+    {
+      "t": 43.1,
+      "from": 53,
+      "to": 59
+    },
+    {
+      "t": 70.3,
+      "from": 59,
+      "to": 63
+    }
+  ],
+  "start_response": {
+    "http": 200,
+    "body": "{\"status\":\"success\",\"data\":{\"status\":\"training_started\",\"timestamp\":1788913463.9052808},\"meta\":{\"timestamp\":1788913463.905303,\"version\":\"0.6.0\"}}"
+  },
+  "end_hidden": 52,
+  "end_status": {
+    "ok": true,
+    "fsm": "COMPLETED",
+    "phase": "Idle",
+    "status": "Completed",
+    "phase_started_at": "2026-09-09T00:24:39.406962+00:00",
+    "hidden": 52,
+    "epoch": 56,
+    "cand_epoch": 0,
+    "cand_total": 0,
+    "candidates_trained": 8
+  },
+  "end_cards": 0,
+  "header_click": {
+    "attempted": false
+  },
+  "verdicts": {
+    "M-CANDIDATES-09": "FAIL",
+    "M-CANDIDATES-10": "BLOCKED (no card to click)",
+    "M-CANDIDATES-11": "BLOCKED (no card to click)",
+    "F-CANOPY-026": "STILL-OPEN (worst |delta| 55.8s over 4 samples)",
+    "M-TOPOLOGY-16": "PASS (glow trace at t=89.1s)"
+  }
+}

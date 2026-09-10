@@ -1,0 +1,68 @@
+{
+  "canopy": "http://127.0.0.1:8052",
+  "store": "network-visualizer-topology-store",
+  "window_s": 60.0,
+  "tab": "Network Topology",
+  "serving": {
+    "ok": true,
+    "canopy": "http://127.0.0.1:8052",
+    "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded",
+    "build_date": "2026-09-08T12:12:17Z",
+    "version": "0.6.0",
+    "read_at": "2026-09-09T00:13:41Z"
+  },
+  "reloaded": true,
+  "armed": true,
+  "dispatches": [
+    {
+      "t": 1788912870153,
+      "type": "Callbacks.Aggregate",
+      "len": -1
+    },
+    {
+      "t": 1788912870153,
+      "type": "Callbacks.Aggregate",
+      "len": -1
+    },
+    {
+      "t": 1788912870153,
+      "type": "Callbacks.Aggregate",
+      "len": -1
+    }
+  ],
+  "transitions": [
+    {
+      "t": 1788912839212,
+      "from": null,
+      "to": null,
+      "note": "initial"
+    },
+    {
+      "t": 1788912839268,
+      "from": null,
+      "to": -1
+    }
+  ],
+  "actionTypes": {
+    "IsLoading.Set": 1,
+    "<thunk>": 875,
+    "RESET_COMPONENT_STATE": 5445,
+    "Callbacks.Aggregate": 3562,
+    "LOADING": 565,
+    "LOADED": 555,
+    "SET_PATHS": 102
+  },
+  "totalDispatches": 11105,
+  "totalNotifies": 11256,
+  "errors": [],
+  "independent_read": {
+    "ok": true,
+    "via": "paths.strs",
+    "len": null,
+    "hidden_units": 48
+  },
+  "result": {
+    "verdict": "APPLIED-THEN-LOST",
+    "why": "3 dispatches carried a value, the state reached non-empty ([-1]), and it did not stay. Something reverts it; read the transition list for the shape of the revert."
+  }
+}

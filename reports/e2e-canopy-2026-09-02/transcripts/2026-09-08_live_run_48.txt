@@ -1,0 +1,38 @@
+[t=     74ms] serving: {"ok": true, "canopy": "http://127.0.0.1:8052", "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded", "build_date": "2026-09-08T12:12:17Z", "version": "0.6.0", "read_at": "2026-09-08T12:31:22Z"}
+[t=     78ms] start: cascor hidden=44 status={'ok': True, 'fsm': 'COMPLETED', 'phase': 'Idle', 'status': 'Completed', 'phase_started_at': '2026-09-08T12:26:47.017174+00:00', 'hidden': 44, 'epoch': 46, 'cand_epoch': 0, 'cand_total': 0, 'candidates_trained': 8}
+[t=    516ms] navigating to http://127.0.0.1:8052
+[t=    518ms]   serving: {"ok": true, "canopy": "http://127.0.0.1:8052", "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded", "build_date": "2026-09-08T12:12:17Z", "version": "0.6.0", "read_at": "2026-09-08T12:31:22Z"}
+[t=  11582ms]   welcome modal dismissed
+[t=  30485ms]   welcome modal not present/visible
+[t=  37835ms]   [metrics] tab 'Training Metrics' opened=True
+[t=  42634ms]   welcome modal not present/visible
+[t=  49022ms]   [topology] tab 'Network Topology' opened=True
+[t=  51027ms]   POST /v1/training/start -> {"http": 200, "body": "{\"status\":\"success\",\"data\":{\"status\":\"training_started\",\"timestamp\":1788870733.253205},\"meta\":{\"timestamp\":1788870733.2532227,\"version\":\"0.6.0\"}}"}
+[t=  73076ms]   [t=0.0] FSM None -> STARTED  phase=Output hidden=44 epoch=46
+[t=  73080ms]   [t=0.0] *** SERVER GREW: hidden 44 -> 45 ***
+[t=  73080ms]   [t=0.0] history cards None -> 0 (store len 0, badge 'Inactive')
+[t=  73080ms]   [t=0.0] DOM hidden-count now '0'
+[t=  73080ms]   [t=0.0] glow traces absent: []
+[t=  73080ms]   [t=0.0] ws-cascade-add-buffer gen None -> 0
+[t=  73080ms]   [t=0.0] metrics-panel-metrics-store len None -> 0
+[t=  95251ms]   [t=24.1] *** SERVER GREW: hidden 45 -> 48 ***
+[t=  95251ms]   [t=24.1] DOM hidden-count now '44'
+[t= 116675ms]   [t=46.2] FSM STARTED -> COMPLETED  phase=Idle hidden=48 epoch=51
+[t= 116675ms]   [t=46.2] run reached COMPLETED; sampling for 60.0s more
+[t= 116678ms]   [t=46.2] DOM hidden-count now '48'
+[t= 174291ms]   screenshot: /tmp/juniper-e2e/shots/live48/LIVE-RUN__candidates_end.png
+[t= 179214ms]   screenshot: /tmp/juniper-e2e/shots/live48/LIVE-RUN__topology_end.png
+[t= 184670ms]   screenshot: /tmp/juniper-e2e/shots/live48/LIVE-RUN__metrics_end.png
+[t= 184834ms] 
+[t= 184834ms]   server growth : 44 -> 48 via [45, 48]
+[t= 184834ms]   DOM growth    : ['0', '44', '48']
+[t= 184834ms]   cards         : first at t=Nones, end=0
+[t= 184834ms]   glow          : first at t=Nones
+[t= 184834ms]   metrics store : [(None, 0)]
+[t= 184834ms]   F-026 samples : 0  deltas=[]
+[t= 184834ms]   => M-CANDIDATES-09: FAIL
+[t= 184834ms]   => M-CANDIDATES-10: BLOCKED (no card to click)
+[t= 184834ms]   => M-CANDIDATES-11: BLOCKED (no card to click)
+[t= 184834ms]   => F-CANOPY-026: NOT-SAMPLED (no mid-run pair)
+[t= 184834ms]   => M-TOPOLOGY-16: BLOCKED-BY-F-035 (server grew 44 -> 45 -> 48, DOM followed=True, no glow trace ever; the detector reads hidden-unit deltas out of metrics-panel-metrics-store, whose length stayed [0])
+[t= 184835ms] results -> /tmp/juniper-e2e/live_run_48.json

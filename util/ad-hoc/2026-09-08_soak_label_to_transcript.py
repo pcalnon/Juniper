@@ -82,8 +82,12 @@ CONTENT_RE = re.compile(re.escape(DEST) + r":\d+:")
 # siblings ship their own `docs/REFERENCE.md` (every one but juniper-recurrence,
 # measured 2026-09-08), so the instrument's `hit = doc in blob` substring test
 # cannot tell them apart.
-ML_ROOTS = ("juniper-ml/", "juniper-ml--", "/juniper-ml")
+# Both entries end at a segment boundary. A bare "/juniper-ml" is a PREFIX and
+# matched `/juniper-mlx/` and `/juniper-ml-scratch/` -- a third repo's file
+# claimed as ours.
+ML_ROOTS = ("juniper-ml/", "juniper-ml--")
 CD_RE = re.compile(r"cd\s+(/[\w./-]+)")
+PATH_CHARS = re.compile(r"[\w./~-]")
 SIBLING_REPOS = (
     "juniper-cascor-client/", "juniper-cascor-worker/", "juniper-data-client/",
     "juniper-recurrence-client/", "juniper-recurrence-model/",
@@ -230,12 +234,27 @@ def classify_occurrences(where: str, blob: str, cmd: str) -> list[str]:
                 out.append(M_LEDGER)
                 continue
         # A sibling repo reaches the transcript two ways: the subject `cd`s into
-        # it, or names it in the grep's path argument. Only the first shows up
-        # in the command, so also read the path segment immediately BEFORE the
-        # occurrence -- `juniper-deploy/docs/REFERENCE.md` is foreign however it
-        # got there.
-        prefix = blob[max(0, idx - 60):idx]
-        if foreign_cwd or any(s in prefix for s in SIBLING_REPOS):
+        # it, or names it in the path argument. Read the path segment BEFORE the
+        # occurrence FIRST -- an explicitly qualified path outranks the cwd in
+        # both directions.
+        #
+        # ORDER IS LOAD-BEARING. Testing `foreign_cwd` first discards the whole
+        # input, so a subject that ran `cd <ECOSYSTEM PARENT> && sed -n … \
+        # juniper-ml/docs/REFERENCE.md` had a genuine read of OUR file thrown
+        # away: the parent directory matches no `juniper-ml` root segment. That
+        # is a false-negative generator, and it is what produced the original
+        # 51.2% headline. Found by Lane A review 2026-09-09.
+        # Walk back to the start of the PATH TOKEN, not a fixed-width text
+        # window: a window is not a path, so a grep PATTERN that merely mentions
+        # our path scored as a read of it. Proximity decides, not list order.
+        head = idx
+        while head > 0 and PATH_CHARS.match(blob[head - 1]):
+            head -= 1
+        token = blob[head:idx]
+        if any(s in token for s in SIBLING_REPOS):
+            out.append(M_FOREIGN)
+            continue
+        if not any(r in token for r in ML_ROOTS) and foreign_cwd:
             out.append(M_FOREIGN)
             continue
         if where == "input":

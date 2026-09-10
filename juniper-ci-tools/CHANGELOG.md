@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-09
+
+### Fixed
+
+- **`juniper-lint-workflow-paths` reported a missing script path whenever a job ran in a
+  working directory** (juniper-ml#1836). Resolution was `repo_root / path` unconditionally, so
+  every monorepo lane with a nested package was a false positive: juniper-recurrence's
+  `ci-recurrence-model.yml` sets `working-directory: juniper-recurrence-model` and runs
+  `pytest tests/test_readouts_mlp.py`, which exists at
+  `juniper-recurrence-model/tests/test_readouts_mlp.py` — the lane was green while the lint
+  disagreed. Paths are now resolved against the step's effective working directory, in GitHub's
+  own precedence: step `working-directory`, then the job's `defaults.run.working-directory`, then
+  the workflow's, then the repo root. A path is reported missing only when it exists at **neither**
+  its working directory **nor** the repo root, which is deliberately permissive — paths also appear
+  in strings that are not `run:` bodies, and a rename (the failure class this lint exists for)
+  removes the file from both places.
+- **The failure report now names both searched locations and warns against the wrong repair.** The
+  old message led directly to prefixing the path in the workflow, which *breaks* the lane: the step
+  already runs in that directory, so the prefix is applied twice.
+
+### Added
+
+- `extract_script_references()` and `ScriptReference` — a structured extractor that walks
+  `jobs` → `steps` instead of flattening the YAML tree, so `working-directory` context survives.
+  `extract_script_paths()` is unchanged and still returns bare path strings.
+- `LintFinding.working_directory` — the directory a finding was resolved against, `""` when none
+  applies. Additive with a default, so no existing consumer breaks.
+
 ## [0.8.0] - 2026-08-08
 
 ### Added

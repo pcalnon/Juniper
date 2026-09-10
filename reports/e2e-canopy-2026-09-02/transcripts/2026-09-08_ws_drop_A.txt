@@ -1,0 +1,11 @@
+[19:21:04] connected to ws://127.0.0.1:8202/ws/training
+[19:21:13] pre-trigger frames: ['connection_established', 'initial_metrics']
+[19:21:13] trigger: POST /v1/snapshots/snapshot_20260908T123427Z/resume -> http 200
+[19:21:39]   +26.0s frame type=ping
+[19:21:58] 
+[19:21:58]   frames before: ['connection_established', 'initial_metrics']
+[19:21:58]   frames after : ['ping']
+[19:21:58]   close        : None
+[19:21:58]   => VERDICT: INDETERMINATE
+[19:21:58]      frames after the trigger were ['ping']: pings but no state frame -- read the cascor log for this window.
+[19:21:58] results -> /tmp/juniper-e2e/ws_drop_A.json

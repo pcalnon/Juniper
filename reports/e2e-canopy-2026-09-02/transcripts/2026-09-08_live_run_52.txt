@@ -1,0 +1,44 @@
+[t=     90ms] serving: {"ok": true, "canopy": "http://127.0.0.1:8052", "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded", "build_date": "2026-09-08T12:12:17Z", "version": "0.6.0", "read_at": "2026-09-09T00:23:30Z"}
+[t=     92ms] start: cascor hidden=48 status={'ok': True, 'fsm': 'RESUME_READY', 'phase': 'Idle', 'status': 'Stopped', 'phase_started_at': None, 'hidden': 0, 'epoch': 51, 'cand_epoch': 0, 'cand_total': 0, 'candidates_trained': 0}
+[t=    523ms] navigating to http://127.0.0.1:8052
+[t=    526ms]   serving: {"ok": true, "canopy": "http://127.0.0.1:8052", "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded", "build_date": "2026-09-08T12:12:17Z", "version": "0.6.0", "read_at": "2026-09-09T00:23:31Z"}
+[t=  12932ms]   welcome modal dismissed
+[t=  33368ms]   welcome modal not present/visible
+[t=  39585ms]   [metrics] tab 'Training Metrics' opened=True
+[t=  44808ms]   welcome modal not present/visible
+[t=  50982ms]   [topology] tab 'Network Topology' opened=True
+[t=  53075ms]   POST /v1/training/start -> {"http": 200, "body": "{\"status\":\"success\",\"data\":{\"status\":\"training_started\",\"timestamp\":1788913463.9052808},\"meta\":{\"timestamp\":1788913463.905303,\"version\":\"0.6.0\"}}"}
+[t=  94165ms]   [t=0.0] FSM None -> STARTED  phase=Output hidden=0 epoch=51
+[t=  94169ms]   [t=0.0] *** SERVER GREW: hidden 48 -> 50 ***
+[t=  94169ms]   [t=0.0] history cards None -> 0 (store len 0, badge 'Inactive')
+[t=  94169ms]   [t=0.0] DOM hidden-count now '0'
+[t=  94169ms]   [t=0.0] glow traces absent: []
+[t=  94169ms]   [t=0.0] ws-cascade-add-buffer gen None -> 0
+[t=  94169ms]   [t=0.0] metrics-panel-metrics-store len None -> 53
+[t= 121400ms]   [t=43.1] *** SERVER GREW: hidden 50 -> 52 ***
+[t= 121400ms]   [t=43.1] DOM hidden-count now '48'
+[t= 121400ms]   [t=43.1] ws-cascade-add-buffer gen 0 -> 6
+[t= 121400ms]   [t=43.1] metrics-panel-metrics-store len 53 -> 59
+[t= 140132ms]   [t=70.3] FSM STARTED -> COMPLETED  phase=Idle hidden=52 epoch=56
+[t= 140132ms]   [t=70.3] run reached COMPLETED; sampling for 60.0s more
+[t= 140135ms]   [t=70.3] ws-cascade-add-buffer gen 6 -> 8
+[t= 140135ms]   [t=70.3] metrics-panel-metrics-store len 59 -> 63
+[t= 159967ms]   [t=89.1] DOM hidden-count now '52'
+[t= 159968ms]   [t=89.1] glow traces PRESENT: ['New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Edges', 'New Unit Glow']
+[t= 166180ms]   screenshot: /tmp/juniper-e2e/shots/live52/LIVE-RUN__glow_first_seen.png
+[t= 193888ms]   screenshot: /tmp/juniper-e2e/shots/live52/LIVE-RUN__candidates_end.png
+[t= 200186ms]   screenshot: /tmp/juniper-e2e/shots/live52/LIVE-RUN__topology_end.png
+[t= 207332ms]   screenshot: /tmp/juniper-e2e/shots/live52/LIVE-RUN__metrics_end.png
+[t= 207495ms] 
+[t= 207495ms]   server growth : 48 -> 52 via [50, 52]
+[t= 207495ms]   DOM growth    : ['0', '48', '52']
+[t= 207495ms]   cards         : first at t=Nones, end=0
+[t= 207495ms]   glow          : first at t=89.1s
+[t= 207495ms]   metrics store : [(None, 53), (53, 59), (59, 63)]
+[t= 207495ms]   F-026 samples : 4  deltas=[-34.8, -22.6, -32.4, -55.8]
+[t= 207495ms]   => M-CANDIDATES-09: FAIL
+[t= 207495ms]   => M-CANDIDATES-10: BLOCKED (no card to click)
+[t= 207495ms]   => M-CANDIDATES-11: BLOCKED (no card to click)
+[t= 207495ms]   => F-CANOPY-026: STILL-OPEN (worst |delta| 55.8s over 4 samples)
+[t= 207495ms]   => M-TOPOLOGY-16: PASS (glow trace at t=89.1s)
+[t= 207496ms] results -> /tmp/juniper-e2e/live_run_52.json

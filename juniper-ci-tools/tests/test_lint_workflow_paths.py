@@ -19,7 +19,9 @@ from tempfile import TemporaryDirectory
 from juniper_ci_tools.cli_lint_workflow_paths import main as cli_main
 from juniper_ci_tools.lint_workflow_paths import (
     DEFAULT_ECOSYSTEM_SIBLING_PREFIXES,
+    ScriptReference,
     extract_script_paths,
+    extract_script_references,
     find_repo_root,
     is_validatable,
     lint_workflow_paths,
@@ -253,6 +255,166 @@ class CliTest(unittest.TestCase):
             )
             self.assertEqual(rc, 2)
             self.assertIn("workflows directory not found", err)
+
+
+class WorkingDirectoryTest(unittest.TestCase):
+    """A ``run:`` step resolves its paths against its working directory (juniper-ml#1836)."""
+
+    # The real juniper-recurrence shape: a monorepo lane whose job runs inside a
+    # nested package. Before the fix this reported
+    # ``references missing path 'tests/test_readouts_mlp.py'`` while the lane was green.
+    RECURRENCE_MODEL_LANE = textwrap.dedent(
+        """\
+        jobs:
+          torch-readout:
+            defaults:
+              run:
+                working-directory: juniper-recurrence-model
+            steps:
+              - run: python -m pytest tests/test_readouts_mlp.py -q
+        """
+    )
+
+    def test_job_level_working_directory_resolves_the_path(self):
+        with TemporaryDirectory() as tmp:
+            root = _make_repo(
+                Path(tmp),
+                {"ci-recurrence-model.yml": self.RECURRENCE_MODEL_LANE},
+                ["juniper-recurrence-model/tests/test_readouts_mlp.py"],
+            )
+            result = lint_workflow_paths(root)
+            self.assertTrue(result.ok, result.report())
+
+    def test_job_level_working_directory_still_reports_a_real_rename(self):
+        """The permissiveness must not cost the lint its purpose: a renamed file is gone from both places."""
+        with TemporaryDirectory() as tmp:
+            root = _make_repo(
+                Path(tmp),
+                {"ci-recurrence-model.yml": self.RECURRENCE_MODEL_LANE},
+                ["juniper-recurrence-model/tests/test_readouts_renamed.py"],
+            )
+            result = lint_workflow_paths(root)
+            self.assertFalse(result.ok)
+            self.assertEqual(result.missing[0].path, "tests/test_readouts_mlp.py")
+            self.assertEqual(result.missing[0].working_directory, "juniper-recurrence-model")
+
+    def test_report_names_both_searched_locations_and_warns_against_prefixing(self):
+        """The hazard in #1836: acting on the old message led to prefixing the path, which breaks the lane."""
+        with TemporaryDirectory() as tmp:
+            root = _make_repo(Path(tmp), {"ci.yml": self.RECURRENCE_MODEL_LANE}, [])
+            report = lint_workflow_paths(root).report()
+            self.assertIn("juniper-recurrence-model/tests/test_readouts_mlp.py", report)
+            self.assertIn("do NOT 'fix' this by", report)
+
+    def test_step_level_working_directory_wins_over_the_job(self):
+        yaml_text = textwrap.dedent(
+            """\
+            jobs:
+              t:
+                defaults:
+                  run:
+                    working-directory: pkg-a
+                steps:
+                  - run: bash scripts/build.sh
+                    working-directory: pkg-b
+            """
+        )
+        with TemporaryDirectory() as tmp:
+            root = _make_repo(Path(tmp), {"ci.yml": yaml_text}, ["pkg-b/scripts/build.sh"])
+            self.assertTrue(lint_workflow_paths(root).ok)
+
+    def test_workflow_level_default_applies_to_a_job_without_one(self):
+        yaml_text = textwrap.dedent(
+            """\
+            defaults:
+              run:
+                working-directory: app
+            jobs:
+              t:
+                steps:
+                  - run: python util/probe.py
+            """
+        )
+        with TemporaryDirectory() as tmp:
+            root = _make_repo(Path(tmp), {"ci.yml": yaml_text}, ["app/util/probe.py"])
+            self.assertTrue(lint_workflow_paths(root).ok)
+
+    def test_repo_root_relative_path_still_resolves_under_a_working_directory(self):
+        """Both candidates are tried, so a root-relative helper invoked from a subdirectory still passes."""
+        yaml_text = textwrap.dedent(
+            """\
+            jobs:
+              t:
+                defaults:
+                  run:
+                    working-directory: app
+                steps:
+                  - run: python util/shared.py
+            """
+        )
+        with TemporaryDirectory() as tmp:
+            root = _make_repo(Path(tmp), {"ci.yml": yaml_text}, ["util/shared.py"])
+            self.assertTrue(lint_workflow_paths(root).ok)
+
+    def test_trailing_slash_in_working_directory_is_tolerated(self):
+        yaml_text = "jobs:\n  t:\n    steps:\n      - run: python util/probe.py\n        working-directory: app/\n"
+        with TemporaryDirectory() as tmp:
+            root = _make_repo(Path(tmp), {"ci.yml": yaml_text}, ["app/util/probe.py"])
+            self.assertTrue(lint_workflow_paths(root).ok)
+
+    def test_no_working_directory_behaves_exactly_as_before(self):
+        yaml_text = "jobs:\n  t:\n    steps:\n      - run: python scripts/gone.py\n"
+        with TemporaryDirectory() as tmp:
+            root = _make_repo(Path(tmp), {"ci.yml": yaml_text}, [])
+            result = lint_workflow_paths(root)
+            self.assertFalse(result.ok)
+            self.assertEqual(result.missing[0].working_directory, "")
+            self.assertNotIn("searched", result.report())
+
+
+class ScriptReferenceExtractionTest(unittest.TestCase):
+    """``extract_script_references`` keeps the structure the flat extractor discards."""
+
+    def test_tags_a_step_path_with_its_working_directory(self):
+        yaml_text = "jobs:\n  t:\n    steps:\n      - run: python a/b.py\n        working-directory: sub\n"
+        self.assertEqual(extract_script_references(yaml_text), {ScriptReference(path="a/b.py", working_directory="sub")})
+
+    def test_collects_paths_outside_any_step(self):
+        """Coverage the flat extractor had must not be lost: strings outside steps are still linted."""
+        yaml_text = "env:\n  HELPER: tools/helper.sh\njobs:\n  t:\n    steps:\n      - run: echo hi\n"
+        self.assertIn(ScriptReference(path="tools/helper.sh", working_directory=""), extract_script_references(yaml_text))
+
+    def test_finds_every_path_the_flat_extractor_finds(self):
+        yaml_text = textwrap.dedent(
+            """\
+            jobs:
+              a:
+                defaults:
+                  run:
+                    working-directory: pkg
+                steps:
+                  - run: python one/x.py
+                  - run: bash two/y.sh
+              b:
+                steps:
+                  - run: python3 three/z.py
+            """
+        )
+        flat = extract_script_paths(yaml_text)
+        structured = {ref.path for ref in extract_script_references(yaml_text)}
+        self.assertEqual(flat, structured)
+
+    def test_unparseable_yaml_yields_nothing(self):
+        self.assertEqual(extract_script_references("jobs: [unclosed\n"), set())
+
+    def test_candidates_are_root_only_without_a_working_directory(self):
+        self.assertEqual(ScriptReference(path="a/b.py").candidates(), ("a/b.py",))
+
+    def test_candidates_prefer_the_working_directory(self):
+        self.assertEqual(
+            ScriptReference(path="a/b.py", working_directory="sub").candidates(),
+            ("sub/a/b.py", "a/b.py"),
+        )
 
 
 if __name__ == "__main__":

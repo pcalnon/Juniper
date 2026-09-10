@@ -1,0 +1,731 @@
+{
+  "canopy": "http://127.0.0.1:8052",
+  "store": "metrics-panel-metrics-store",
+  "window_s": 90.0,
+  "callbacks_list_inventory": {
+    "ok": true,
+    "lists": {
+      "blocked": 0,
+      "executed": 0,
+      "executing": 0,
+      "prioritized": 0,
+      "requested": 6,
+      "stored": 34,
+      "watched": 6,
+      "completed": null
+    }
+  },
+  "armed": true,
+  "seen": {
+    "watched": 4235,
+    "requested": 180,
+    "prioritized": 442
+  },
+  "everSeen": {
+    "watched": 1,
+    "requested": 1,
+    "prioritized": 1
+  },
+  "touchHigh": {
+    "requested": 5,
+    "watched": 1,
+    "prioritized": 1
+  },
+  "entries": {
+    "watched": 44,
+    "requested": 43,
+    "prioritized": 43
+  },
+  "maxRun": {
+    "watched": 231,
+    "requested": 9,
+    "prioritized": 23
+  },
+  "samples": [
+    {
+      "list": "watched",
+      "entry": {
+        "callback": {
+          "matchKeys": [],
+          "firstSingleOutput": 0,
+          "outputs": [
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data",
+              "out": true
+            }
+          ],
+          "output": "metrics-panel-metrics-store.data",
+          "inputs": [
+            {
+              "id": "fast-update-interval",
+              "property": "n_intervals"
+            },
+            {
+              "id": "metrics-panel-display-mode-store",
+              "property": "data"
+            }
+          ],
+          "state": [
+            {
+              "id": "ws-liveness-store",
+              "property": "data"
+            },
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data"
+            }
+          ],
+          "clientside_function": null,
+          "prevent_initial_call": false,
+          "background": null,
+          "dynamic_creator": null,
+          "no_output": false,
+          "optional": false,
+          "hidden": false,
+          "websocket": false,
+          "persistent": false
+        },
+        "anyVals": "",
+        "resolvedId": "metrics-panel-metrics-store.data",
+        "changedPropIds": {
+          "fast-update-interval.n_intervals": 2
+        },
+        "initialCall": false,
+        "priority": "0",
+        "executionPromise": {}
+      }
+    },
+    {
+      "list": "watched",
+      "entry": {
+        "callback": {
+          "matchKeys": [],
+          "firstSingleOutput": 0,
+          "outputs": [
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data",
+              "out": true
+            }
+          ],
+          "output": "metrics-panel-metrics-store.data",
+          "inputs": [
+            {
+              "id": "fast-update-interval",
+              "property": "n_intervals"
+            },
+            {
+              "id": "metrics-panel-display-mode-store",
+              "property": "data"
+            }
+          ],
+          "state": [
+            {
+              "id": "ws-liveness-store",
+              "property": "data"
+            },
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data"
+            }
+          ],
+          "clientside_function": null,
+          "prevent_initial_call": false,
+          "background": null,
+          "dynamic_creator": null,
+          "no_output": false,
+          "optional": false,
+          "hidden": false,
+          "websocket": false,
+          "persistent": false
+        },
+        "anyVals": "",
+        "resolvedId": "metrics-panel-metrics-store.data",
+        "changedPropIds": {
+          "fast-update-interval.n_intervals": 2
+        },
+        "initialCall": false,
+        "priority": "0",
+        "executionPromise": {}
+      }
+    },
+    {
+      "list": "watched",
+      "entry": {
+        "callback": {
+          "matchKeys": [],
+          "firstSingleOutput": 0,
+          "outputs": [
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data",
+              "out": true
+            }
+          ],
+          "output": "metrics-panel-metrics-store.data",
+          "inputs": [
+            {
+              "id": "fast-update-interval",
+              "property": "n_intervals"
+            },
+            {
+              "id": "metrics-panel-display-mode-store",
+              "property": "data"
+            }
+          ],
+          "state": [
+            {
+              "id": "ws-liveness-store",
+              "property": "data"
+            },
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data"
+            }
+          ],
+          "clientside_function": null,
+          "prevent_initial_call": false,
+          "background": null,
+          "dynamic_creator": null,
+          "no_output": false,
+          "optional": false,
+          "hidden": false,
+          "websocket": false,
+          "persistent": false
+        },
+        "anyVals": "",
+        "resolvedId": "metrics-panel-metrics-store.data",
+        "changedPropIds": {
+          "fast-update-interval.n_intervals": 2
+        },
+        "initialCall": false,
+        "priority": "0",
+        "executionPromise": {}
+      }
+    },
+    {
+      "list": "watched",
+      "entry": {
+        "callback": {
+          "matchKeys": [],
+          "firstSingleOutput": 0,
+          "outputs": [
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data",
+              "out": true
+            }
+          ],
+          "output": "metrics-panel-metrics-store.data",
+          "inputs": [
+            {
+              "id": "fast-update-interval",
+              "property": "n_intervals"
+            },
+            {
+              "id": "metrics-panel-display-mode-store",
+              "property": "data"
+            }
+          ],
+          "state": [
+            {
+              "id": "ws-liveness-store",
+              "property": "data"
+            },
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data"
+            }
+          ],
+          "clientside_function": null,
+          "prevent_initial_call": false,
+          "background": null,
+          "dynamic_creator": null,
+          "no_output": false,
+          "optional": false,
+          "hidden": false,
+          "websocket": false,
+          "persistent": false
+        },
+        "anyVals": "",
+        "resolvedId": "metrics-panel-metrics-store.data",
+        "changedPropIds": {
+          "fast-update-interval.n_intervals": 2
+        },
+        "initialCall": false,
+        "priority": "0",
+        "executionPromise": {}
+      }
+    },
+    {
+      "list": "watched",
+      "entry": {
+        "callback": {
+          "matchKeys": [],
+          "firstSingleOutput": 0,
+          "outputs": [
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data",
+              "out": true
+            }
+          ],
+          "output": "metrics-panel-metrics-store.data",
+          "inputs": [
+            {
+              "id": "fast-update-interval",
+              "property": "n_intervals"
+            },
+            {
+              "id": "metrics-panel-display-mode-store",
+              "property": "data"
+            }
+          ],
+          "state": [
+            {
+              "id": "ws-liveness-store",
+              "property": "data"
+            },
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data"
+            }
+          ],
+          "clientside_function": null,
+          "prevent_initial_call": false,
+          "background": null,
+          "dynamic_creator": null,
+          "no_output": false,
+          "optional": false,
+          "hidden": false,
+          "websocket": false,
+          "persistent": false
+        },
+        "anyVals": "",
+        "resolvedId": "metrics-panel-metrics-store.data",
+        "changedPropIds": {
+          "fast-update-interval.n_intervals": 2
+        },
+        "initialCall": false,
+        "priority": "0",
+        "executionPromise": {}
+      }
+    },
+    {
+      "list": "watched",
+      "entry": {
+        "callback": {
+          "matchKeys": [],
+          "firstSingleOutput": 0,
+          "outputs": [
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data",
+              "out": true
+            }
+          ],
+          "output": "metrics-panel-metrics-store.data",
+          "inputs": [
+            {
+              "id": "fast-update-interval",
+              "property": "n_intervals"
+            },
+            {
+              "id": "metrics-panel-display-mode-store",
+              "property": "data"
+            }
+          ],
+          "state": [
+            {
+              "id": "ws-liveness-store",
+              "property": "data"
+            },
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data"
+            }
+          ],
+          "clientside_function": null,
+          "prevent_initial_call": false,
+          "background": null,
+          "dynamic_creator": null,
+          "no_output": false,
+          "optional": false,
+          "hidden": false,
+          "websocket": false,
+          "persistent": false
+        },
+        "anyVals": "",
+        "resolvedId": "metrics-panel-metrics-store.data",
+        "changedPropIds": {
+          "fast-update-interval.n_intervals": 2
+        },
+        "initialCall": false,
+        "priority": "0",
+        "executionPromise": {}
+      }
+    },
+    {
+      "list": "watched",
+      "entry": {
+        "callback": {
+          "matchKeys": [],
+          "firstSingleOutput": 0,
+          "outputs": [
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data",
+              "out": true
+            }
+          ],
+          "output": "metrics-panel-metrics-store.data",
+          "inputs": [
+            {
+              "id": "fast-update-interval",
+              "property": "n_intervals"
+            },
+            {
+              "id": "metrics-panel-display-mode-store",
+              "property": "data"
+            }
+          ],
+          "state": [
+            {
+              "id": "ws-liveness-store",
+              "property": "data"
+            },
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data"
+            }
+          ],
+          "clientside_function": null,
+          "prevent_initial_call": false,
+          "background": null,
+          "dynamic_creator": null,
+          "no_output": false,
+          "optional": false,
+          "hidden": false,
+          "websocket": false,
+          "persistent": false
+        },
+        "anyVals": "",
+        "resolvedId": "metrics-panel-metrics-store.data",
+        "changedPropIds": {
+          "fast-update-interval.n_intervals": 2
+        },
+        "initialCall": false,
+        "priority": "0",
+        "executionPromise": {}
+      }
+    },
+    {
+      "list": "watched",
+      "entry": {
+        "callback": {
+          "matchKeys": [],
+          "firstSingleOutput": 0,
+          "outputs": [
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data",
+              "out": true
+            }
+          ],
+          "output": "metrics-panel-metrics-store.data",
+          "inputs": [
+            {
+              "id": "fast-update-interval",
+              "property": "n_intervals"
+            },
+            {
+              "id": "metrics-panel-display-mode-store",
+              "property": "data"
+            }
+          ],
+          "state": [
+            {
+              "id": "ws-liveness-store",
+              "property": "data"
+            },
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data"
+            }
+          ],
+          "clientside_function": null,
+          "prevent_initial_call": false,
+          "background": null,
+          "dynamic_creator": null,
+          "no_output": false,
+          "optional": false,
+          "hidden": false,
+          "websocket": false,
+          "persistent": false
+        },
+        "anyVals": "",
+        "resolvedId": "metrics-panel-metrics-store.data",
+        "changedPropIds": {
+          "fast-update-interval.n_intervals": 2
+        },
+        "initialCall": false,
+        "priority": "0",
+        "executionPromise": {}
+      }
+    },
+    {
+      "list": "watched",
+      "entry": {
+        "callback": {
+          "matchKeys": [],
+          "firstSingleOutput": 0,
+          "outputs": [
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data",
+              "out": true
+            }
+          ],
+          "output": "metrics-panel-metrics-store.data",
+          "inputs": [
+            {
+              "id": "fast-update-interval",
+              "property": "n_intervals"
+            },
+            {
+              "id": "metrics-panel-display-mode-store",
+              "property": "data"
+            }
+          ],
+          "state": [
+            {
+              "id": "ws-liveness-store",
+              "property": "data"
+            },
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data"
+            }
+          ],
+          "clientside_function": null,
+          "prevent_initial_call": false,
+          "background": null,
+          "dynamic_creator": null,
+          "no_output": false,
+          "optional": false,
+          "hidden": false,
+          "websocket": false,
+          "persistent": false
+        },
+        "anyVals": "",
+        "resolvedId": "metrics-panel-metrics-store.data",
+        "changedPropIds": {
+          "fast-update-interval.n_intervals": 2
+        },
+        "initialCall": false,
+        "priority": "0",
+        "executionPromise": {}
+      }
+    },
+    {
+      "list": "watched",
+      "entry": {
+        "callback": {
+          "matchKeys": [],
+          "firstSingleOutput": 0,
+          "outputs": [
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data",
+              "out": true
+            }
+          ],
+          "output": "metrics-panel-metrics-store.data",
+          "inputs": [
+            {
+              "id": "fast-update-interval",
+              "property": "n_intervals"
+            },
+            {
+              "id": "metrics-panel-display-mode-store",
+              "property": "data"
+            }
+          ],
+          "state": [
+            {
+              "id": "ws-liveness-store",
+              "property": "data"
+            },
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data"
+            }
+          ],
+          "clientside_function": null,
+          "prevent_initial_call": false,
+          "background": null,
+          "dynamic_creator": null,
+          "no_output": false,
+          "optional": false,
+          "hidden": false,
+          "websocket": false,
+          "persistent": false
+        },
+        "anyVals": "",
+        "resolvedId": "metrics-panel-metrics-store.data",
+        "changedPropIds": {
+          "fast-update-interval.n_intervals": 2
+        },
+        "initialCall": false,
+        "priority": "0",
+        "executionPromise": {}
+      }
+    },
+    {
+      "list": "watched",
+      "entry": {
+        "callback": {
+          "matchKeys": [],
+          "firstSingleOutput": 0,
+          "outputs": [
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data",
+              "out": true
+            }
+          ],
+          "output": "metrics-panel-metrics-store.data",
+          "inputs": [
+            {
+              "id": "fast-update-interval",
+              "property": "n_intervals"
+            },
+            {
+              "id": "metrics-panel-display-mode-store",
+              "property": "data"
+            }
+          ],
+          "state": [
+            {
+              "id": "ws-liveness-store",
+              "property": "data"
+            },
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data"
+            }
+          ],
+          "clientside_function": null,
+          "prevent_initial_call": false,
+          "background": null,
+          "dynamic_creator": null,
+          "no_output": false,
+          "optional": false,
+          "hidden": false,
+          "websocket": false,
+          "persistent": false
+        },
+        "anyVals": "",
+        "resolvedId": "metrics-panel-metrics-store.data",
+        "changedPropIds": {
+          "fast-update-interval.n_intervals": 2
+        },
+        "initialCall": false,
+        "priority": "0",
+        "executionPromise": {}
+      }
+    },
+    {
+      "list": "watched",
+      "entry": {
+        "callback": {
+          "matchKeys": [],
+          "firstSingleOutput": 0,
+          "outputs": [
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data",
+              "out": true
+            }
+          ],
+          "output": "metrics-panel-metrics-store.data",
+          "inputs": [
+            {
+              "id": "fast-update-interval",
+              "property": "n_intervals"
+            },
+            {
+              "id": "metrics-panel-display-mode-store",
+              "property": "data"
+            }
+          ],
+          "state": [
+            {
+              "id": "ws-liveness-store",
+              "property": "data"
+            },
+            {
+              "id": "metrics-panel-metrics-store",
+              "property": "data"
+            }
+          ],
+          "clientside_function": null,
+          "prevent_initial_call": false,
+          "background": null,
+          "dynamic_creator": null,
+          "no_output": false,
+          "optional": false,
+          "hidden": false,
+          "websocket": false,
+          "persistent": false
+        },
+        "anyVals": "",
+        "resolvedId": "metrics-panel-metrics-store.data",
+        "changedPropIds": {
+          "fast-update-interval.n_intervals": 2
+        },
+        "initialCall": false,
+        "priority": "0",
+        "executionPromise": {}
+      }
+    }
+  ],
+  "notifies": 4677,
+  "storeLenSeq": [
+    {
+      "t": 1788912949539,
+      "from": null,
+      "to": 0
+    }
+  ],
+  "errors": [],
+  "independent_read": {
+    "ok": true,
+    "via": "paths.strs",
+    "len": 0,
+    "hidden_units": null,
+    "type": "list"
+  },
+  "serving": {
+    "ok": true,
+    "canopy": "http://127.0.0.1:8052",
+    "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded",
+    "build_date": "2026-09-08T12:12:17Z",
+    "version": "0.6.0",
+    "read_at": "2026-09-09T00:17:24Z"
+  },
+  "buckets": {
+    "terminal": {},
+    "pre_execution": {
+      "watched": 1,
+      "requested": 1,
+      "prioritized": 1
+    },
+    "unclassified": {}
+  },
+  "result": {
+    "verdict": "RETIRED-BEFORE-EXECUTION",
+    "why": "entries appeared in pre-execution lists ['prioritized', 'requested', 'watched'] and NEVER in a terminal list (['executed', 'stored', 'completed']). The renderer drops the call before its result can be applied. In 'watched' it entered 44 SEPARATE times (longest unbroken presence 231 notifies), so this is a SERIES of calls each replaced before resolving -- supersession, not one stuck request. That names the mechanism the dispatch probe could only bound, and points the fix at the TRIGGER."
+  }
+}
