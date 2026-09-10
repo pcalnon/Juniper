@@ -1060,6 +1060,16 @@ Pidfile must be under `$JUNIPER_EXP_RUN_ROOT/soak-probes/` (`JUNIPER_EXP_RUN_ROO
 
 User units in `util/systemd/`, **not system units**: the probe must see `~/.claude/projects/.../memory/MEMORY.md`, and a system unit runs as root with a different `HOME` and measures nothing (the same class that ruled out cloud routines).
 
+```bash
+mkdir -p ~/.config/systemd/user
+cp util/systemd/juniper-soak-probe.* ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now juniper-soak-probe.timer   # or the .path unit
+systemctl --user start juniper-soak-probe                # one-off; no [Install] on the service
+```
+
+Enable the **timer** or **path** unit, not the service. An `[Install]` block on the service is deliberately absent: enabling it would fire an extra uncoordinated probe at every login.
+
 - `ExecStart=/usr/bin/python3 util/soak_run_probe.py --timeout 900` — the reaper candidate filter matches cmdline text `/JuniperC[a-z0-9]+/`; a conda interpreter is reapable from the same cwd. `/usr/bin/python3` is not a candidate.
 - `TimeoutStartSec=1500` must exceed dispatch (120s) + claude (900s) + `--reveal` (120s) = 1140s. If systemd wins the race it cgroup-kills the wrapper **before** `status.json` is written ("crash, not timeout").
 - Timer: `OnCalendar=*-*-* 03,09,15,21:23:00`, `Persistent=false` (a laptop resuming after two days must not stampede missed intervals).
