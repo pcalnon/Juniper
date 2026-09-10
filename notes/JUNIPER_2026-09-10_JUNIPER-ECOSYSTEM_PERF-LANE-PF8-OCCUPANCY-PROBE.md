@@ -532,7 +532,7 @@ re-scope note and the 2026-09-09 handoff). Both ran against the tree frozen at `
 document was edited only after both had reported. Round 2, briefed on the corrections only, ran
 against the corrected tree at `e38caf06`; round 3, briefed on rows 18–27, against `a97fb91f`;
 round 4, briefed on rows 28–35, against `526d0842`; round 5, briefed on rows 36–40, against
-`e1a7c72f`; round 6, briefed on what round 5 found, against the tree after that fix. Each
+`e1a7c72f`; round 6, briefed on row 41, against `d7a0168a`. Each
 round's record below is written after that round reports.
 
 Verdicts, round 1: **A — PASS WITH FINDINGS** (48 claims, 45 exact matches, three corrections);
@@ -626,10 +626,18 @@ exactly (four of fifteen cells; +9.67 / +9.29 / +10.42%; 82.44% / 83.02%; the sp
 |---|---|---|
 | 41 | one line of the test's docstring (its item 7) still said "worker-equivalent figure" for the cores the reducer computes; and the round-3 record said "seven items" above eight rows without saying row 35 bundles observations | fixed, both |
 
-**Round 6** (on row 41 only): ROUND6_RESULT
+**Round 6 — PASS** (on row 41 only, against `d7a0168a`). The docstring line, the round-3 wording
+and the round-5 record re-verified; the fix commit touched two files and only the intended lines;
+the 26 tests and the structure delta (0 regressions) re-run; a sweep of every retired phrase across
+the nine changed surfaces found only permitted hits (§9's own historical rows, the "~4–8
+worker-equivalent band" that names the sweep's axis, and OpenBLAS sentences that carry their hedge).
+Two observations, neither a defect: §1.3 of the re-scope note keeps its pre-probe
+"worker-equivalent" wording, which is the dated plan §2.1 disagrees with on the record rather than
+rewrites; and §2.3 cites rounds 2–4 for a comparison round 5 also re-derived. No finding changes a
+number, a disposition or an action.
 
 **Termination.** Rounds continue until one changes no number, disposition or action; rounds 1–5
-each did. **Residual uncertainty, stated plainly**: the burst's library is a leading candidate, not an identification;
+each did and round 6 did not, so the rounds stop there. **Residual uncertainty, stated plainly**: the burst's library is a leading candidate, not an identification;
 the pair's cost is three pairs on one day, and its between-pair spread is not independent of
 ambient; the sweep-axis reading of any occupancy figure rests on an assumption the sweep did not
 test.
