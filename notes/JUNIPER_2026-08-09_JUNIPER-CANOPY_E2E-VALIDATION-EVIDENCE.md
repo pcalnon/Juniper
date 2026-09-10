@@ -6431,7 +6431,7 @@ fixture `COMPLETED` at 48 with 71 history rows, Candidate Metrics tab:
 
 | phase | store | wire |
 |---|---|---|
-| baseline, 30 s, contended | `0 → 0` | **39** responses naming the store, **every one carrying 71 rows**, 0 omitted |
+| baseline, 30 iterations (~45 s), contended | `0 → 0` | **39** responses naming the store, **every one carrying 71 rows**, 0 omitted |
 | tick disabled, 20 s settle | **`0 → 71` at 2.9 s** | 1 response, 71 rows — the last in-flight call, landing with nothing behind it |
 | one manual trigger, 60 s watch | `71`, unchanged | 0 responses (recorded, not interpreted — see below) |
 
@@ -6449,6 +6449,13 @@ above, not "an hour of instruments"): baseline 40 responses × 71 rows, store 0;
 agreeing to the tenth — and the value held for the watch
 with, again, no request after the manual trigger. `APPLIED-UNCONTENDED` twice; n = 2, and the two agree
 exactly (`…_f035_supersession_run{1,2}.json`).
+
+**Read every phase label as an ITERATION COUNT, not a duration** (corrected 2026-09-09). Each iteration is
+a `wait_for_timeout(1000)` plus a Playwright `evaluate`, which costs ~1.5 s — the transcript's own clock
+shows the "20 s" settle running 29.9 s and the "60 s" watch 88.2 s. So the baseline spans ~45 s, not 30 s,
+and its 39 responses are **~0.87/s — the 1 Hz fast lane, not a storm above it**. The same arithmetic
+deflates "2.9 s": that is the second sample of the settle loop, so both replicates agree only to within a
+bucket of ~1.5 s, and neither run can distinguish a fill at 0.2 s from one at 2.9 s.
 
 Two honest limits. The manual `n_intervals` trigger after the settle produced **no request at all** — the
 store already held 71, so nothing distinguishes "the callback ran and `no_update`d" from "a `setProps` on
