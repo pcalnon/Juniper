@@ -1,0 +1,648 @@
+{
+  "probe": "2026-09-10_f035_unopposed_response_test.py",
+  "started_at": "2026-09-10T10:16:52Z",
+  "canopy": "http://127.0.0.1:8053",
+  "tick_ms": 1000,
+  "land_window_s": 2.0,
+  "window_s": 75.0,
+  "tab_requested": "Candidate Metrics",
+  "serving": {
+    "canopy": {
+      "ok": true,
+      "url": "http://127.0.0.1:8053",
+      "version": "0.6.0",
+      "git_sha": "eab7cf43c7e1b1ce85d48e55ac77e2c4b5118b18",
+      "build_date": "2026-09-10T10:13:11Z"
+    },
+    "cascor": {
+      "ok": true,
+      "url": "http://127.0.0.1:8202",
+      "version": "0.9.0",
+      "git_sha": "d39d537e985ba329290142c123f576b4ece9dba3",
+      "build_date": "2026-09-09T00:21:59Z"
+    }
+  },
+  "invocations": [
+    {
+      "t_start": 37.707,
+      "t_end": 40.2,
+      "duration_s": 2.493,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 2,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 46.128,
+      "t_end": 47.815,
+      "duration_s": 1.688,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 52.61,
+      "t_end": 53.72,
+      "duration_s": 1.11,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 59.748,
+      "t_end": 62.614,
+      "duration_s": 2.866,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 2,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 67.589,
+      "t_end": 68.913,
+      "duration_s": 1.325,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": false,
+      "ticks_inside": 0,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 74.289,
+      "t_end": 76.204,
+      "duration_s": 1.915,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 81.504,
+      "t_end": 84.184,
+      "duration_s": 2.68,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 2,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 88.938,
+      "t_end": 91.334,
+      "duration_s": 2.396,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 2,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 96.28,
+      "t_end": 98.384,
+      "duration_s": 2.104,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 2,
+      "landed": false,
+      "landed_at": null
+    }
+  ],
+  "console": [],
+  "observer_install": {
+    "ok": true,
+    "specs": [
+      {
+        "id": "metrics-panel-metrics-store",
+        "prop": "data",
+        "mode": "len"
+      },
+      {
+        "id": "network-visualizer-topology-store",
+        "prop": "data",
+        "mode": "len"
+      },
+      {
+        "id": "fast-update-interval",
+        "prop": "n_intervals",
+        "mode": "value"
+      }
+    ],
+    "initial": {
+      "metrics-panel-metrics-store.data": 0,
+      "network-visualizer-topology-store.data": -2,
+      "fast-update-interval.n_intervals": 6
+    }
+  },
+  "observer_install_at": 10.648,
+  "tab_active": "Candidate Metrics",
+  "control": {
+    "ran": false
+  },
+  "observer": {
+    "notifies": 10455,
+    "heartbeats": 40,
+    "last": {
+      "metrics-panel-metrics-store.data": 66,
+      "network-visualizer-topology-store.data": -2,
+      "fast-update-interval.n_intervals": 52
+    },
+    "dur_ms": 94550
+  },
+  "trace": [
+    {
+      "t": 10.648,
+      "id": "metrics-panel-metrics-store",
+      "prop": "data",
+      "len": 0,
+      "prev": null,
+      "reason": "install"
+    },
+    {
+      "t": 10.648,
+      "id": "network-visualizer-topology-store",
+      "prop": "data",
+      "len": -2,
+      "prev": null,
+      "reason": "install"
+    },
+    {
+      "t": 10.648,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 6,
+      "prev": null,
+      "reason": "install"
+    },
+    {
+      "t": 14.608,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 7,
+      "prev": 6,
+      "reason": "notify"
+    },
+    {
+      "t": 16.144,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 8,
+      "prev": 7,
+      "reason": "notify"
+    },
+    {
+      "t": 16.778,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 9,
+      "prev": 8,
+      "reason": "notify"
+    },
+    {
+      "t": 17.933,
+      "id": "metrics-panel-metrics-store",
+      "prop": "data",
+      "len": 66,
+      "prev": 0,
+      "reason": "notify"
+    },
+    {
+      "t": 19.239,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 10,
+      "prev": 9,
+      "reason": "notify"
+    },
+    {
+      "t": 20.555,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 11,
+      "prev": 10,
+      "reason": "notify"
+    },
+    {
+      "t": 28.419,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 12,
+      "prev": 11,
+      "reason": "notify"
+    },
+    {
+      "t": 30.535,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 13,
+      "prev": 12,
+      "reason": "notify"
+    },
+    {
+      "t": 33.787,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 14,
+      "prev": 13,
+      "reason": "notify"
+    },
+    {
+      "t": 35.879,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 15,
+      "prev": 14,
+      "reason": "notify"
+    },
+    {
+      "t": 37.78,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 16,
+      "prev": 15,
+      "reason": "notify"
+    },
+    {
+      "t": 40.03,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 17,
+      "prev": 16,
+      "reason": "notify"
+    },
+    {
+      "t": 42.281,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 18,
+      "prev": 17,
+      "reason": "notify"
+    },
+    {
+      "t": 44.538,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 19,
+      "prev": 18,
+      "reason": "notify"
+    },
+    {
+      "t": 46.173,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 20,
+      "prev": 19,
+      "reason": "notify"
+    },
+    {
+      "t": 47.941,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 21,
+      "prev": 20,
+      "reason": "notify"
+    },
+    {
+      "t": 49.312,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 22,
+      "prev": 21,
+      "reason": "notify"
+    },
+    {
+      "t": 51.583,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 23,
+      "prev": 22,
+      "reason": "notify"
+    },
+    {
+      "t": 53.074,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 24,
+      "prev": 23,
+      "reason": "notify"
+    },
+    {
+      "t": 54.614,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 25,
+      "prev": 24,
+      "reason": "notify"
+    },
+    {
+      "t": 56.252,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 26,
+      "prev": 25,
+      "reason": "notify"
+    },
+    {
+      "t": 58.148,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 27,
+      "prev": 26,
+      "reason": "notify"
+    },
+    {
+      "t": 59.863,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 28,
+      "prev": 27,
+      "reason": "notify"
+    },
+    {
+      "t": 61.751,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 29,
+      "prev": 28,
+      "reason": "notify"
+    },
+    {
+      "t": 63.286,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 30,
+      "prev": 29,
+      "reason": "notify"
+    },
+    {
+      "t": 65.712,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 31,
+      "prev": 30,
+      "reason": "notify"
+    },
+    {
+      "t": 67.236,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 32,
+      "prev": 31,
+      "reason": "notify"
+    },
+    {
+      "t": 69.391,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 33,
+      "prev": 32,
+      "reason": "notify"
+    },
+    {
+      "t": 71.408,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 34,
+      "prev": 33,
+      "reason": "notify"
+    },
+    {
+      "t": 73.094,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 35,
+      "prev": 34,
+      "reason": "notify"
+    },
+    {
+      "t": 74.812,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 36,
+      "prev": 35,
+      "reason": "notify"
+    },
+    {
+      "t": 76.562,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 37,
+      "prev": 36,
+      "reason": "notify"
+    },
+    {
+      "t": 78.108,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 38,
+      "prev": 37,
+      "reason": "notify"
+    },
+    {
+      "t": 79.619,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 39,
+      "prev": 38,
+      "reason": "notify"
+    },
+    {
+      "t": 81.628,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 40,
+      "prev": 39,
+      "reason": "notify"
+    },
+    {
+      "t": 83.264,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 41,
+      "prev": 40,
+      "reason": "notify"
+    },
+    {
+      "t": 85.544,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 42,
+      "prev": 41,
+      "reason": "notify"
+    },
+    {
+      "t": 87.565,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 43,
+      "prev": 42,
+      "reason": "notify"
+    },
+    {
+      "t": 89.445,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 44,
+      "prev": 43,
+      "reason": "notify"
+    },
+    {
+      "t": 91.31,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 45,
+      "prev": 44,
+      "reason": "notify"
+    },
+    {
+      "t": 92.987,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 46,
+      "prev": 45,
+      "reason": "notify"
+    },
+    {
+      "t": 94.752,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 47,
+      "prev": 46,
+      "reason": "notify"
+    },
+    {
+      "t": 96.533,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 48,
+      "prev": 47,
+      "reason": "notify"
+    },
+    {
+      "t": 98.359,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 49,
+      "prev": 48,
+      "reason": "notify"
+    },
+    {
+      "t": 100.284,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 50,
+      "prev": 49,
+      "reason": "notify"
+    },
+    {
+      "t": 102.146,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 51,
+      "prev": 50,
+      "reason": "notify"
+    },
+    {
+      "t": 103.38,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 52,
+      "prev": 51,
+      "reason": "notify"
+    }
+  ],
+  "summary": {
+    "invocations": 9,
+    "writes": 0,
+    "writes_pre_control": 0,
+    "rows_each": [],
+    "kinds": {
+      "no_update": 9
+    },
+    "http_opposed": 0,
+    "http_unopposed": 0,
+    "http_unopposed_failed_to_land": 0,
+    "http_opposed_failed_to_land": 0,
+    "tick_crossed": 0,
+    "tick_free": 0,
+    "tick_free_failed_to_land": 0,
+    "tick_crossed_failed_to_land": 0,
+    "ticks_observed": 47,
+    "durations_under_tick": 0,
+    "landed_any": 0,
+    "duration_s": {
+      "n": 0,
+      "min": null,
+      "median": null,
+      "max": null
+    },
+    "request_gap_s": {
+      "n": 0,
+      "min": null,
+      "median": null,
+      "max": null
+    },
+    "metrics_store_fills": 1,
+    "console_errors": 0,
+    "callback_failed_msgs": 0
+  },
+  "verdict": "NO-WRITES",
+  "verdict_why": "no store-writing invocation was observed; the instrument's own control failed",
+  "h2_failed_response": {
+    "console_failed_msgs": 0,
+    "non_landing_responses": 0,
+    "correlated_within_3s": 0,
+    "messages": []
+  }
+}
