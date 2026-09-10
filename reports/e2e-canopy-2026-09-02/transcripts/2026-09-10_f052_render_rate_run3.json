@@ -1,0 +1,106 @@
+{
+  "probe": "2026-09-10_f035_downstream_consumer_probe.py",
+  "canopy": "http://127.0.0.1:8053",
+  "started_at": "2026-09-10T10:40:38Z",
+  "wire": {
+    "loss_plot_responses": 0,
+    "carried_figure": 0,
+    "other_responses": 85,
+    "samples": []
+  },
+  "store": {
+    "ok": true,
+    "via": "paths.strs",
+    "len": 66
+  },
+  "client_phase_census": {
+    "output": 54,
+    "candidate": 12
+  },
+  "client_samples": [
+    {
+      "epoch": 1,
+      "metrics": {
+        "loss": 0.11764895915985107,
+        "accuracy": null,
+        "val_loss": null,
+        "val_accuracy": null,
+        "f1": null,
+        "precision": null,
+        "recall": null,
+        "roc_auc": null
+      },
+      "network_topology": {
+        "hidden_units": 48
+      },
+      "phase": "output",
+      "timestamp": "2026-09-08T19:24:23.975675",
+      "eval_metrics": null
+    },
+    {
+      "epoch": 1,
+      "metrics": {
+        "loss": 0.29607972502708435,
+        "accuracy": 0.5578125,
+        "val_loss": 0.2919754385948181,
+        "val_accuracy": 0.5625,
+        "f1": null,
+        "precision": null,
+        "recall": null,
+        "roc_auc": null
+      },
+      "network_topology": {
+        "hidden_units": 48
+      },
+      "phase": "output",
+      "timestamp": "2026-09-08T19:24:23.982189",
+      "eval_metrics": null
+    },
+    {
+      "epoch": 52,
+      "metrics": {
+        "loss": 0.11569642275571823,
+        "accuracy": 0.86,
+        "val_loss": 0.11728882044553757,
+        "val_accuracy": 0.8575,
+        "f1": 0.8574777308954524,
+        "precision": 0.8574607460746074,
+        "recall": 0.8575054387237129,
+        "roc_auc": 0.9228576429696682
+      },
+      "network_topology": {
+        "hidden_units": 48
+      },
+      "phase": "candidate",
+      "timestamp": "2026-09-08T19:24:39.412122",
+      "eval_metrics": null
+    },
+    {
+      "epoch": 1,
+      "metrics": {
+        "loss": 0.11569642275571823,
+        "accuracy": null,
+        "val_loss": null,
+        "val_accuracy": null,
+        "f1": null,
+        "precision": null,
+        "recall": null,
+        "roc_auc": null
+      },
+      "network_topology": {
+        "hidden_units": 49
+      },
+      "phase": "candidate",
+      "timestamp": "2026-09-08T19:24:39.423411",
+      "eval_metrics": null
+    }
+  ],
+  "adapter_series_len": 12,
+  "figure_before": {
+    "present": true,
+    "traces": [],
+    "annotations": []
+  },
+  "verdict": "NOT-RENDERED-NO-FORCE",
+  "verdict_why": "the client's store yields a 12-point candidate series and the figure is empty; --no-force means the second-chance arm was deliberately not run"
+}

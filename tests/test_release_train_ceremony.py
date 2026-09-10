@@ -1537,6 +1537,38 @@ class CreateReleaseTempNotesTest(unittest.TestCase):
         self.assertFalse((repo / "notes" / "releases" / "RELEASE_NOTES_v0.6.0.md").exists())
 
 
+class ArchiveNotesTrailingNewlineTest(unittest.TestCase):
+    """The archive file must end with EXACTLY one newline.
+
+    ceremony.py writes render_notes() output straight into the exempt archive PR, and that PR
+    runs the repo's pre-commit. end-of-file-fixer REWRITES a file that ends in a blank line, so
+    the hook run exits 1 and fails the PR -- juniper-ml#1874, where all three Pre-commit jobs and
+    the Quality Gate went red on a one-byte difference. The renderers build a line list ending in
+    a "" separator that is load-bearing only when a remaining-sections comment follows, so the
+    normalisation happens at the return."""
+
+    def _render(self, **kw):
+        import notes_render as nr
+
+        return nr.render_notes("juniper-recurrence", "0.5.0", template_text="", repo_root=None, **kw)
+
+    def test_final_body_ends_with_exactly_one_newline(self):
+        body = self._render(final=True)
+        self.assertTrue(body.endswith("\n"), "must end with a newline")
+        self.assertFalse(body.endswith("\n\n"), "must NOT end with a blank line -- end-of-file-fixer rewrites it")
+        self.assertEqual(body, body.rstrip("\n") + "\n")
+
+    def test_draft_body_ends_with_exactly_one_newline_too(self):
+        body = self._render(final=False)
+        self.assertTrue(body.endswith("\n"))
+        self.assertFalse(body.endswith("\n\n"))
+
+    def test_security_body_ends_with_exactly_one_newline(self):
+        body = self._render(final=True, is_security=True)
+        self.assertTrue(body.endswith("\n"))
+        self.assertFalse(body.endswith("\n\n"))
+
+
 class LiveSeamRepoBoundTest(unittest.TestCase):
     """The LIVE seam bounds every --repo to the registry-derived allowlist (Phase 4.1). Cross-repo is
     expressed by --repo owner/<owning-of-the-8>; anything else raises before gh runs -- hermetically."""

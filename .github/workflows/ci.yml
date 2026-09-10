@@ -1062,6 +1062,8 @@ jobs:
           python3 -m unittest -v tests/test_markdown_structure_delta.py
           # tests/test_markdown_structure_screen.py: the SCREEN the delta gate imports and calls per file. Its `main()` selected files with `not p.is_file()`, and `is_file()` FOLLOWS SYMLINKS -- so each of the ten dangling links on `main` (nine under notes/legacy/ -> a `regressions/` dir that is not on main, one under notes/development/) was skipped WITHOUT being counted and scored clean. Pins: an unreadable markdown path exits 2 rather than passing silently; examining ZERO paths exits 2; a clean file still exits 0 and a real structural problem still exits 1; and the delta gate can still import the module and call check().
           python3 -m unittest -v tests/test_markdown_structure_screen.py
+          # tests/test_pf8_occupancy_probe.py: the PF-8 occupancy probe's arithmetic, which decides whether a two-arm pair is worth an owner's host time. /proc/<pid>/stat split around the LAST ')' (comm may hold spaces and parens); roles follow the process tree; a pid counts from birth only if born inside the interval and an exited one is counted as vanished, never invented; busy excludes iowait; both edges of the ~4-8 worker-equivalent band pinned (3.99 / 8.01 say NO, 4.0 / 8.0 say YES); occupancy is sum-over-sum, not a mean of ratios.
+          python3 -m unittest -v tests/test_pf8_occupancy_probe.py
 
       - name: Run bash regression tests
         run: |
