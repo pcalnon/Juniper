@@ -16,22 +16,29 @@
 #   header has no separator row. Markdownlint and the doc-link validator see none of them -- a
 #   fence is never "missing", it silently absorbs everything after it.
 #
-#   Wiring that count directly as a gate does not work, and the measurement says so: **102
-#   problems across 21 files** on `main` (re-measured 2026-09-09; the 104/23 this comment
-#   carried was from 2026-09-05). A gate demanding zero is red on arrival, and the repair
-#   campaign it implies is not the thing anyone asked for.
+#   Wiring that count directly as a gate does not work, and the measurement says so: **63
+#   problems across 14 files** on `main` at `e173ea81` (2026-09-10). A gate demanding zero is
+#   red on arrival, and the repair campaign it implies is not the thing anyone asked for.
+#
+#   THE COUNT IS A MOVING FLOOR, NOT A BACKLOG, and treating it as a standing fact is how five
+#   sites in this repo went stale at once. Successive measurements: 104/23 (09-05), 102/21
+#   (09-09), 63/14 after ml#1834 repaired the live `notes/` half, 73/15 later the same day,
+#   63/14 (09-10). Quote a commit and a date, or re-measure -- never the bare number.
 #
 #   This comment also said the damage was "most of them in `notes/legacy/` and
-#   `notes/code-review/`", and that is FALSE. By file, matching the breakdown #1831 put in
-#   `tests/test_markdown_structure_delta.py`: 11 under `notes/`, 6 under `notes/legacy/`,
-#   3 under `prompts/`, 1 under `notes/code-review/`, and none at all under `docs/`.
+#   `notes/code-review/`", and that is FALSE. By file at `e173ea81`: 5 under `notes/`, 6 under
+#   `notes/legacy/`, 3 under `prompts/`, and ZERO under both `notes/code-review/` and `docs/`.
+#   `notes/code-review/` scored 1 as recently as 09-09 and is clean now with its 14 tracked
+#   files still present, so that zero is a real result and not an empty enumeration.
 #
 #   By PROBLEM the concentration is sharper still, and it is the more useful cut when
-#   deciding whether to repair rather than delta-scope: `notes/` 62, `notes/legacy/` 20,
-#   `prompts/generated/` 11, `prompts/agent_templates/` 7, `prompts/manual/` 1,
-#   `notes/code-review/` 1. Over half the total sits in three files -- 28 of it in
-#   `notes/JUNIPER_2026-03-12_JUNIPER-ML_PROMPT-ANALYSIS-AND-AUTOMATION-PLAN.md` alone.
-#   So the two directories once named as the bulk are 21 of 102, and the bulk is live `notes/`.
+#   deciding whether to repair rather than delta-scope: `notes/` 24, `notes/legacy/` 20,
+#   `prompts/generated/` 11, `prompts/agent_templates/` 7, `prompts/manual/` 1. Three files
+#   hold 38 of the 63 -- 14 in `notes/legacy/CASCOR_DEMO_TRAINING_ERROR_PLAN.md`, 13 in
+#   `notes/JUNIPER_2026-08-09_JUNIPER-ECOSYSTEM_STANDING-ITEMS-CLOSEOUT-AND-HARNESS-REMEDIATION-PLAN.md`,
+#   and 11 in `prompts/generated/JUNIPER_ML_CUSTOM-AGENT-SUITE-ENHANCEMENTS_PLAN_2026-06-26_2048.md`.
+#   Repairing those three leaves 25 across 11 and changes NO gate outcome, because the gate is
+#   delta-scoped -- which is the argument for leaving them alone.
 #
 #   RE-MEASURE BEFORE QUOTING, and delimit the paths properly:
 #
