@@ -16,7 +16,10 @@ For every cell in a suite's `registry.jsonl`, the trace rows written by
 `2026-09-10_pf8_occupancy_sampler.py` for that cell's run are split into the TRAINING window —
 bracketed by the first and last `ts_unix` of the driver's `metrics_series.csv`, i.e. the drive
 loop, the only phase the sweep measured — and the whole run (bring-up to teardown). Occupancy is
-cpu-seconds / wall-seconds; 1.0 is one sweep worker (one saturated core).
+cpu-seconds / wall-seconds — CORES. Reading a core as one sweep worker (one saturated `sha256sum`
+process) is an ASSUMPTION §8.4 of the sweep note disclaims ("the knee is located in worker count,
+not in cores"); the readout below is conditional on it, and the two-arm pair measures the
+externality directly instead.
 
     occupancy          cascor tree (uvicorn + forkserver + candidate pool + other) in the window
     total_occupancy    + the juniper-data service and the driver
@@ -70,7 +73,13 @@ def readout(worker_equivalents: float) -> dict:
     else:
         cost = f"+{SWEEP_CURVE[12]}% at 12 workers, and rising"
         band = "beyond-plateau"
-    return {"worker_equivalents": w, "band": band, "second_run_cost": cost, "pair_worth_running": PAIR_BAND[0] <= w <= PAIR_BAND[1]}
+    return {
+        "worker_equivalents": w,
+        "band": band,
+        "second_run_cost": cost,
+        "pair_worth_running": PAIR_BAND[0] <= w <= PAIR_BAND[1],
+        "assumption": "one core = one sweep worker; untested — §8.4 of the sweep note locates the knee in worker count, not cores",
+    }
 
 
 def load_trace(path: Path) -> "list[dict]":
@@ -289,7 +298,7 @@ def render_arms(result: dict) -> str:
 
 
 def render(summary: dict) -> str:
-    header = "| cell | outcome | steps | mean step ms | drive s | samples | cascor tree (worker-eq) | + data + driver | p95 | max | share ≥ 6 | share ≥ 8 | occ ≥ 6 | occ < 6 | workers | host busy cores | ambient cores | load 1m | vanished | whole-run tree |"
+    header = "| cell | outcome | steps | mean step ms | drive s | samples | cascor tree (cores) | + data + driver | p95 | max | share ≥ 6 | share ≥ 8 | occ ≥ 6 | occ < 6 | workers | host busy cores | ambient cores | load 1m | vanished | whole-run tree |"
     lines = [f"suite: {summary['suite_dir']}", "", header, "|" + "---|" * 20]
     for c in summary["cells"]:
         d = c.get("drive") or {}
@@ -324,10 +333,10 @@ def render(summary: dict) -> str:
     agg = summary.get("aggregate")
     lines.append("")
     if agg:
-        lines.append(f"cascor-tree occupancy during drive, {agg['cells']} succeeded cells: mean {agg['mean']}  min {agg['min']}  max {agg['max']}  spread {agg['spread_pct']}%  (1.0 = one sweep worker)")
+        lines.append(f"cascor-tree occupancy during drive, {agg['cells']} succeeded cells: mean {agg['mean']}  min {agg['min']}  max {agg['max']}  spread {agg['spread_pct']}%  (cores; read as sweep workers only under the assumption below)")
         for label, key in (("mean", "readout_mean"), ("max", "readout_max")):
             ro = agg[key]
-            lines.append(f"  readout at the {label} ({ro['worker_equivalents']:.2f}): band={ro['band']}; a second run costs: {ro['second_run_cost']}; two-arm pair worth running: {'YES' if ro['pair_worth_running'] else 'NO'}")
+            lines.append(f"  readout at the {label} ({ro['worker_equivalents']:.2f}), assuming {ro['assumption']}: band={ro['band']}; a second run costs: {ro['second_run_cost']}; two-arm pair worth running: {'YES' if ro['pair_worth_running'] else 'NO'}")
     else:
         lines.append("no succeeded cell has trace rows inside its drive window — nothing to read off the curve")
     amb = summary.get("between_cells")

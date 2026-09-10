@@ -37,8 +37,9 @@ answered health) and, for each, walks the process table:
     host_busy_cores    (busy / total) jiffies from /proc/stat x nproc — the WHOLE host, ours and
                        everyone else's; ambient occupancy = host_busy_cores - total / wall_dt
 
-Every cpu column is cpu-seconds spent in the interval; divide by `wall_dt` for occupancy, and 1.0
-is one sweep worker. A pid born inside an interval is counted from birth (`starttime` against the
+Every cpu column is cpu-seconds spent in the interval; divide by `wall_dt` for occupancy in CORES.
+Equating one core with one sweep worker is an assumption §8.4 of the sweep note disclaims (the
+knee is located in worker count, not cores). A pid born inside an interval is counted from birth (`starttime` against the
 previous tick's uptime); a pid that exits inside one loses its final partial second, which
 `vanished` counts so the loss can be bounded. Rows with `run_id -` are host-only ticks between
 cells and give the ambient trace.

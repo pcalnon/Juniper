@@ -126,7 +126,7 @@ and unmeasured until a pair actually runs.
 > note disclaims, and the pair below measured the externality directly instead. Step 2, run
 > because 4.52 is inside the band (§1.1 above had said ≤ 6 adds nothing, and the result agrees):
 > three aligned parallel pairs against six sequential controls, same budget, all twelve cells at
-> 1770 — **+11.3% per step, +9 to +13% leaving one pair out**, inside the 20.5% band, outside the
+> 1770 — **+11.3% per step, +8.5 to +12.7% leaving one pair out**, inside the 20.5% band, outside the
 > day's within-arm spread by one pair's margin. The two unmeasured items above are now measured:
 > start offsets were 0.003–0.068 s with ≥ 89% of the drive windows shared, and each parallel
 > cell's own juniper-data instance stayed idle during training (its `data` column reads ~0.01

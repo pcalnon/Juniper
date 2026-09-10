@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that initial pass and +9% on the other 91% of steps, at an identical `step_count` 1770. Step 2
   ran because 4.52 is inside the ~4–8 band: three aligned parallel pairs against six sequential
   controls, same budget, all twelve cells at 1770 — **a second concurrent pinned run costs +11.3%
-  per step, +9 to +13% leaving one pair out**, inside the sweep's 20.5% quiet band and outside the
+  per step, +8.5 to +12.7% leaving one pair out**, inside the sweep's 20.5% quiet band and outside the
   day's within-arm spread; advisory, as item 4.3 said. The burst is removed by the three BLAS
   variables, which `torch.set_num_threads` does not reach and which the YAML's
   `runtime.blas_threads` never sets: the block is validated by the driver, accepted by the service,
@@ -37,7 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `notes/JUNIPER_2026-09-02_JUNIPER-ECOSYSTEM_PERF-LANE-P2-PLAN.md` (rows 2.2, 4.1, 4.2, the §3
   graph and a §4 hazard), `notes/JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md`
   (a dated blockquote in §1.3), `docs/REFERENCE.md` (PF-8 row, test reference),
-  `util/experiments/suites/perf/README.md` (PF-8 row), `AGENTS.md` (test list, Last Updated).
+  `util/experiments/suites/perf/README.md` (PF-3 and PF-8 rows), `util/experiments/suites/perf/pf3-cascor-pool-scaling.yaml`
+  (header only: the `runtime.num_processes` axis is inert; do not launch as written), `AGENTS.md`
+  (test list, Last Updated).
 
 - **Perf lane — Wave 4 re-scoped, the micro timing reference established, PF-2 probed**
   (`notes/JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md`).
