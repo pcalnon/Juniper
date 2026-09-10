@@ -1,0 +1,810 @@
+{
+  "probe": "2026-09-10_f035_unopposed_response_test.py",
+  "started_at": "2026-09-10T10:13:29Z",
+  "canopy": "http://127.0.0.1:8053",
+  "tick_ms": 1000,
+  "land_window_s": 2.0,
+  "window_s": 90.0,
+  "tab_requested": "Candidate Metrics",
+  "serving": {
+    "canopy": {
+      "ok": true,
+      "url": "http://127.0.0.1:8053",
+      "version": "0.6.0",
+      "git_sha": "eab7cf43c7e1b1ce85d48e55ac77e2c4b5118b18",
+      "build_date": "2026-09-10T10:13:11Z"
+    },
+    "cascor": {
+      "ok": true,
+      "url": "http://127.0.0.1:8202",
+      "version": "0.9.0",
+      "git_sha": "d39d537e985ba329290142c123f576b4ece9dba3",
+      "build_date": "2026-09-09T00:21:59Z"
+    }
+  },
+  "invocations": [
+    {
+      "t_start": 30.783,
+      "t_end": 33.28,
+      "duration_s": 2.497,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 39.186,
+      "t_end": 41.471,
+      "duration_s": 2.285,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 46.46,
+      "t_end": 47.307,
+      "duration_s": 0.847,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": false,
+      "ticks_inside": 0,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 51.692,
+      "t_end": 52.097,
+      "duration_s": 0.404,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": false,
+      "ticks_inside": 0,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 56.412,
+      "t_end": 57.185,
+      "duration_s": 0.773,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": false,
+      "ticks_inside": 0,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 61.656,
+      "t_end": 63.215,
+      "duration_s": 1.56,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 67.1,
+      "t_end": 68.393,
+      "duration_s": 1.293,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 72.155,
+      "t_end": 74.215,
+      "duration_s": 2.06,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 79.504,
+      "t_end": 80.698,
+      "duration_s": 1.194,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 84.843,
+      "t_end": 86.158,
+      "duration_s": 1.315,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 91.598,
+      "t_end": 93.087,
+      "duration_s": 1.488,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 97.859,
+      "t_end": 100.594,
+      "duration_s": 2.735,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 2,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 104.385,
+      "t_end": 105.579,
+      "duration_s": 1.194,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 109.358,
+      "t_end": 110.753,
+      "duration_s": 1.395,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 114.91,
+      "t_end": 116.213,
+      "duration_s": 1.303,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    }
+  ],
+  "console": [],
+  "tab_active": "Candidate Metrics",
+  "observer_install": {
+    "ok": true,
+    "specs": [
+      {
+        "id": "metrics-panel-metrics-store",
+        "prop": "data",
+        "mode": "len"
+      },
+      {
+        "id": "network-visualizer-topology-store",
+        "prop": "data",
+        "mode": "len"
+      },
+      {
+        "id": "fast-update-interval",
+        "prop": "n_intervals",
+        "mode": "value"
+      }
+    ],
+    "initial": {
+      "metrics-panel-metrics-store.data": 66,
+      "network-visualizer-topology-store.data": -2,
+      "fast-update-interval.n_intervals": 13
+    }
+  },
+  "observer_install_at": 30.594,
+  "control": {
+    "ran": false
+  },
+  "observer": {
+    "notifies": 8372,
+    "heartbeats": 53,
+    "last": {
+      "metrics-panel-metrics-store.data": 66,
+      "network-visualizer-topology-store.data": -2,
+      "fast-update-interval.n_intervals": 69
+    },
+    "dur_ms": 90957
+  },
+  "trace": [
+    {
+      "t": 30.594,
+      "id": "metrics-panel-metrics-store",
+      "prop": "data",
+      "len": 66,
+      "prev": null,
+      "reason": "install"
+    },
+    {
+      "t": 30.594,
+      "id": "network-visualizer-topology-store",
+      "prop": "data",
+      "len": -2,
+      "prev": null,
+      "reason": "install"
+    },
+    {
+      "t": 30.594,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 13,
+      "prev": null,
+      "reason": "install"
+    },
+    {
+      "t": 32.556,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 14,
+      "prev": 13,
+      "reason": "notify"
+    },
+    {
+      "t": 34.329,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 15,
+      "prev": 14,
+      "reason": "notify"
+    },
+    {
+      "t": 35.977,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 16,
+      "prev": 15,
+      "reason": "notify"
+    },
+    {
+      "t": 37.845,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 17,
+      "prev": 16,
+      "reason": "notify"
+    },
+    {
+      "t": 39.941,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 18,
+      "prev": 17,
+      "reason": "notify"
+    },
+    {
+      "t": 41.54,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 19,
+      "prev": 18,
+      "reason": "notify"
+    },
+    {
+      "t": 42.548,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 20,
+      "prev": 19,
+      "reason": "notify"
+    },
+    {
+      "t": 44.093,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 21,
+      "prev": 20,
+      "reason": "notify"
+    },
+    {
+      "t": 45.639,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 22,
+      "prev": 21,
+      "reason": "notify"
+    },
+    {
+      "t": 47.398,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 23,
+      "prev": 22,
+      "reason": "notify"
+    },
+    {
+      "t": 48.728,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 24,
+      "prev": 23,
+      "reason": "notify"
+    },
+    {
+      "t": 50.626,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 25,
+      "prev": 24,
+      "reason": "notify"
+    },
+    {
+      "t": 52.16,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 26,
+      "prev": 25,
+      "reason": "notify"
+    },
+    {
+      "t": 53.985,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 27,
+      "prev": 26,
+      "reason": "notify"
+    },
+    {
+      "t": 55.813,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 28,
+      "prev": 27,
+      "reason": "notify"
+    },
+    {
+      "t": 57.251,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 29,
+      "prev": 28,
+      "reason": "notify"
+    },
+    {
+      "t": 58.413,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 30,
+      "prev": 29,
+      "reason": "notify"
+    },
+    {
+      "t": 60.17,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 31,
+      "prev": 30,
+      "reason": "notify"
+    },
+    {
+      "t": 61.7,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 32,
+      "prev": 31,
+      "reason": "notify"
+    },
+    {
+      "t": 63.809,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 33,
+      "prev": 32,
+      "reason": "notify"
+    },
+    {
+      "t": 65.688,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 34,
+      "prev": 33,
+      "reason": "notify"
+    },
+    {
+      "t": 67.247,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 35,
+      "prev": 34,
+      "reason": "notify"
+    },
+    {
+      "t": 68.779,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 36,
+      "prev": 35,
+      "reason": "notify"
+    },
+    {
+      "t": 70.501,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 37,
+      "prev": 36,
+      "reason": "notify"
+    },
+    {
+      "t": 71.62,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 38,
+      "prev": 37,
+      "reason": "notify"
+    },
+    {
+      "t": 73.048,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 39,
+      "prev": 38,
+      "reason": "notify"
+    },
+    {
+      "t": 75.077,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 40,
+      "prev": 39,
+      "reason": "notify"
+    },
+    {
+      "t": 76.466,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 41,
+      "prev": 40,
+      "reason": "notify"
+    },
+    {
+      "t": 77.749,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 42,
+      "prev": 41,
+      "reason": "notify"
+    },
+    {
+      "t": 79.834,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 43,
+      "prev": 42,
+      "reason": "notify"
+    },
+    {
+      "t": 81.251,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 44,
+      "prev": 43,
+      "reason": "notify"
+    },
+    {
+      "t": 82.911,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 45,
+      "prev": 44,
+      "reason": "notify"
+    },
+    {
+      "t": 85.086,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 46,
+      "prev": 45,
+      "reason": "notify"
+    },
+    {
+      "t": 86.547,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 47,
+      "prev": 46,
+      "reason": "notify"
+    },
+    {
+      "t": 87.525,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 48,
+      "prev": 47,
+      "reason": "notify"
+    },
+    {
+      "t": 89.12,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 49,
+      "prev": 48,
+      "reason": "notify"
+    },
+    {
+      "t": 90.75,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 50,
+      "prev": 49,
+      "reason": "notify"
+    },
+    {
+      "t": 92.516,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 51,
+      "prev": 50,
+      "reason": "notify"
+    },
+    {
+      "t": 93.679,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 52,
+      "prev": 51,
+      "reason": "notify"
+    },
+    {
+      "t": 95.612,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 53,
+      "prev": 52,
+      "reason": "notify"
+    },
+    {
+      "t": 96.58,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 54,
+      "prev": 53,
+      "reason": "notify"
+    },
+    {
+      "t": 97.984,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 55,
+      "prev": 54,
+      "reason": "notify"
+    },
+    {
+      "t": 100.058,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 56,
+      "prev": 55,
+      "reason": "notify"
+    },
+    {
+      "t": 101.454,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 57,
+      "prev": 56,
+      "reason": "notify"
+    },
+    {
+      "t": 102.659,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 58,
+      "prev": 57,
+      "reason": "notify"
+    },
+    {
+      "t": 104.695,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 59,
+      "prev": 58,
+      "reason": "notify"
+    },
+    {
+      "t": 106.132,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 60,
+      "prev": 59,
+      "reason": "notify"
+    },
+    {
+      "t": 107.886,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 61,
+      "prev": 60,
+      "reason": "notify"
+    },
+    {
+      "t": 109.654,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 62,
+      "prev": 61,
+      "reason": "notify"
+    },
+    {
+      "t": 111.215,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 63,
+      "prev": 62,
+      "reason": "notify"
+    },
+    {
+      "t": 112.6,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 64,
+      "prev": 63,
+      "reason": "notify"
+    },
+    {
+      "t": 113.944,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 65,
+      "prev": 64,
+      "reason": "notify"
+    },
+    {
+      "t": 115.693,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 66,
+      "prev": 65,
+      "reason": "notify"
+    },
+    {
+      "t": 117.375,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 67,
+      "prev": 66,
+      "reason": "notify"
+    },
+    {
+      "t": 118.661,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 68,
+      "prev": 67,
+      "reason": "notify"
+    },
+    {
+      "t": 120.539,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 69,
+      "prev": 68,
+      "reason": "notify"
+    }
+  ],
+  "summary": {
+    "invocations": 15,
+    "writes": 0,
+    "writes_pre_control": 0,
+    "rows_each": [],
+    "kinds": {
+      "no_update": 15
+    },
+    "http_opposed": 0,
+    "http_unopposed": 0,
+    "http_unopposed_failed_to_land": 0,
+    "http_opposed_failed_to_land": 0,
+    "tick_crossed": 0,
+    "tick_free": 0,
+    "tick_free_failed_to_land": 0,
+    "tick_crossed_failed_to_land": 0,
+    "ticks_observed": 57,
+    "durations_under_tick": 0,
+    "landed_any": 0,
+    "duration_s": {
+      "n": 0,
+      "min": null,
+      "median": null,
+      "max": null
+    },
+    "request_gap_s": {
+      "n": 0,
+      "min": null,
+      "median": null,
+      "max": null
+    },
+    "metrics_store_fills": 1,
+    "console_errors": 0,
+    "callback_failed_msgs": 0
+  },
+  "verdict": "NO-WRITES",
+  "verdict_why": "no store-writing invocation was observed; the instrument's own control failed",
+  "h2_failed_response": {
+    "console_failed_msgs": 0,
+    "non_landing_responses": 0,
+    "correlated_within_3s": 0,
+    "messages": []
+  }
+}

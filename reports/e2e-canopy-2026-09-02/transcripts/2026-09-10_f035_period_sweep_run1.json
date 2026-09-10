@@ -1,0 +1,848 @@
+{
+  "probe": "2026-09-10_f035_trigger_period_sweep.py",
+  "started_at": "2026-09-10T09:49:32Z",
+  "canopy": "http://127.0.0.1:8052",
+  "periods_ms": [
+    1000,
+    2000,
+    3000,
+    5000,
+    8000
+  ],
+  "phase_s": 40.0,
+  "serving": {
+    "canopy": {
+      "ok": true,
+      "url": "http://127.0.0.1:8052",
+      "version": "0.6.0",
+      "git_sha": "eb05021d19d8d5887f9ea8c4dcfccf348eea7ded"
+    },
+    "cascor": {
+      "ok": true,
+      "url": "http://127.0.0.1:8202",
+      "version": "0.9.0",
+      "git_sha": "d39d537e985ba329290142c123f576b4ece9dba3"
+    }
+  },
+  "phases": [
+    {
+      "period_ms": 1000,
+      "t_begin": 40.165,
+      "t_end": 80.166,
+      "setprops_ok": true,
+      "invocations": 24,
+      "rows_each": [
+        66
+      ],
+      "duration_median_s": 1.652,
+      "duration_max_s": 2.59,
+      "observed_ticks": 24,
+      "observed_tick_gap_median_s": 1.579,
+      "fills": 0,
+      "landed": false,
+      "first_fill": null
+    },
+    {
+      "period_ms": 2000,
+      "t_begin": 82.493,
+      "t_end": 122.495,
+      "setprops_ok": true,
+      "invocations": 19,
+      "rows_each": [],
+      "duration_median_s": 1.06,
+      "duration_max_s": 2.338,
+      "observed_ticks": 19,
+      "observed_tick_gap_median_s": 1.944,
+      "fills": 1,
+      "landed": true,
+      "first_fill": {
+        "t": 84.414,
+        "id": "metrics-panel-metrics-store",
+        "prop": "data",
+        "len": 66,
+        "prev": 0,
+        "reason": "notify"
+      }
+    }
+  ],
+  "tab_active": "Candidate Metrics",
+  "observer_install": {
+    "ok": true,
+    "specs": [
+      {
+        "id": "metrics-panel-metrics-store",
+        "prop": "data",
+        "mode": "len"
+      },
+      {
+        "id": "fast-update-interval",
+        "prop": "n_intervals",
+        "mode": "value"
+      },
+      {
+        "id": "fast-update-interval",
+        "prop": "interval",
+        "mode": "value"
+      }
+    ],
+    "initial": {
+      "metrics-panel-metrics-store.data": 0,
+      "fast-update-interval.n_intervals": 14,
+      "fast-update-interval.interval": 1000
+    }
+  },
+  "observer_install_at": 37.953,
+  "observer": {
+    "notifies": 7358,
+    "heartbeats": 48,
+    "last": {
+      "metrics-panel-metrics-store.data": 66,
+      "fast-update-interval.n_intervals": 60,
+      "fast-update-interval.interval": 1000
+    },
+    "dur_ms": 86995
+  },
+  "trace": [
+    {
+      "t": 37.953,
+      "id": "metrics-panel-metrics-store",
+      "prop": "data",
+      "len": 0,
+      "prev": null,
+      "reason": "install"
+    },
+    {
+      "t": 37.953,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 14,
+      "prev": null,
+      "reason": "install"
+    },
+    {
+      "t": 37.953,
+      "id": "fast-update-interval",
+      "prop": "interval",
+      "len": 1000,
+      "prev": null,
+      "reason": "install"
+    },
+    {
+      "t": 38.207,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 15,
+      "prev": 14,
+      "reason": "notify"
+    },
+    {
+      "t": 40.539,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 16,
+      "prev": 15,
+      "reason": "notify"
+    },
+    {
+      "t": 42.115,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 17,
+      "prev": 16,
+      "reason": "notify"
+    },
+    {
+      "t": 43.578,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 18,
+      "prev": 17,
+      "reason": "notify"
+    },
+    {
+      "t": 46.022,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 19,
+      "prev": 18,
+      "reason": "notify"
+    },
+    {
+      "t": 47.787,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 20,
+      "prev": 19,
+      "reason": "notify"
+    },
+    {
+      "t": 49.357,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 21,
+      "prev": 20,
+      "reason": "notify"
+    },
+    {
+      "t": 51.293,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 22,
+      "prev": 21,
+      "reason": "notify"
+    },
+    {
+      "t": 52.771,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 23,
+      "prev": 22,
+      "reason": "notify"
+    },
+    {
+      "t": 54.148,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 24,
+      "prev": 23,
+      "reason": "notify"
+    },
+    {
+      "t": 56.197,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 25,
+      "prev": 24,
+      "reason": "notify"
+    },
+    {
+      "t": 57.776,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 26,
+      "prev": 25,
+      "reason": "notify"
+    },
+    {
+      "t": 59.102,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 27,
+      "prev": 26,
+      "reason": "notify"
+    },
+    {
+      "t": 60.565,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 28,
+      "prev": 27,
+      "reason": "notify"
+    },
+    {
+      "t": 62.315,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 29,
+      "prev": 28,
+      "reason": "notify"
+    },
+    {
+      "t": 64.281,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 30,
+      "prev": 29,
+      "reason": "notify"
+    },
+    {
+      "t": 66.541,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 31,
+      "prev": 30,
+      "reason": "notify"
+    },
+    {
+      "t": 68.163,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 32,
+      "prev": 31,
+      "reason": "notify"
+    },
+    {
+      "t": 70.124,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 33,
+      "prev": 32,
+      "reason": "notify"
+    },
+    {
+      "t": 71.555,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 34,
+      "prev": 33,
+      "reason": "notify"
+    },
+    {
+      "t": 73.102,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 35,
+      "prev": 34,
+      "reason": "notify"
+    },
+    {
+      "t": 74.684,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 36,
+      "prev": 35,
+      "reason": "notify"
+    },
+    {
+      "t": 76.449,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 37,
+      "prev": 36,
+      "reason": "notify"
+    },
+    {
+      "t": 77.968,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 38,
+      "prev": 37,
+      "reason": "notify"
+    },
+    {
+      "t": 79.151,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 39,
+      "prev": 38,
+      "reason": "notify"
+    },
+    {
+      "t": 81.441,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 40,
+      "prev": 39,
+      "reason": "notify"
+    },
+    {
+      "t": 82.471,
+      "id": "fast-update-interval",
+      "prop": "interval",
+      "len": 2000,
+      "prev": 1000,
+      "reason": "notify"
+    },
+    {
+      "t": 84.414,
+      "id": "metrics-panel-metrics-store",
+      "prop": "data",
+      "len": 66,
+      "prev": 0,
+      "reason": "notify"
+    },
+    {
+      "t": 85.543,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 41,
+      "prev": 40,
+      "reason": "notify"
+    },
+    {
+      "t": 87.215,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 42,
+      "prev": 41,
+      "reason": "notify"
+    },
+    {
+      "t": 89.972,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 43,
+      "prev": 42,
+      "reason": "notify"
+    },
+    {
+      "t": 91.985,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 44,
+      "prev": 43,
+      "reason": "notify"
+    },
+    {
+      "t": 93.278,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 45,
+      "prev": 44,
+      "reason": "notify"
+    },
+    {
+      "t": 95.696,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 46,
+      "prev": 45,
+      "reason": "notify"
+    },
+    {
+      "t": 97.429,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 47,
+      "prev": 46,
+      "reason": "notify"
+    },
+    {
+      "t": 99.134,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 48,
+      "prev": 47,
+      "reason": "notify"
+    },
+    {
+      "t": 101.395,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 49,
+      "prev": 48,
+      "reason": "notify"
+    },
+    {
+      "t": 103.562,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 50,
+      "prev": 49,
+      "reason": "notify"
+    },
+    {
+      "t": 105.497,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 51,
+      "prev": 50,
+      "reason": "notify"
+    },
+    {
+      "t": 107.238,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 52,
+      "prev": 51,
+      "reason": "notify"
+    },
+    {
+      "t": 109.48,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 53,
+      "prev": 52,
+      "reason": "notify"
+    },
+    {
+      "t": 111.377,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 54,
+      "prev": 53,
+      "reason": "notify"
+    },
+    {
+      "t": 113.29,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 55,
+      "prev": 54,
+      "reason": "notify"
+    },
+    {
+      "t": 115.632,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 56,
+      "prev": 55,
+      "reason": "notify"
+    },
+    {
+      "t": 117.126,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 57,
+      "prev": 56,
+      "reason": "notify"
+    },
+    {
+      "t": 119.539,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 58,
+      "prev": 57,
+      "reason": "notify"
+    },
+    {
+      "t": 121.492,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 59,
+      "prev": 58,
+      "reason": "notify"
+    },
+    {
+      "t": 122.933,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 60,
+      "prev": 59,
+      "reason": "notify"
+    },
+    {
+      "t": 124.109,
+      "id": "fast-update-interval",
+      "prop": "interval",
+      "len": 1000,
+      "prev": 2000,
+      "reason": "notify"
+    }
+  ],
+  "console": [],
+  "invocations": [
+    {
+      "t_start": 39.365,
+      "t_end": 41.382,
+      "duration_s": 2.017,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 41.109,
+      "t_end": 42.946,
+      "duration_s": 1.836,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 42.86,
+      "t_end": 44.571,
+      "duration_s": 1.711,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 44.326,
+      "t_end": 46.916,
+      "duration_s": 2.59,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 46.761,
+      "t_end": 48.513,
+      "duration_s": 1.751,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 48.313,
+      "t_end": 50.093,
+      "duration_s": 1.779,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 49.951,
+      "t_end": 51.101,
+      "duration_s": 1.15,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 51.767,
+      "t_end": 52.687,
+      "duration_s": 0.92,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 53.402,
+      "t_end": 55.274,
+      "duration_s": 1.872,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 54.791,
+      "t_end": 56.226,
+      "duration_s": 1.435,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 56.717,
+      "t_end": 57.555,
+      "duration_s": 0.839,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 58.349,
+      "t_end": 60.182,
+      "duration_s": 1.833,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 59.711,
+      "t_end": 61.72,
+      "duration_s": 2.008,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 61.44,
+      "t_end": 63.081,
+      "duration_s": 1.641,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 62.837,
+      "t_end": 64.126,
+      "duration_s": 1.289,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 64.808,
+      "t_end": 66.305,
+      "duration_s": 1.497,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 67.262,
+      "t_end": 68.217,
+      "duration_s": 0.955,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 68.815,
+      "t_end": 71.062,
+      "duration_s": 2.247,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 70.991,
+      "t_end": 72.432,
+      "duration_s": 1.441,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 72.046,
+      "t_end": 73.125,
+      "duration_s": 1.079,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 73.792,
+      "t_end": 76.353,
+      "duration_s": 2.56,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 75.246,
+      "t_end": 77.511,
+      "duration_s": 2.265,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 76.978,
+      "t_end": 78.641,
+      "duration_s": 1.663,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 78.506,
+      "t_end": 79.905,
+      "duration_s": 1.399,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 79.708,
+      "t_end": 81.266,
+      "duration_s": 1.558,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 81.967,
+      "t_end": 83.131,
+      "duration_s": 1.164,
+      "status": 200,
+      "rows": 66
+    },
+    {
+      "t_start": 86.365,
+      "t_end": 87.152,
+      "duration_s": 0.787,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 87.806,
+      "t_end": 89.999,
+      "duration_s": 2.193,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 90.682,
+      "t_end": 93.015,
+      "duration_s": 2.334,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 92.599,
+      "t_end": 94.09,
+      "duration_s": 1.491,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 93.889,
+      "t_end": 94.71,
+      "duration_s": 0.821,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 96.475,
+      "t_end": 97.494,
+      "duration_s": 1.019,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 98.074,
+      "t_end": 99.922,
+      "duration_s": 1.849,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 99.657,
+      "t_end": 100.838,
+      "duration_s": 1.181,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 102.039,
+      "t_end": 104.103,
+      "duration_s": 2.064,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 104.102,
+      "t_end": 105.073,
+      "duration_s": 0.972,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 106.056,
+      "t_end": 107.107,
+      "duration_s": 1.051,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 107.735,
+      "t_end": 108.794,
+      "duration_s": 1.06,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 110.081,
+      "t_end": 111.216,
+      "duration_s": 1.135,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 111.9,
+      "t_end": 112.892,
+      "duration_s": 0.992,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 113.951,
+      "t_end": 116.234,
+      "duration_s": 2.283,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 116.15,
+      "t_end": 117.028,
+      "duration_s": 0.878,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 117.628,
+      "t_end": 118.46,
+      "duration_s": 0.832,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 120.131,
+      "t_end": 122.469,
+      "duration_s": 2.338,
+      "status": 200,
+      "rows": null
+    },
+    {
+      "t_start": 122.035,
+      "t_end": 122.839,
+      "duration_s": 0.803,
+      "status": 200,
+      "rows": null
+    }
+  ],
+  "verdict": "PERIOD-CONTROLS-LANDING",
+  "verdict_why": "landing turns on between 1000ms and 2000ms; measured round trip median 1.491s max 2.59s -- the threshold falls in the round-trip range, which is the eviction signature",
+  "round_trip_s": {
+    "n": 45,
+    "median": 1.491,
+    "max": 2.59
+  }
+}

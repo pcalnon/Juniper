@@ -1,0 +1,673 @@
+{
+  "probe": "2026-09-10_f035_unopposed_response_test.py",
+  "started_at": "2026-09-10T10:20:11Z",
+  "canopy": "http://127.0.0.1:8053",
+  "tick_ms": 1000,
+  "land_window_s": 2.0,
+  "window_s": 75.0,
+  "tab_requested": "Candidate Metrics",
+  "serving": {
+    "canopy": {
+      "ok": true,
+      "url": "http://127.0.0.1:8053",
+      "version": "0.6.0",
+      "git_sha": "eab7cf43c7e1b1ce85d48e55ac77e2c4b5118b18",
+      "build_date": "2026-09-10T10:13:11Z"
+    },
+    "cascor": {
+      "ok": true,
+      "url": "http://127.0.0.1:8202",
+      "version": "0.9.0",
+      "git_sha": "d39d537e985ba329290142c123f576b4ece9dba3",
+      "build_date": "2026-09-09T00:21:59Z"
+    }
+  },
+  "invocations": [
+    {
+      "t_start": 24.608,
+      "t_end": 26.636,
+      "duration_s": 2.028,
+      "status": 200,
+      "kind": "write",
+      "rows": 66,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 36.445,
+      "t_end": 37.827,
+      "duration_s": 1.382,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": false,
+      "ticks_inside": 0,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 42.817,
+      "t_end": 45.106,
+      "duration_s": 2.289,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 2,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 48.88,
+      "t_end": 50.897,
+      "duration_s": 2.016,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 2,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 54.501,
+      "t_end": 55.229,
+      "duration_s": 0.728,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": false,
+      "ticks_inside": 0,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 58.919,
+      "t_end": 60.393,
+      "duration_s": 1.474,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 64.155,
+      "t_end": 65.845,
+      "duration_s": 1.689,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 70.294,
+      "t_end": 71.903,
+      "duration_s": 1.61,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 77.22,
+      "t_end": 79.311,
+      "duration_s": 2.091,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 83.643,
+      "t_end": 85.171,
+      "duration_s": 1.528,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 89.571,
+      "t_end": 90.853,
+      "duration_s": 1.282,
+      "status": 200,
+      "kind": "no_update",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    },
+    {
+      "t_start": 94.709,
+      "t_end": 96.198,
+      "duration_s": 1.489,
+      "status": 200,
+      "kind": "unknown",
+      "rows": null,
+      "output": "metrics-panel-metrics-store.data",
+      "writer": "poll",
+      "opposed": false,
+      "tick_crossed": true,
+      "ticks_inside": 1,
+      "landed": false,
+      "landed_at": null
+    }
+  ],
+  "console": [],
+  "tab_active": "Candidate Metrics",
+  "observer_install": {
+    "ok": true,
+    "specs": [
+      {
+        "id": "metrics-panel-metrics-store",
+        "prop": "data",
+        "mode": "len"
+      },
+      {
+        "id": "network-visualizer-topology-store",
+        "prop": "data",
+        "mode": "len"
+      },
+      {
+        "id": "fast-update-interval",
+        "prop": "n_intervals",
+        "mode": "value"
+      }
+    ],
+    "initial": {
+      "metrics-panel-metrics-store.data": 0,
+      "network-visualizer-topology-store.data": -2,
+      "fast-update-interval.n_intervals": 8
+    }
+  },
+  "observer_install_at": 21.66,
+  "metrics_period_setprops": {
+    "ms": 250,
+    "result": {
+      "ok": true,
+      "via": "memoizedProps.setProps",
+      "hops": 634
+    }
+  },
+  "control": {
+    "ran": false
+  },
+  "observer": {
+    "notifies": 6315,
+    "heartbeats": 38,
+    "last": {
+      "metrics-panel-metrics-store.data": 66,
+      "network-visualizer-topology-store.data": -2,
+      "fast-update-interval.n_intervals": 50
+    },
+    "dur_ms": 77858
+  },
+  "trace": [
+    {
+      "t": 21.66,
+      "id": "metrics-panel-metrics-store",
+      "prop": "data",
+      "len": 0,
+      "prev": null,
+      "reason": "install"
+    },
+    {
+      "t": 21.66,
+      "id": "network-visualizer-topology-store",
+      "prop": "data",
+      "len": -2,
+      "prev": null,
+      "reason": "install"
+    },
+    {
+      "t": 21.66,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 8,
+      "prev": null,
+      "reason": "install"
+    },
+    {
+      "t": 21.836,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 9,
+      "prev": 8,
+      "reason": "notify"
+    },
+    {
+      "t": 22.705,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 10,
+      "prev": 9,
+      "reason": "notify"
+    },
+    {
+      "t": 25.396,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 11,
+      "prev": 10,
+      "reason": "notify"
+    },
+    {
+      "t": 27.268,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 12,
+      "prev": 11,
+      "reason": "notify"
+    },
+    {
+      "t": 33.583,
+      "id": "metrics-panel-metrics-store",
+      "prop": "data",
+      "len": 66,
+      "prev": 0,
+      "reason": "notify"
+    },
+    {
+      "t": 34.591,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 13,
+      "prev": 12,
+      "reason": "notify"
+    },
+    {
+      "t": 36.152,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 14,
+      "prev": 13,
+      "reason": "notify"
+    },
+    {
+      "t": 39.381,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 15,
+      "prev": 14,
+      "reason": "notify"
+    },
+    {
+      "t": 41.177,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 16,
+      "prev": 15,
+      "reason": "notify"
+    },
+    {
+      "t": 42.996,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 17,
+      "prev": 16,
+      "reason": "notify"
+    },
+    {
+      "t": 44.402,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 18,
+      "prev": 17,
+      "reason": "notify"
+    },
+    {
+      "t": 46.068,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 19,
+      "prev": 18,
+      "reason": "notify"
+    },
+    {
+      "t": 47.602,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 20,
+      "prev": 19,
+      "reason": "notify"
+    },
+    {
+      "t": 49.343,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 21,
+      "prev": 20,
+      "reason": "notify"
+    },
+    {
+      "t": 50.873,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 22,
+      "prev": 21,
+      "reason": "notify"
+    },
+    {
+      "t": 52.334,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 23,
+      "prev": 22,
+      "reason": "notify"
+    },
+    {
+      "t": 54.103,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 24,
+      "prev": 23,
+      "reason": "notify"
+    },
+    {
+      "t": 55.647,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 25,
+      "prev": 24,
+      "reason": "notify"
+    },
+    {
+      "t": 57.511,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 26,
+      "prev": 25,
+      "reason": "notify"
+    },
+    {
+      "t": 59.108,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 27,
+      "prev": 26,
+      "reason": "notify"
+    },
+    {
+      "t": 60.721,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 28,
+      "prev": 27,
+      "reason": "notify"
+    },
+    {
+      "t": 62.14,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 29,
+      "prev": 28,
+      "reason": "notify"
+    },
+    {
+      "t": 64.48,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 30,
+      "prev": 29,
+      "reason": "notify"
+    },
+    {
+      "t": 65.992,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 31,
+      "prev": 30,
+      "reason": "notify"
+    },
+    {
+      "t": 67.402,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 32,
+      "prev": 31,
+      "reason": "notify"
+    },
+    {
+      "t": 69.161,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 33,
+      "prev": 32,
+      "reason": "notify"
+    },
+    {
+      "t": 70.981,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 34,
+      "prev": 33,
+      "reason": "notify"
+    },
+    {
+      "t": 72.609,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 35,
+      "prev": 34,
+      "reason": "notify"
+    },
+    {
+      "t": 74.756,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 36,
+      "prev": 35,
+      "reason": "notify"
+    },
+    {
+      "t": 76.214,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 37,
+      "prev": 36,
+      "reason": "notify"
+    },
+    {
+      "t": 78.253,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 38,
+      "prev": 37,
+      "reason": "notify"
+    },
+    {
+      "t": 79.982,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 39,
+      "prev": 38,
+      "reason": "notify"
+    },
+    {
+      "t": 80.994,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 40,
+      "prev": 39,
+      "reason": "notify"
+    },
+    {
+      "t": 82.695,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 41,
+      "prev": 40,
+      "reason": "notify"
+    },
+    {
+      "t": 84.259,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 42,
+      "prev": 41,
+      "reason": "notify"
+    },
+    {
+      "t": 86.011,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 43,
+      "prev": 42,
+      "reason": "notify"
+    },
+    {
+      "t": 87.719,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 44,
+      "prev": 43,
+      "reason": "notify"
+    },
+    {
+      "t": 89.746,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 45,
+      "prev": 44,
+      "reason": "notify"
+    },
+    {
+      "t": 91.288,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 46,
+      "prev": 45,
+      "reason": "notify"
+    },
+    {
+      "t": 93.296,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 47,
+      "prev": 46,
+      "reason": "notify"
+    },
+    {
+      "t": 95.089,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 48,
+      "prev": 47,
+      "reason": "notify"
+    },
+    {
+      "t": 96.398,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 49,
+      "prev": 48,
+      "reason": "notify"
+    },
+    {
+      "t": 98.879,
+      "id": "fast-update-interval",
+      "prop": "n_intervals",
+      "len": 50,
+      "prev": 49,
+      "reason": "notify"
+    }
+  ],
+  "summary": {
+    "invocations": 12,
+    "writes": 1,
+    "writes_pre_control": 1,
+    "rows_each": [
+      66
+    ],
+    "kinds": {
+      "no_update": 10,
+      "unknown": 1,
+      "write": 1
+    },
+    "http_opposed": 0,
+    "http_unopposed": 1,
+    "http_unopposed_failed_to_land": 1,
+    "http_opposed_failed_to_land": 0,
+    "tick_crossed": 1,
+    "tick_free": 0,
+    "tick_free_failed_to_land": 0,
+    "tick_crossed_failed_to_land": 1,
+    "ticks_observed": 43,
+    "durations_under_tick": 0,
+    "landed_any": 0,
+    "duration_s": {
+      "n": 1,
+      "min": 2.028,
+      "median": 2.028,
+      "max": 2.028
+    },
+    "request_gap_s": {
+      "n": 0,
+      "min": null,
+      "median": null,
+      "max": null
+    },
+    "metrics_store_fills": 1,
+    "console_errors": 0,
+    "callback_failed_msgs": 0
+  },
+  "verdict": "NO-TICK-FREE",
+  "verdict_why": "a tick fell inside all 1 in-flight windows -- consistent with eviction, and predicted by a median 2.028s round trip against a 1000ms tick, but not discriminating on its own",
+  "h2_failed_response": {
+    "console_failed_msgs": 0,
+    "non_landing_responses": 1,
+    "correlated_within_3s": 0,
+    "messages": []
+  }
+}
