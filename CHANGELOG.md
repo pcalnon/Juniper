@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   1.1% spread) as one ~11-core block in the listener for the *initial* output pass (160 of 1770
   steps, before the candidate pool exists) then ~1.8 for the rest, and **2.15** under the
   four-variable budget `run_suite` pins for a parallel arm — 34% faster per step overall, 8× on
-  that initial pass and +9% on the other 91% of steps, at an identical `step_count` 1770. Step 2
+  that initial pass and +9 to +10% on the other 91% of steps, at an identical `step_count` 1770. Step 2
   ran because 4.52 is inside the ~4–8 band: three aligned parallel pairs against six sequential
   controls, same budget, all twelve cells at 1770 — **a second concurrent pinned run costs +11.3%
   per step, +8.5 to +12.7% leaving one pair out**, inside the sweep's 20.5% quiet band and outside the

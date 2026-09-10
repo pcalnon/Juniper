@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Reduce a PF-8 occupancy trace to worker-equivalents per cell and read a second run's cost off the headroom sweep's response curve.
+Reduce a PF-8 occupancy trace to cores per cell, read a second run's cost off the headroom sweep's response curve under a stated assumption, and compare a two-arm pair.
 
 Project: juniper-ml
 Sub-Project: ad-hoc tooling
@@ -291,7 +291,7 @@ def render_arms(result: dict) -> str:
         lines.append(f"parallel / control mean step = {result['ratio']}  ->  a second run costs {result['cost_pct']:+.1f}%")
         lines.append(f"  vs the sweep's {QUIET_BAND_PCT}% quiet band (the lane's standing rule): {'LOCATED' if result['located_vs_quiet_band'] else 'below what this host can measure across sessions'}")
         lines.append(f"  vs today's within-arm spread ({result['within_arm_spread_pct']}%): {'resolved by the brackets on the day' if result['resolved_vs_within_arm_spread'] else 'not resolved even on the day'}")
-    lines.append(f"two runs together, cascor-tree worker-equivalents per pair: {result['pair_occupancy_totals']}")
+    lines.append(f"two runs together, cascor-tree cores per pair: {result['pair_occupancy_totals']}")
     for ov in result["overlaps"]:
         lines.append(f"  drive-window overlap: {ov['shared_s']} s shared = {ov['fraction_of_a']} of A / {ov['fraction_of_b']} of B; start offset {ov['start_offset_s']} s")
     return "\n".join(lines)

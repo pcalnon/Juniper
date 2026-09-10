@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Sample an experiment run's process trees from /proc at 1 s and write cpu-seconds per wall-second per role — the occupancy of one Juniper run, in sweep-worker equivalents.
+Sample an experiment run's process trees from /proc at 1 s and write cpu-seconds per wall-second per role — the occupancy of one Juniper run, in cores.
 
 Project: juniper-ml
 Sub-Project: ad-hoc tooling
@@ -18,7 +18,8 @@ marginal value is finding where one Juniper run sits on that axis. Nothing recor
 manifest carries nproc and the thread env, not what the run actually consumed, and `ps %CPU` is a
 lifetime average (cputime / elapsed) — useless for a 60 s window. This reads `/proc/<pid>/stat`
 utime+stime for every process in the run's trees once a second and writes the deltas, so the mean
-over the training window IS the worker-equivalent figure.
+over the training window is the run's core occupancy; reading that as sweep workers is an
+assumption, stated below.
 
 WHAT IT SAMPLES
 
