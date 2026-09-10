@@ -83,6 +83,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **All seven decision-11 floors raised — the meta-package now resolves the released contract, not the
+  retired one.** `[clients]` `juniper-data-client>=0.5.0`; `[servers]` `juniper-canopy>=0.7.0`,
+  `juniper-cascor>=0.11.0`, `juniper-data>=0.14.0`; `[recurrence]`
+  `juniper-recurrence-model>=0.3.0,<0.4.0`, `juniper-recurrence>=0.5.0,<0.6.0`,
+  `juniper-recurrence-client>=0.3.0,<0.4.0`. Decision 11 (§9.5 of
+  `notes/JUNIPER_2026-08-29_JUNIPER-ECOSYSTEM_TRAIN-EVAL-TEST-PARTITION-DESIGN.md`, producer-side
+  juniper-data#369) retired the `*_full` family, and every package above shipped its half of that
+  change. Until now `pip install juniper-ml[recurrence]` could not resolve the new versions **at all**:
+  the old caps were `juniper-recurrence-model<0.3.0` and `juniper-recurrence-client<0.3.0`, which
+  actively forbid the releases that carry `derive_full_split` — the reconstruction `POST /v1/crossval`
+  depends on for a post-#369 artifact.
+
+  The raises are **floors on a meta-package**, so nothing here is a behaviour change in this repo; the
+  behaviour is in the pinned packages, and each is documented in its own changelog. The lockstep
+  artifacts move with them: `tests/test_pyproject_extras.py` (which asserts the exact strings),
+  the four extras tables in `AGENTS.md`, `README.md`, `docs/QUICK_START.md` and `docs/REFERENCE.md`,
+  and a new `0.8.x` row in the compatibility matrix.
+
+- **`docs/REFERENCE.md`'s HTTP-client base-URL note described a defect that the published wheels no
+  longer have.** It said the latest released data-client was `0.4.2` and "still lacks the host guard",
+  so `pip install juniper-ml[clients]` could resolve a wheel that "silently accepts `HTTPS://host`
+  (TLS downgrade)". Checked against the *published* wheels in a clean venv: `juniper-data-client`
+  0.5.0 and `juniper-cascor-client` 0.8.0 both refuse a hostless `https://` and both normalise
+  `HTTPS://host` to `https://host`, so the TLS-downgrade reading is **withdrawn**. What survives is
+  narrower and now stated: the new `juniper-data-client>=0.5.0` floor guarantees the guard, while
+  `juniper-cascor-client>=0.5.0` does **not** — 0.8.0 has it, but the resolver may still pick an older
+  wheel. Raising that floor is an open decision, unrelated to decision 11.
+
 - Widened the `recurrence` extra's `juniper-recurrence` ceiling to admit the released next minor:
   `juniper-recurrence>=0.2.0,<0.5.0` (0.4.0 on PyPI). Supersedes dependabot #1323, which cannot
   co-update the `tests/test_pyproject_extras.py` lint contract; the contract and the extras tables in
