@@ -639,3 +639,58 @@ whereas three of the five synthetics are signals the LMU visibly learns.
 `equities` — rank-2, deferred to a slice whose §12.4 validation runs against **cascor** rather
 than the LMU, with `equities` additionally needing the canopy#610 treatment — plus `arc_agi`
 (variable rank, above) and `csv_import` (excluded).
+
+### 12.7 The rank-2 slice (2026-09-10) — and a correction to §12.6's own prescription
+
+Added by session `resilient-strolling-bachman`. Shipped as **canopy#616**. Probes:
+`util/ad-hoc/2026-09-10_rank2_generate_artifacts.py` and `…_rank2_cascor_fit.py` in juniper-ml.
+
+Validation for a rank-2 seed runs against **cascor**, so it goes in two stages through the real
+artifact contract — generate → NPZ → `CascadeCorrelationNetwork.fit` — rather than passing arrays
+in memory: `juniper_data` and `juniper-cascor` live in different conda environments, and the split
+exercises the six-key NPZ shape one emits and the other consumes instead of assuming the round-trip.
+
+| dataset | X_train | units recruited | loss first → last | train top-1 | fit |
+|---|---|---|---|---|---|
+| `gaussian` | (100, 2) | 1 | 0.0231 → 0.0016 | **1.000** | 0.4s |
+| `checkerboard` | (200, 2) | 1 | 0.2499 → 0.2498 | 0.515 | 3.0s |
+| `checkerboard` @ `n_samples=2000` | (1400, 2) | **8** | 0.2496 → 0.2418 | 0.5425 | 2.2s |
+| `equities` (3 params, below) | (15799, 16) | 3 | 0.2511 → 0.2491 | 0.524 | 1.2s |
+| `equities` unnormalised | (15799, 16) | 8 | **5.83e+21** → 5.32e+21 | 0.509 | 2.3s |
+
+**`gaussian` and `checkerboard` are seeded.** cascor needed no change: its
+`StageDatasetRequest.dataset_type` `Literal` already admitted both and already carries a typed
+`n_squares` knob for checkerboard (W-3). It was canopy that never offered them. Checkerboard's own
+default — 200 samples over a 4×4 grid — is too thin for CasCor to recruit against (one unit, loss
+flat to four decimals); at 2,000 it recruits eight and the loss moves. `n_samples` is a rendered
+schema field, so that is an operator knob, not a code change.
+
+**§12.6's prescription for `equities` was wrong, and measuring it is what showed why.** That entry
+said to seed it "with the same treatment `equities_seq` received (canopy#610), not before". The
+treatment transfers *and then some* — `equities` needs **three** params, not two:
+
+1. an explicit `symbols` list (bare defaults are refused: 503 names over a deployment cap of 14);
+2. `fundamentals_fill` away from its `"nan"` default;
+3. **`normalize_features=True`** — new, and absent from the sequence sibling, because equities'
+   columns are raw market quantities. Unnormalised the first output pass reports a loss of
+   **5.8e+21** against **0.2511** normalised: twenty-two orders of magnitude.
+
+**But the prescription cannot be carried out at all, for a structural reason neither §12 nor
+canopy#612 had noticed.** `dataset_default_params` is a **recurrence-only** concept. Its only two
+production consumers are `_resolve_oneshot_start_body_handler` (gated on
+`model_class == "one_shot"`) and `dataset_ref_from_staged`. `_apply_dataset_handler` builds the
+**cascor** staging payload from the rendered form alone — and `symbols` is an *array*, which
+`_field_from_property` deliberately does not render. A seeded `equities` would therefore send bare
+defaults and 422 on every Apply: the gap moved somewhere less visible, which is the outcome §12.4
+exists to prevent.
+
+So the registry's `default_params` channel, which §12 has been treating as the general mechanism
+for seeding a generator's bounded parameters, **only reaches one of the two model tiers**. Closing
+`equities` needs that decided first — either the cascor path learns to carry registry defaults, or
+an array-valued param becomes settable — and it is recorded in G10 as such rather than as a
+treatment with nowhere to travel.
+
+**Still unseeded after the rank-2 slice**: `equities` (above), `arc_agi` (variable rank, §12.6) and
+`csv_import` (excluded). **Seven of §12.1's ten are now seeded** — five rank-3, two rank-2 — and
+nothing remains that is both validated and deliverable: each of the three that remain has a named,
+measured blocker rather than a backlog entry.
