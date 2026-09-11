@@ -411,19 +411,42 @@ Worse for the original framing: **not one probe's interval excludes 50%.**
 No probe's interval excludes the pooled 65%. Individually, **nothing is pinned
 down**, and "P14 never follows" is not a supportable claim from 0/3.
 
+> **SUPERSEDED BY LATER DATA — the claim was true here and is false now.** This is the
+> n=40 snapshot. `wilson(0,3) = [0.000, 0.561]` genuinely does not exclude 50%, so the
+> sentence above was correct when written. The corpus then reached 43 runs and **P15 and
+> P19 became 0/4**, where `wilson(0,4) = [0.000, 0.490]` — which **does** exclude 50%. P14
+> at 0/3 also excludes the pooled rate (upper 0.561 < 0.605). Under the mechanism-checked
+> standard P21 is 0/4 as well, making three.
+>
+> Re-derive with the repo's own `util/soak_ledger.py::wilson` before quoting either
+> version; `docs/REFERENCE.md` carries the current figures. The general caution — per-probe
+> membership is mostly unresolved at these n — is unaffected.
+
 ### 9.3 But the strata are real — tested, not eyeballed
 
 The right question is not whether any single probe is extreme; it is whether the
-*pattern* of variation exceeds binomial noise. Permutation test, 20,000 draws,
+*pattern* of variation exceeds binomial noise. Resampling test, 20,000 draws,
 null = all 15 probes share the pooled rate:
 
 ```
 probes=15  runs=40  follows=26  pooled p=0.650
 observed heterogeneity statistic = 30.84
-permutation p-value = 0.0017
+p-value = 0.0017          # PARAMETRIC BOOTSTRAP -- see the correction below
 ```
 
-**p = 0.0017.** The probes do not share one rate. So:
+> **CORRECTED 2026-09-09: this is a parametric bootstrap, not a permutation test.** It
+> resampled from `Binomial(n, pooled)` rather than permuting the observed labels; §6 of
+> `notes/JUNIPER_2026-09-04_JUNIPER-ML_SOAK-HANDOFF-CONSENSUS-VALIDATION.md` recorded the
+> mislabel and this document carried it uncorrected for five days. A **real** label shuffle
+> — reassign observed outcomes across probes with each probe's `n` held fixed — is
+> implemented in `util/ad-hoc/2026-09-09_soak_stratum_predictors.py` and returns **0 hits
+> in 200,000 draws**, i.e. p at the floor of ≈5e-6. Quote that as a floor with its draw
+> count: `permutation_p` returns `(hits+1)/(draws+1)`, so the default 20,000 draws floors
+> an order of magnitude higher, at 5e-5. The two figures are not comparable in any case —
+> the statistic behind 0.0017 is not recorded here.
+
+**p = 0.0017 (bootstrap).** The probes do not share one rate — a conclusion the corrected
+test strengthens rather than overturns. So:
 
 - **§8.1's core claim survives and is now supported rather than eyeballed** — the
   pooled rate is a mixture, and it is the wrong estimate for any specific
