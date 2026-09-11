@@ -178,6 +178,9 @@ python3 -m unittest -v tests/test_soak_next_probe_split.py
 python3 -m unittest -v tests/test_soak_run_probe_terminal.py
 python3 -m unittest -v tests/test_soak_run_probe_launch_guards.py
 python3 -m unittest -v tests/test_soak_handoff_consensus_checks.py
+python3 -m unittest -v tests/test_soak_ledger.py
+python3 -m unittest -v tests/test_soak_next_probe.py
+python3 -m unittest -v tests/test_soak_run_probe.py
 python3 -m unittest -v tests/test_x7_offload_census.py
 python3 -m unittest -v tests/test_markdown_structure_delta.py
 python3 -m unittest -v tests/test_pf8_occupancy_probe.py
