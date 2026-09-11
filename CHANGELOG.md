@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   premise: **nothing does** — the burst ends when the initial output pass ends, ICV still 16. The
   growth loop instead **re-pins the thread 16 → 2**, which is why *later* passes are quiet. Scored
   separately and oppositely in both runs: "the drop ends the burst" **REFUTED** (the burst was over
-  2.90 s / 2.94 s earlier), "the drop is why later passes do not burst" **SUPPORTED** (peak 2
+  2.90 s / 3.49 s earlier), "the drop is why later passes do not burst" **SUPPORTED** (peak 2
   threads after). (3) **Candidate-pool creation is excluded** — `_ensure_worker_pool` returns with
   the ICV still 16; the re-pin is localised to the `result_queue.get()` that unpickles the first
   worker's `CandidateTrainingResult`, inside `_collect_training_results`. (4) §5.1 is **inverted**:
@@ -181,37 +181,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   squash and the armed-but-`BEHIND` split that exposed the config deadlock above.
 
 ### Changed
-
-- **All eight decision-11 floors raised — the meta-package now resolves the released contract, not the
-  retired one.** `[clients]` `juniper-data-client>=0.5.0` and `juniper-cascor-client>=0.8.0`; `[servers]`
-  `juniper-canopy>=0.7.0`, `juniper-cascor>=0.11.0`, `juniper-data>=0.14.0`; `[recurrence]`
-  `juniper-recurrence-model>=0.3.0,<0.4.0`, `juniper-recurrence>=0.5.0,<0.6.0`,
-  `juniper-recurrence-client>=0.3.0,<0.4.0`. Decision 11 (§9.5 of
-  `notes/JUNIPER_2026-08-29_JUNIPER-ECOSYSTEM_TRAIN-EVAL-TEST-PARTITION-DESIGN.md`, producer-side
-  juniper-data#369) retired the `*_full` family, and every package above shipped its half of that
-  change. Until now `pip install juniper-ml[recurrence]` could not resolve the new versions **at all**:
-  the old caps were `juniper-recurrence-model<0.3.0` and `juniper-recurrence-client<0.3.0`, which
-  actively forbid the releases that carry `derive_full_split` — the reconstruction `POST /v1/crossval`
-  depends on for a post-#369 artifact.
-
-  These are **floors on a meta-package**, so nothing here is a behaviour change in this repo; the
-  behaviour is in the pinned packages, each documented in its own changelog. The lockstep artifacts
-  move with them: `tests/test_pyproject_extras.py` (which asserts the exact strings), the four extras
-  tables in `AGENTS.md`, `README.md`, `docs/QUICK_START.md` and `docs/REFERENCE.md`, and a new `0.8.x`
-  row in the compatibility matrix — whose prose still said "juniper-ml 0.6.0 declares" while the
-  package was at 0.7.1.
-
-- **`juniper-cascor-client` floored at `>=0.8.0`, which is where the base-URL host guard actually
-  starts.** `docs/REFERENCE.md`'s HTTP-client note said the latest released data-client was `0.4.2` and
-  "still lacks the host guard", so `pip install juniper-ml[clients]` could resolve a wheel that
-  "silently accepts `HTTPS://host` (TLS downgrade)". Checked against the *published* wheels in a clean
-  venv: `juniper-data-client` 0.5.0 and `juniper-cascor-client` 0.8.0 both refuse a hostless `https://`
-  and both **normalise** `HTTPS://host` to `https://host`, so the TLS-downgrade reading is withdrawn.
-  What survived was narrower and was a live gap — the data-client floor guaranteed the guard, the
-  cascor-client floor did not. Each published cascor-client wheel was then probed in a throwaway venv
-  (`util/ad-hoc/2026-09-11_cascor_client_guard_boundary.py`): **0.5.0, 0.6.0 and 0.7.0 all fail both
-  halves**, and **0.8.0 is the first release carrying either**. The floor is set from that measurement
-  rather than from the changelog that introduced the fix, and the gap is closed rather than documented.
 
 - Widened the `recurrence` extra's `juniper-recurrence` ceiling to admit the released next minor:
   `juniper-recurrence>=0.2.0,<0.5.0` (0.4.0 on PyPI). Supersedes dependabot #1323, which cannot

@@ -208,6 +208,18 @@ open question ("whether `torch.get_num_threads()` reads 2 inside the listener wh
 runs") could not have discriminated anything on its own. It does read 2, and the pass still runs
 16-wide.
 
+> **2026-09-11 — that is only HALF of why the getter is useless here, and the other half is
+> worse.** Calling it is **not a passive read**: it runs torch's per-thread lazy init and
+> **re-pins the calling thread's ICV** to the global it reports. Two threads identical but for
+> that one call go 16 → 16 without it and 16 → **8** with it. So a probe that reads it inside the
+> listener during the burst does not merely fail to discriminate — it **ends the burst** and then
+> reports a quiet, correctly-pinned thread. Both halves are stated together here because until
+> 2026-09-11 they lived in separate documents. The safe instrument is libgomp's
+> `omp_get_max_threads()` through `ctypes`, which returns the calling thread's own width and
+> mutates nothing:
+> [`JUNIPER_2026-09-11_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-BURST-TERMINATOR-AND-ICV-INSTRUMENT.md`](JUNIPER_2026-09-11_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-BURST-TERMINATOR-AND-ICV-INSTRUMENT.md)
+> §1.1.
+
 ### 5.1 What is NOT true
 
 A plain torch matmul is **not** affected by the thread it runs on: 1.84 cores / 2 threads whether
@@ -264,7 +276,7 @@ The pair `--mode output_pass --on-thread --repeat 3` (bursts throughout) against
 > "stops" the burst: it ends because the **initial output pass ends**, with the training thread's
 > ICV still at 16. What the growth loop changes is separate — it **re-pins the thread from 16 to
 > 2**, so every *later* pass runs 2-wide. Measured twice, and the two claims score oppositely:
-> "the drop ends the burst" is **REFUTED** (the burst was over 2.90 s / 2.94 s before the drop),
+> "the drop ends the burst" is **REFUTED** (the burst was over 2.90 s / 3.49 s before the drop),
 > while "the drop is why later passes do not burst" is **SUPPORTED** (peak 2 threads after it).
 >
 > **The suspect named in the paragraph above is WRONG.** Candidate-pool creation does not re-pin:

@@ -158,10 +158,12 @@ what the process *did*:
 
 | claim | verdict (`growth.json`) | verdict (`growth-bisect.json`) |
 |---|---|---|
-| (a) the ICV drop **ends the burst** | **REFUTED** — the burst was already over 2.90 s earlier | **REFUTED** — 2.94 s earlier |
-| (b) the ICV drop is why **later passes do not burst** | **SUPPORTED** — peak 2 threads after it, over 15 samples | **SUPPORTED** — over 11 samples |
+| (a) the ICV drop **ends the burst** | **REFUTED** — the burst was already over 2.90 s earlier | **REFUTED** — 3.49 s earlier |
+| (b) the ICV drop is why **later passes do not burst** | **SUPPORTED** — peak 2 threads after it, over 15 samples | **SUPPORTED** — over 10 samples |
 
-Stage spans from `growth.json` (3 growth iterations, `output_epochs` 800, `hidden_units` 2 grown):
+Stage spans from `growth.json` (3 growth iterations, `output_epochs` 800, `hidden_units` 3 grown;
+`growth-bisect.json` is the 2-iteration run and grew 2 — do not cross the two files' numbers, which
+an earlier draft of this note did):
 
 | stage | span (s) | ICV on exit |
 |---|---|---|
@@ -198,9 +200,12 @@ Between those two points the only thing that runs is `result_queue.get(timeout=�
 thread's OpenMP width is re-pinned from 16 to 2, and the value it lands on (2) is torch's global,
 set by the constructor.
 
-The full enclosing stack, innermost last:
+The full enclosing stack the reducer prints, innermost last:
 `train_candidates > _execute_candidate_training > _execute_parallel_training >
-_collect_worker_results > _collect_training_results`.
+_collect_worker_results > _collect_training_results > _validate_training_result`. The innermost
+frame is where the *checkpoint that first reads 2* sits; the re-pin itself happened in the
+`result_queue.get()` immediately before it, which has no frame of its own because it is not a
+method of the network.
 
 **The precise rebuild path inside that payload is NOT named here.** A plain `pickle.loads` of a
 64² tensor does not reproduce the re-pin (§3.1), so the trigger is something about the real
@@ -213,7 +218,9 @@ process — and not "unpickling a tensor" in general. See §7.
 
 **Nothing is re-opened and no decision is taken here.** The six open decisions listed in
 [`prompts/thread-handoff_automated-prompts/HANDOFF_2026-09-10_perf-lane-burst-is-libgomp-and-the-pin-binds-the-constructor-thread.md`](../prompts/thread-handoff_automated-prompts/HANDOFF_2026-09-10_perf-lane-burst-is-libgomp-and-the-pin-binds-the-constructor-thread.md)
-§1 stand unchanged in substance. Two of them are better informed:
+§1 stand unchanged in substance. **One** of them is better informed — the cascor thread-pin
+defect, whose extent is now bounded. The `runtime:` block decision is **unchanged**; it appears
+below only because this work reconfirms its existing rationale, not because anything moved:
 
 - **The cascor thread-pin defect.** The repair options in the attribution note's §6 — "pin on the
   thread that runs the training, or set the process-wide default before any BLAS-importing
@@ -233,10 +240,13 @@ process — and not "unpickling a tensor" in general. See §7.
 - **Not** that candidate-pool creation re-pins — measured and refuted, twice (§3.4).
 - **Not** that unpickling a tensor re-pins in general — the 64² arm does not (§3.1, §3.5).
 - **Not** that "a matmul re-pins" — the one-shot 512² arm does not (§3.2).
-- **Not** any run-tier figure. Every number here was taken at a one-minute load of 11–20 on a
-  16-core host with a 21-hour `clamscan` running. The **discriminations** (16 vs 2; which stage
-  spans the drop; which arm re-pins) are structural and load-insensitive; the cores, ms and
-  wall-clock spans are not, and must not be compared against a suite cell.
+- **Not** any run-tier figure. The four evidence files record their own one-minute load at
+  **9.20, 10.86, 11.71 and 12.10** on a 16-core host with a 21-hour `clamscan` running; the host
+  was at 20.30 when the session opened, before any measurement. Quote the per-file figure, not a
+  band — an earlier draft of this section said "11–20", which excluded two of its own four
+  observations. The **discriminations** (16 vs 2; which stage spans the drop; which arm re-pins)
+  are structural and load-insensitive; the cores, ms and wall-clock spans are not, and must not be
+  compared against a suite cell.
 
 ---
 
