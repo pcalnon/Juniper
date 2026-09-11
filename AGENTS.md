@@ -5,7 +5,7 @@
 **Author**: Paul Calnon
 **License**: MIT License
 **Version**: 0.7.1
-**Last Updated**: 2026-09-07
+**Last Updated**: 2026-09-11
 
 ---
 
@@ -66,120 +66,12 @@ pip install -e ".[tools]"      # ci-tools + doc-tools + observability
 pip install -e ".[doc-tools]"  # markdown link validator (back-compat alias)
 pip install -e ".[all]"        # everything (multi-GB; pulls torch via worker)
 
-# Run all tests
-python3 -m unittest -v tests/test_wake_the_claude.py
-python3 -m unittest -v tests/test_env_repr_safety.py
-python3 -m unittest -v tests/test_worktree_cleanup.py
-python3 -m unittest -v tests/test_worktree_sweep_scripts.py
-python3 -m unittest -v tests/test_p5_worktree_cleanup.py
-python3 -m unittest -v tests/test_cleanup_session_worktrees.py
-python3 -m unittest -v tests/test_reap_pytest_orphans.py
-python3 -m unittest -v tests/test_kill_helpers.py
-python3 -m unittest -v tests/test_check_conda_env_torch.py
-python3 -m unittest -v tests/test_duplicati_restore_integrity.py
-python3 -m unittest -v tests/test_requirements_drift_check.py
-python3 -m unittest -v tests/test_editable_install_drift_check.py
-python3 -m unittest -v tests/test_env_floor_drift_check.py
-python3 -m unittest -v tests/test_prompt_discovery.py
-python3 -m unittest -v tests/test_symbol_overlay.py
-python3 -m unittest -v tests/test_generated_prompt_index.py
-python3 -m unittest -v tests/test_thread_handoff_archive.py
-python3 -m unittest -v tests/test_install_agents.py
-python3 -m unittest -v tests/test_agent_suite_doctor.py
-python3 -m unittest -v tests/test_agent_suite_summary.py
-python3 -m unittest -v tests/test_predict_merge.py
-python3 -m unittest -v tests/test_fleet_supervisor_contract.py
-python3 -m unittest -v tests/test_workflow_script_paths.py
-python3 -m unittest -v tests/test_doc_tools_drift.py
-python3 -m unittest -v tests/test_service_fork_drift.py
-python3 -m unittest -v tests/test_publish_env_policy_drift.py
-python3 -m unittest -v tests/test_assert_release_tag.py
-python3 -m unittest -v tests/test_pyproject_extras.py
-python3 -m unittest -v tests/test_template_library_drift.py
-python3 -m unittest -v tests/test_template_selection.py
-python3 -m unittest -v tests/test_template_select_preview.py
-python3 -m unittest -v tests/test_template_data_resolver.py
-python3 -m unittest -v tests/test_scaffold_template.py
-python3 -m unittest -v tests/test_open_signed_pr.py
-python3 -m unittest -v tests/test_wait_for_checks.py
-python3 -m unittest -v tests/test_safe_merge.py
-python3 -m unittest -v tests/test_ci_test_wiring_drift.py
-python3 -m unittest -v tests/test_ruleset_scope_guard.py
-python3 -m unittest -v tests/test_subpackage_py_typed.py
-python3 -m unittest -v tests/test_requirements_consolidate.py
-python3 -m unittest -v tests/test_prompt_validator_contract.py
-python3 -m unittest -v tests/test_template_agent_skill_lint.py
-python3 -m unittest -v tests/test_service_smoke_skill_lint.py
-python3 -m unittest -v tests/test_ui_test_author_skill_lint.py
-python3 -m unittest -v tests/test_agents_frontmatter.py
-python3 -m unittest -v tests/test_agents_md_version_drift.py
-python3 -m unittest -v tests/test_agents_md_header_schema.py
-python3 -m unittest -v tests/test_agents_md_tree_drift.py
-python3 -m unittest -v tests/test_coverage_gap_mapper_drift.py
-python3 -m unittest -v tests/test_env_drift_check_drift.py
-python3 -m unittest -v tests/test_release_train_registry.py
-python3 -m unittest -v tests/test_release_train_detect.py
-python3 -m unittest -v tests/test_release_train_propose.py
-python3 -m unittest -v tests/test_release_train_archive_guard.py
-python3 -m unittest -v tests/test_release_train_ceremony.py
-python3 -m unittest -v tests/test_experiment_stack_script.py
-python3 -m unittest -v tests/test_run_experiment.py
-python3 -m unittest -v tests/test_list_runs.py
-python3 -m unittest -v tests/test_snapshot_index.py
-python3 -m unittest -v tests/test_snapshot_classify.py
-python3 -m unittest -v tests/test_snapshot_attribute.py
-python3 -m unittest -v tests/test_snapshot_backfill.py
-python3 -m unittest -v tests/test_run_suite.py
-python3 -m unittest -v tests/test_experiment_config_schemas.py
-python3 -m unittest -v tests/test_experiment_suite_yamls.py
-python3 -m unittest -v tests/test_p5_port_memory_budget.py
-python3 -m unittest -v tests/test_p5_fleet_state.py
-python3 -m unittest -v tests/test_resident_gap_triage.py
-python3 -m unittest -v tests/test_resident_gap_scan.py
-python3 -m unittest -v tests/test_hazard_triage.py
-python3 -m unittest -v tests/test_require_context_safely.py
-python3 -m unittest -v tests/test_matrix_set_verdicts.py
-python3 -m unittest -v tests/test_e2e_matrix_fill.py
-python3 -m unittest -v tests/test_e2e_matrix_rescore.py
-python3 -m unittest -v tests/test_e2e_unfilled_rows.py
-python3 -m unittest -v tests/test_e2e_f037_render_census.py
-python3 -m unittest -v tests/test_e2e_row_coverage.py
-python3 -m unittest -v tests/test_soak_probe_evidence.py
-python3 -m unittest -v tests/test_soak_wilson_resolving.py
-python3 -m unittest -v tests/test_soak_run_probe_stopping_rule.py
-python3 -m unittest -v tests/test_soak_ledger_status_token.py
-python3 -m unittest -v tests/test_soak_analyse_date_pool.py
-python3 -m unittest -v tests/test_run_suite_gate_metrics.py
-python3 -m unittest -v tests/test_list_runs_classify_guards.py
-python3 -m unittest -v tests/test_register_close_protocol.py
-python3 -m unittest -v tests/test_stats_summary_render.py
-python3 -m unittest -v tests/test_stats_summary_git_and_confirmed.py
-python3 -m unittest -v tests/test_canopy_poller_inventory.py
-python3 -m unittest -v tests/test_cascor_freeze_tell.py
-python3 -m unittest -v tests/test_ruleset_context_audit.py
-python3 -m unittest -v tests/test_snapshot_index_root_resolution.py
-python3 -m unittest -v tests/test_equities_symbol_cap_operator.py
-python3 -m unittest -v tests/test_e2e_append_statuses.py
-python3 -m unittest -v tests/test_recurrence_kind_edges.py
-python3 -m unittest -v tests/test_e2e_topology_row_predicates.py
-python3 -m unittest -v tests/test_e2e_topology_score_contracts.py
-python3 -m unittest -v tests/test_e2e_topology_step_order.py
-python3 -m unittest -v tests/test_compare_baseline_defects.py
-python3 -m unittest -v tests/test_work_countable_contract.py
-python3 -m unittest -v tests/test_termination_branch_precondition.py
-python3 -m unittest -v tests/test_run_suite_uncountable_report.py
-python3 -m unittest -v tests/test_worktree_inuse_probe.py
-python3 -m unittest -v tests/test_e2e_finding_triage.py
-python3 -m unittest -v tests/test_e2e_finding_triage_nested_bold.py
-python3 -m unittest -v tests/test_e2e_finding_triage_priority.py
-python3 -m unittest -v tests/test_register_open_set.py
-python3 -m unittest -v tests/test_register_status_crosscheck.py
-python3 -m unittest -v tests/test_soak_next_probe_split.py
-python3 -m unittest -v tests/test_soak_run_probe_terminal.py
-python3 -m unittest -v tests/test_soak_run_probe_launch_guards.py
-python3 -m unittest -v tests/test_soak_handoff_consensus_checks.py
-python3 -m unittest -v tests/test_x7_offload_census.py
-python3 -m unittest -v tests/test_markdown_structure_delta.py
+# Run all tests -- the full ordered list of 164 `python3 -m unittest`
+# commands lives in docs/REFERENCE.md -- see "Running every suite" under
+# § Test Suite Reference. It is generated from ci.yml's regression step, which is
+# the authoritative list; tests/test_ci_test_wiring_drift.py gates that every suite
+# on disk is invoked there, and util/ad-hoc/2026-09-10_agents_md_test_list_drift.py
+# reports any suite CI runs that the reference does not name.
 bash scripts/test_resume_file_safety.bash
 # doc-link validator regression tests live in juniper-doc-tools/tests/
 # and run under the dedicated `CI -- juniper-doc-tools` workflow.

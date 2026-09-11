@@ -242,7 +242,7 @@ The split-default is intentional, not an oversight: `juniper-data` is a higher-r
 
 The three separately released HTTP clients — `juniper-data-client`, `juniper-cascor-client`, and `juniper-recurrence-client` — now share one REST `base_url` treatment. That closes defect-register `APD-DCLIENT-004` / `APD-CCLIENT-005` (sibling PRs [data-client#165](https://github.com/pcalnon/juniper-data-client/pull/165) + [#166](https://github.com/pcalnon/juniper-data-client/pull/166), [cascor-client#129](https://github.com/pcalnon/juniper-cascor-client/pull/129), [recurrence#129](https://github.com/pcalnon/juniper-recurrence/pull/129)). Register status is recorded by open [juniper-ml#1331](https://github.com/pcalnon/juniper-ml/pull/1331).
 
-**Shipped on PyPI as of 2026-09-10 — but only the data-client floor guarantees it.** Verified against the *published* wheels in a clean venv, not a checkout: `juniper-data-client` **0.5.0** and `juniper-cascor-client` **0.8.0** both expose their `Juniper*ConfigurationError`, both refuse a hostless `https://`, and both NORMALISE `HTTPS://host` to `https://host` rather than talking plaintext — so the TLS-downgrade reading of this note is withdrawn. `[clients]` now pins `juniper-data-client>=0.5.0` **and `juniper-cascor-client>=0.8.0`**, so both floors guarantee the guard. The cascor-client floor was `>=0.5.0` and did **not**: probing each published wheel in a throwaway venv (`util/ad-hoc/2026-09-11_cascor_client_guard_boundary.py`) shows **0.5.0, 0.6.0 and 0.7.0 all fail both halves** — they accept a hostless `https://` and do not normalise the scheme — and **0.8.0 is the first release that carries either**. `juniper-recurrence-client` is not in `[clients]` at all — it ships under `[recurrence]`.
+**Shipped on PyPI, and now guaranteed by both `[clients]` floors.** Verified against the *published* wheels in a clean venv, not a checkout: `juniper-data-client` **0.5.0** and `juniper-cascor-client` **0.8.0** both expose their `Juniper*ConfigurationError`, both refuse a hostless `https://`, and both NORMALISE `HTTPS://host` to `https://host` rather than talking plaintext — so the TLS-downgrade reading of this note is withdrawn. `[clients]` pins `juniper-data-client>=0.5.0` **and `juniper-cascor-client>=0.8.0`**. The cascor-client floor was `>=0.5.0` and did **not** guarantee the guard: probing each published wheel in a throwaway venv (`util/ad-hoc/2026-09-11_cascor_client_guard_boundary.py`) shows **0.5.0, 0.6.0 and 0.7.0 all fail both halves**, and **0.8.0 is the first release carrying either**. `juniper-recurrence-client` is not in `[clients]` at all — it ships under `[recurrence]`.
 
 ### What REST constructors do
 
@@ -2710,6 +2710,184 @@ Related: [Relocation Completeness (G3)](#relocation-completeness-g3),
 
 ## Test Suite Reference
 
+### Running every suite
+
+The complete ordered list, generated from `.github/workflows/ci.yml`'s `Run Python regression tests` step on 2026-09-10 -- **164 suites**. This relocated from `AGENTS.md` (the 2026-09-10 structure repair), where the hand-maintained copy had drifted to 115 and completing it in place would have left the always-loaded file 534 chars under its 38000-char ceiling.
+
+ci.yml is the authoritative list. `tests/test_ci_test_wiring_drift.py` gates that every `tests/test_*.py` on disk is invoked there; `util/ad-hoc/2026-09-10_agents_md_test_list_drift.py` reports any suite CI runs that this list does not name.
+
+> [juniper-ml#1883](https://github.com/pcalnon/juniper-ml/pull/1883) added three soak suites to the old `AGENTS.md` copy and recorded "Set difference against ci.yml is now empty." At its own merge commit `83556f26` that copy named 118 of 164 and the difference was **46**. The three were real and are included above; the generalisation from the suites being checked to the whole set was not. Re-run the drift script rather than quoting a difference.
+
+```bash
+python3 -m unittest -v tests/test_wake_the_claude.py
+python3 -m unittest -v tests/test_claude_interactive.py
+python3 -m unittest -v tests/test_env_repr_safety.py
+python3 -m unittest -v tests/test_worktree_cleanup.py
+python3 -m unittest -v tests/test_worktree_activate.py
+python3 -m unittest -v tests/test_worktree_sweep_scripts.py
+python3 -m unittest -v tests/test_p5_worktree_cleanup.py
+python3 -m unittest -v tests/test_yubikey_test_pinentry.py
+python3 -m unittest -v tests/test_cleanup_session_worktrees.py
+python3 -m unittest -v tests/test_cleanup_open_remove_stale_worktrees.py
+python3 -m unittest -v tests/test_worktree_wipeout_close.py
+python3 -m unittest -v tests/test_global_text_search.py
+python3 -m unittest -v tests/test_prune_git_branches_without_working_dirs.py
+python3 -m unittest -v tests/test_reap_pytest_orphans.py
+python3 -m unittest -v tests/test_kill_helpers.py
+python3 -m unittest -v tests/test_duplicati_scheduled_backup.py
+python3 -m unittest -v tests/test_editable_install_drift_check.py
+python3 -m unittest -v tests/test_env_floor_drift_check.py
+python3 -m unittest -v tests/test_env_drift_check.py
+python3 -m unittest -v tests/test_env_drift_check_drift.py
+python3 -m unittest -v tests/test_release_train_registry.py
+python3 -m unittest -v tests/test_release_train_detect.py
+python3 -m unittest -v tests/test_release_train_propose.py
+python3 -m unittest -v tests/test_release_train_workflow_guard.py
+python3 -m unittest -v tests/test_release_train_archive_guard.py
+python3 -m unittest -v tests/test_release_train_ceremony.py
+python3 -m unittest -v tests/test_prompt_discovery.py
+python3 -m unittest -v tests/test_symbol_overlay.py
+python3 -m unittest -v tests/test_generated_prompt_index.py
+python3 -m unittest -v tests/test_thread_handoff_archive.py
+python3 -m unittest -v tests/test_install_agents.py
+python3 -m unittest -v tests/test_agent_suite_doctor.py
+python3 -m unittest -v tests/test_agent_suite_summary.py
+python3 -m unittest -v tests/test_predict_merge.py
+python3 -m unittest -v tests/test_fleet_supervisor_contract.py
+python3 -m unittest -v tests/test_pr_budget_alarm.py
+python3 -m unittest -v tests/test_requirements_drift_check.py
+python3 -m unittest -v tests/test_requirements_consolidate.py
+python3 -m unittest -v tests/test_validate_claude_yaml_access.py
+python3 -m unittest -v tests/test_workflow_script_paths.py
+python3 -m unittest -v tests/test_ci_precommit_g4.py
+python3 -m unittest -v tests/test_main_verify_workflow_guard.py
+python3 -m unittest -v tests/test_publish_testpypi_verify.py
+python3 -m unittest -v tests/test_main_verify_battery_paths.py
+python3 -m unittest -v tests/test_ci_quality_gate.py
+python3 -m unittest -v tests/test_publish_subpackage_workflows.py
+python3 -m unittest -v tests/test_subpackage_py_typed.py
+python3 -m unittest -v tests/test_ci_sequence_safety_hatch.py
+python3 -m unittest -v tests/test_main_verify_catchup_base.py
+python3 -m unittest -v tests/test_main_verify_notify_dedup.py
+python3 -m unittest -v tests/test_ci_fleet_pr_lint.py
+python3 -m unittest -v tests/test_doc_tools_drift.py
+python3 -m unittest -v tests/test_docs_full_check_ecosystem.py
+python3 -m unittest -v tests/test_archive_guard_workflow.py
+python3 -m unittest -v tests/test_ci_tools_drift.py
+python3 -m unittest -v tests/test_service_fork_drift.py
+python3 -m unittest -v tests/test_publish_env_policy_drift.py
+python3 -m unittest -v tests/test_assert_release_tag.py
+python3 -m unittest -v tests/test_publish_release_only_trigger.py
+python3 -m unittest -v tests/test_memory_budget_check.py
+python3 -m unittest -v tests/test_memory_index_check.py
+python3 -m unittest -v tests/test_relocation_check.py
+python3 -m unittest -v tests/test_p3_relocate_section.py
+python3 -m unittest -v tests/test_hazard_triage.py
+python3 -m unittest -v tests/test_soak_ledger.py
+python3 -m unittest -v tests/test_soak_next_probe.py
+python3 -m unittest -v tests/test_soak_run_probe.py
+python3 -m unittest -v tests/test_duplicati_recovery_guards.py
+python3 -m unittest -v tests/test_lockfile_update_workflow.py
+python3 -m unittest -v tests/test_security_scan_workflow.py
+python3 -m unittest -v tests/test_coverage_gap_mapper_drift.py
+python3 -m unittest -v tests/test_subpackage_ci_workflows.py
+python3 -m unittest -v tests/test_model_core_drift.py
+python3 -m unittest -v tests/test_service_core_drift.py
+python3 -m unittest -v tests/test_pyproject_extras.py
+python3 -m unittest -v tests/test_template_library_drift.py
+python3 -m unittest -v tests/test_template_selection.py
+python3 -m unittest -v tests/test_template_select_preview.py
+python3 -m unittest -v tests/test_template_data_resolver.py
+python3 -m unittest -v tests/test_scaffold_template.py
+python3 -m unittest -v tests/test_open_signed_pr.py
+python3 -m unittest -v tests/test_wait_for_checks.py
+python3 -m unittest -v tests/test_safe_merge.py
+python3 -m unittest -v tests/test_ci_test_wiring_drift.py
+python3 -m unittest -v tests/test_ruleset_scope_guard.py
+python3 -m unittest -v tests/test_prompt_validator_contract.py
+python3 -m unittest -v tests/test_template_agent_skill_lint.py
+python3 -m unittest -v tests/test_service_smoke_skill_lint.py
+python3 -m unittest -v tests/test_ui_test_author_skill_lint.py
+python3 -m unittest -v tests/test_agents_frontmatter.py
+python3 -m unittest -v tests/test_agent_suite_path_drift.py
+python3 -m unittest -v tests/test_agents_md_version_drift.py
+python3 -m unittest -v tests/test_agents_md_header_schema.py
+python3 -m unittest -v tests/test_agents_md_touch_up.py
+python3 -m unittest -v tests/test_agents_md_tree_drift.py
+python3 -m unittest -v tests/test_juniper_plant_all.py
+python3 -m unittest -v tests/test_juniper_chop_all.py
+python3 -m unittest -v tests/test_isolated_stack_script.py
+python3 -m unittest -v tests/test_experiment_stack_script.py
+python3 -m unittest -v tests/test_run_experiment.py
+python3 -m unittest -v tests/test_read_run_metrics.py
+python3 -m unittest -v tests/test_compare_baseline.py
+python3 -m unittest -v tests/test_make_baseline.py
+python3 -m unittest -v tests/test_experiment_config_schemas.py
+python3 -m unittest -v tests/test_run_suite.py
+python3 -m unittest -v tests/test_list_runs.py
+python3 -m unittest -v tests/test_snapshot_index.py
+python3 -m unittest -v tests/test_snapshot_classify.py
+python3 -m unittest -v tests/test_snapshot_attribute.py
+python3 -m unittest -v tests/test_snapshot_backfill.py
+python3 -m unittest -v tests/test_experiment_suite_yamls.py
+python3 -m unittest -v tests/test_check_conda_env_torch.py
+python3 -m unittest -v tests/test_p5_port_memory_budget.py
+python3 -m unittest -v tests/test_p5_fleet_state.py
+python3 -m unittest -v tests/test_resident_gap_triage.py
+python3 -m unittest -v tests/test_resident_gap_scan.py
+python3 -m unittest -v tests/test_require_context_safely.py
+python3 -m unittest -v tests/test_duplicati_restore_integrity.py
+python3 -m unittest -v tests/test_duplicati_db_holder_guard.py
+python3 -m unittest -v tests/test_matrix_set_verdicts.py
+python3 -m unittest -v tests/test_e2e_matrix_fill.py
+python3 -m unittest -v tests/test_e2e_matrix_rescore.py
+python3 -m unittest -v tests/test_e2e_unfilled_rows.py
+python3 -m unittest -v tests/test_e2e_f037_render_census.py
+python3 -m unittest -v tests/test_e2e_row_coverage.py
+python3 -m unittest -v tests/test_soak_probe_evidence.py
+python3 -m unittest -v tests/test_soak_wilson_resolving.py
+python3 -m unittest -v tests/test_soak_run_probe_stopping_rule.py
+python3 -m unittest -v tests/test_soak_ledger_status_token.py
+python3 -m unittest -v tests/test_soak_analyse_date_pool.py
+python3 -m unittest -v tests/test_run_suite_gate_metrics.py
+python3 -m unittest -v tests/test_list_runs_classify_guards.py
+python3 -m unittest -v tests/test_register_close_protocol.py
+python3 -m unittest -v tests/test_stats_summary_render.py
+python3 -m unittest -v tests/test_stats_summary_git_and_confirmed.py
+python3 -m unittest -v tests/test_canopy_poller_inventory.py
+python3 -m unittest -v tests/test_cascor_freeze_tell.py
+python3 -m unittest -v tests/test_ruleset_context_audit.py
+python3 -m unittest -v tests/test_snapshot_index_root_resolution.py
+python3 -m unittest -v tests/test_equities_symbol_cap_operator.py
+python3 -m unittest -v tests/test_e2e_append_statuses.py
+python3 -m unittest -v tests/test_recurrence_kind_edges.py
+python3 -m unittest -v tests/test_e2e_topology_row_predicates.py
+python3 -m unittest -v tests/test_e2e_topology_score_contracts.py
+python3 -m unittest -v tests/test_e2e_topology_step_order.py
+python3 -m unittest -v tests/test_compare_baseline_defects.py
+python3 -m unittest -v tests/test_work_countable_contract.py
+python3 -m unittest -v tests/test_termination_branch_precondition.py
+python3 -m unittest -v tests/test_run_suite_uncountable_report.py
+python3 -m unittest -v tests/test_worktree_inuse_probe.py
+python3 -m unittest -v tests/test_e2e_finding_triage.py
+python3 -m unittest -v tests/test_e2e_finding_triage_nested_bold.py
+python3 -m unittest -v tests/test_e2e_finding_triage_priority.py
+python3 -m unittest -v tests/test_register_open_set.py
+python3 -m unittest -v tests/test_register_status_crosscheck.py
+python3 -m unittest -v tests/test_soak_next_probe_split.py
+python3 -m unittest -v tests/test_soak_run_probe_terminal.py
+python3 -m unittest -v tests/test_soak_run_probe_launch_guards.py
+python3 -m unittest -v tests/test_soak_handoff_consensus_checks.py
+python3 -m unittest -v tests/test_x7_offload_census.py
+python3 -m unittest -v tests/test_markdown_structure_delta.py
+python3 -m unittest -v tests/test_markdown_structure_screen.py
+python3 -m unittest -v tests/test_pf8_occupancy_probe.py
+python3 -m unittest -v tests/test_pf8_burst_attribution.py
+bash scripts/test_resume_file_safety.bash
+# doc-link validator regression tests live in juniper-doc-tools/tests/
+# and run under the dedicated `CI -- juniper-doc-tools` workflow.
+```
+
 Relocated verbatim from `AGENTS.md` (P3 of the shared-session-memory plan) so it is read on demand rather than loaded into every session.
 
 Two unittest entry points exist for every `tests/test_*.py` file, and they can disagree.
@@ -2921,7 +3099,7 @@ Review catch on [juniper-ml#1612](https://github.com/pcalnon/juniper-ml/pull/161
 - `tests/test_e2e_finding_triage.py` -- The E2E finding-triage dispositions, which shipped with zero tests: `accepted` is a THIRD state and not a synonym for fixed or open, the first heading wins so a later `fixed` cannot close an earlier `open`, and `--open-only` hides rows without changing the totals.
 - `tests/test_e2e_finding_triage_nested_bold.py` -- Header truncation in `util/ad-hoc/e2e_finding_triage.py`: a nested-bold heading must not be cut at the inner marker, which would split one finding's identity into two and double-count it.
 - `tests/test_e2e_finding_triage_priority.py` -- `pri_of` first-token severity, lifted out of a nested function so it can be imported: the FIRST severity token anywhere in the bolded header body wins, so a header naming another severity in prose before the parenthetical triages as that severity (F-CANOPY-037 / F-E2E-007).
-- `tests/test_markdown_structure_delta.py` -- Hermetic gate for `util/markdown_structure_delta.py`, the CI step that fails a PR which BREAKS markdown structure. Pins the three ways such a gate goes wrong: **red on arrival** (`main` carries 102 structural problems across 21 files -- 11 under `notes/`, 6 under `notes/legacy/`, 3 under `prompts/`, 1 under `notes/code-review/`, none under `docs/` -- so the comparison is per-file and per-PR -- an untouched file is not the PR's problem, a touched one must not come out worse, an ADDED one has no before and so starts at zero); **vacuous pass** (the underlying screen silently skips anything not ending `.md`, so examining zero of N touched files is an error rather than a success, and the temp materialisation keeps the original basename); and an unresolvable base ref exiting 2 rather than comparing nothing.
+- `tests/test_markdown_structure_delta.py` -- Hermetic gate for `util/markdown_structure_delta.py`, the CI step that fails a PR which BREAKS markdown structure. Pins the three ways such a gate goes wrong: **red on arrival** (`main` carries pre-existing structural problems -- **17 across 2 files** after the 2026-09-10 structure repair -- both under live `notes/`, and both known SCREEN FALSE POSITIVES rather than debt: a ` ```text ` banner whose art lines begin `## `, and a ` ````jinja2 ` template sample whose H2s are the sample. `docs/`, `notes/code-review/`, `notes/legacy/` and `prompts/` are all at **zero**, which is a real result rather than an empty enumeration -- the 2026-09-10 structure repair repaired `notes/legacy/` and `prompts/` rather than delta-scoping around them. The count is a moving floor rather than a backlog, having gone 104/23 -> 102/21 -> 63/14 -> 73/15 -> 63/14 -> 17/2 in seven days, so re-measure rather than quote -- so the comparison is per-file and per-PR -- an untouched file is not the PR's problem, a touched one must not come out worse, an ADDED one has no before and so starts at zero); **vacuous pass** (the underlying screen silently skips anything not ending `.md`, so examining zero of N touched files is an error rather than a success, and the temp materialisation keeps the original basename); and an unresolvable base ref exiting 2 rather than comparing nothing.
 - `tests/test_require_context_safely.py` -- Hermetic gate for `util/ad-hoc/2026-08-20_require_context_safely.py` (`util/` is outside every pre-commit Python hook). `gh_json` is monkeypatched; nothing talks to GitHub.
   - Pins `find_ruleset` reporting a failed per-ruleset GET as an error (never an absence — ml#1429), genuine absence / ambiguity as the negative controls, and `TARGETS` lockstep with the census `ROSTER` in `util/ad-hoc/2026-08-26_p5_fleet_state.py` (a missing repo is a silent incomplete `--status`).
   - As of [juniper-ml#1612](https://github.com/pcalnon/juniper-ml/pull/1612) also pins `observed_context_apps` (amend pre-flight): publisher from PR heads, `main` fallback, exact-name negative control, and `57789` (Bandit) must not count as a publisher of `Memory Budget`. Operator surface: [Required-Context Ruleset Writer](#required-context-ruleset-writer).
@@ -2932,6 +3110,8 @@ Review catch on [juniper-ml#1612](https://github.com/pcalnon/juniper-ml/pull/161
 - `tests/test_soak_run_probe_launch_guards.py` -- The launch guards that lose a spent run before it starts: `claude` resolved by absolute path (subprocess resolves a bare name against the env dict it is HANDED, which every unattended launcher minimises), and the reaper pidfile written where `collect_protected_pids` actually scans rather than under reports/, where it protected nothing.
 - `tests/test_soak_handoff_consensus_checks.py` -- The consensus reducer that silently no-ops: a mutation record carries its OWN obs_id and names its TARGET, so keying on obs_id makes every mutation vanish and inflates the denominator 43 to 49 -- with a clean, plausible report either way. Also that the via-search-output marker is matched in BOTH lexical forms (8, not 2).
 - `tests/test_x7_offload_census.py` -- The off-loop census exemption that certified a partial sweep: `census_source` classifies un-offloaded calls from a source string, extracted from `main` so the walk can be tested without canopy's main.py.
+- `tests/test_pf8_burst_attribution.py` -- The PF-8 burst-attribution trio (`util/ad-hoc/2026-09-10_listener_thread_census.py`, `2026-09-10_pyspy_stack_attribute.py`, `2026-09-10_listener_burst_probe.bash`), which overturned a published conclusion: the occupancy note named NumPy's OpenBLAS pool the leading candidate for the initial output pass's ~11-core burst, and it is libgomp under `libtorch_cpu`. Pins `/proc/<tid>/stat` split around the LAST `)`; a thread that exits mid-window reported rather than invented; py-spy folded stacks attributed by SAMPLE count rather than line count (one line can carry hundreds of samples); library patterns anchored to `lib*.so` so a bare `omp` cannot match `compiled` / `component` / `Compute`; `libopenblas` and `libgomp` told apart; every `env -u` preceding every `NAME=VALUE` in every arm, because `env(1)` stops accepting options at the first assignment and a mis-ordered arm kills the listener at startup with what reads like a launch bug; and a port check that refuses when `ss` is absent rather than reading every port as free.
+- `tests/test_pf8_occupancy_probe.py` -- The PF-8 occupancy probe pair (`util/ad-hoc/2026-09-10_pf8_occupancy_{sampler,analyse}.py`), whose one number decides whether a two-arm concurrency pair is worth an owner's host time: `/proc/<pid>/stat` split around the LAST `)` (a `comm` with spaces or parentheses would otherwise shift every field silently), roles assigned by process tree rather than name, a pid counted from birth only when born inside the interval and an exited one counted as vanished rather than invented, busy jiffies excluding iowait, both edges of the ~4-8 worker-equivalent band pinned (3.99 / 8.01 say NO, 4.0 / 8.0 say YES), and occupancy as sum-over-sum rather than a mean of per-second ratios.
 - `scripts/test.bash` -- Manual end-to-end harness for session create/resume launcher flows
 - `scripts/test_resume_file_safety.bash` -- Regression script ensuring invalid `--resume <file.txt>` input does not delete the source file
 
@@ -4601,12 +4781,12 @@ In-tree table: [`util/experiments/suites/perf/README.md`](../util/experiments/su
 |----|------|----------|-------|
 | PF-1 | `pf1-cascor-spiral-repeats.yaml` | step-duration p50/p95 + wall variance over 5 identical cells | Load-bearing cell length; repeats are a **matrix axis** |
 | PF-2 | `pf2-cascor-dataset-scaling.yaml` | wall vs `n_points_per_spiral` `{250, 500, 1000, 2000}` | RSS from the experiments dashboard Process RSS panel |
-| PF-3 | `pf3-cascor-pool-scaling.yaml` | speedup vs `candidate_pool_size` × `runtime.num_processes` | Must declare stall **and** wall (below) |
+| PF-3 | `pf3-cascor-pool-scaling.yaml` | speedup vs `candidate_pool_size` × `runtime.num_processes` | **BLOCKED 2026-09-10 — do not launch as written.** The `runtime.num_processes` axis is read by nothing on either path (the experiment YAML's `runtime:` block binds nothing — `notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md` §4), so the 4×3 matrix is four pool sizes run three times each; P2 item 2.2, owner. Must declare stall **and** wall (below) |
 | PF-4 | — | cascor in-repo pytest, report-only timing reference | **Not a driver suite.** No baseline file ever held timing data (P1 §1; 22 files / 312 entries censused 2026-09-08). Reference established 2026-09-09: `juniper-cascor` `docs/testing/REFERENCE.md` § Micro timing reference — `--benchmark-autosave` into `~/.local/state/juniper-experiments/baselines/cascor-micro`, `--benchmark-compare=NNNN` to report, never `--benchmark-compare-fail` (owner, P2 item 2.5) |
 | PF-5 | `pf5-recurrence-d-scaling.yaml` | fit time vs `train.d` `{8, 16, 32, 64}` | Thresholds unratified; instrument only |
 | PF-6 | `pf6-recurrence-nsteps-scaling.yaml` | fit time vs `dataset.params.n_steps` `{1000, 4000, 16000}` | same |
 | PF-7 | `pf7-recurrence-readout-rungs.yaml` | fit time + r² per `train.readout` `{linear, rff, mlp}` | same |
-| PF-8 | — | two simultaneous pinned-budget runs | **Not a sequential suite — and no longer needs a harness.** `run_suite` accepts `execution: {mode: parallel, max_parallel: 2}` for cascor once the launched tree is ≥ 0.10.0 (the primary is 0.11.0; dry-run verified 2026-09-08), allocating disjoint ports per cell and pinning equal thread budgets (`thread_budget_env`). Re-scoped by P2 item 4.3: the work half is already settled (`step_count` invariant under a 3× load span, sweep §8.4), so PF-8 can only ever report speed. **A checked-in parallel cascor suite fails `tests/test_experiment_suite_yamls.py` in CI**, where no cascor sibling exists to read the version floor from — see P2 item 4.2 |
+| PF-8 | — | two simultaneous pinned-budget runs | **LOCATED 2026-09-10, advisory.** `run_suite` parallel mode is the harness (cascor ≥ 0.10.0; the primary is 0.11.0) and the pair has run from `util/ad-hoc/2026-09-10_pf8_two_run_parallel_suite.yaml` via `util/ad-hoc/2026-09-10_pf8_pair_driver.bash`: three aligned parallel pairs (start offsets 0.003–0.068 s) against six sequential controls under the same four thread variables, all twelve cells at `step_count` 1770 — **a second concurrent pinned run costs +11.3% per step (+8.5 to +12.7% over the three pairs)**, inside the sweep's 20.5% quiet band, outside the day's within-arm spread. One run alone consumes 4.52 cores unpinned (one ~11-core block in the listener for the initial output pass, removed by `OMP_NUM_THREADS` alone; **carried by libgomp under `libtorch_cpu`, NOT NumPy's OpenBLAS** — `…PF8-BURST-LIBRARY-ATTRIBUTION.md`) and 2.15 pinned (`util/ad-hoc/2026-09-10_pf8_occupancy_sampler.py` + `_analyse.py`). The YAML's `runtime:` block binds nothing — PF-3's `runtime.num_processes` axis is inert (P2 item 2.2, owner). Work half settled by the sweep (§8.4); speed ungated. **A checked-in parallel cascor suite still fails `tests/test_experiment_suite_yamls.py` in CI** (no cascor sibling to read the version floor from) — that fix is now optional, needed only for routine re-runs (P2 item 4.2, owner). `notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md` |
 
 ### How to run
 
