@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import json
 import subprocess  # nosec B404 -- fixed argv, no shell
-import sys
 
 PRS = {
     "juniper-canopy": 617,
