@@ -16,29 +16,28 @@
 #   header has no separator row. Markdownlint and the doc-link validator see none of them -- a
 #   fence is never "missing", it silently absorbs everything after it.
 #
-#   Wiring that count directly as a gate does not work, and the measurement says so: **63
-#   problems across 14 files** on `main` at `e173ea81` (2026-09-10). A gate demanding zero is
-#   red on arrival, and the repair campaign it implies is not the thing anyone asked for.
+#   Wiring that count directly as a gate does not work, and the measurement says so: **17
+#   problems across 2 files** on `main` after the 2026-09-10 structure repair (2026-09-10). A gate demanding zero is
+#   still red on arrival, because BOTH survivors are screen FALSE POSITIVES that no repair can
+#   clear without lying about the content: a ```text block of banner art whose lines begin
+#   `## `, and a ````jinja2 template sample whose H2s are the sample.
 #
 #   THE COUNT IS A MOVING FLOOR, NOT A BACKLOG, and treating it as a standing fact is how five
 #   sites in this repo went stale at once. Successive measurements: 104/23 (09-05), 102/21
 #   (09-09), 63/14 after ml#1834 repaired the live `notes/` half, 73/15 later the same day,
-#   63/14 (09-10). Quote a commit and a date, or re-measure -- never the bare number.
+#   63/14 (09-10 morning), 17/2 (09-10, the 2026-09-10 structure repair). Quote a commit and a date, or re-measure --
+#   never the bare number. ml#1881 demonstrated the other failure mode: a branch cut before
+#   ml#1880 re-introduced the stale 102/21 into two of the six sites ml#1880 had just fixed,
+#   nine hours after it merged. A figure duplicated across files does not stay corrected.
 #
 #   This comment also said the damage was "most of them in `notes/legacy/` and
-#   `notes/code-review/`", and that is FALSE. By file at `e173ea81`: 5 under `notes/`, 6 under
-#   `notes/legacy/`, 3 under `prompts/`, and ZERO under both `notes/code-review/` and `docs/`.
-#   `notes/code-review/` scored 1 as recently as 09-09 and is clean now with its 14 tracked
-#   files still present, so that zero is a real result and not an empty enumeration.
+#   `notes/code-review/`", and that is FALSE. It concentrated in live `notes/` and `prompts/`.
 #
-#   By PROBLEM the concentration is sharper still, and it is the more useful cut when
-#   deciding whether to repair rather than delta-scope: `notes/` 24, `notes/legacy/` 20,
-#   `prompts/generated/` 11, `prompts/agent_templates/` 7, `prompts/manual/` 1. Three files
-#   hold 38 of the 63 -- 14 in `notes/legacy/CASCOR_DEMO_TRAINING_ERROR_PLAN.md`, 13 in
-#   `notes/JUNIPER_2026-08-09_JUNIPER-ECOSYSTEM_STANDING-ITEMS-CLOSEOUT-AND-HARNESS-REMEDIATION-PLAN.md`,
-#   and 11 in `prompts/generated/JUNIPER_ML_CUSTOM-AGENT-SUITE-ENHANCEMENTS_PLAN_2026-06-26_2048.md`.
-#   Repairing those three leaves 25 across 11 and changes NO gate outcome, because the gate is
-#   delta-scoped -- which is the argument for leaving them alone.
+#   the 2026-09-10 structure repair then repaired the real damage rather than delta-scoping around it -- a ```python
+#   fence that had swallowed 161 lines of `notes/legacy/CASCOR_DEMO_TRAINING_ERROR_PLAN.md`
+#   after two documents were welded onto one line, two genuinely unclosed fences under
+#   `prompts/`, two broken tables, and a jinja2 wrapper that let `{% endblock %}` render as
+#   prose on github.com -- so the remaining 17 are a floor made entirely of false positives.
 #
 #   RE-MEASURE BEFORE QUOTING, and delimit the paths properly:
 #
@@ -49,9 +48,14 @@
 #   arguments: the run then reports 1040 paths against 1034 tracked and invents six
 #   "non-markdown" fragments. The totals survive that, the coverage line does not.
 #
-#   The run exits 2, not 0/1: `main` carries ten DANGLING symlinks under `notes/` that the
-#   screen counts as unreadable and refuses to certify around (#1831). 1024 of 1034 paths are
-#   examined, so 102 is a floor over the readable set, not a whole-tree census.
+#   The run exited 2, not 0/1, for as long as `main` carried ten DANGLING symlinks under
+#   `notes/` that the screen counts as unreadable and refuses to certify around (#1831), so
+#   every count before the 2026-09-10 structure repair was a floor over the READABLE set rather than a whole-tree
+#   census. The 2026-09-10 structure repair retargeted all ten -- `432ed644` had renamed both ends and a symlink body
+#   is opaque text, so nothing rewrote it -- and the screen now examines every tracked path
+#   and exits 1. It also reports SYMLINK ALIASES: eleven tracked paths resolve onto a file
+#   another path already covered (CLAUDE.md -> AGENTS.md among them), and counting those twice
+#   had inflated the total by 2 the moment the links began resolving.
 #
 #   So gate the DELTA, per FILE, over only the files the PR TOUCHES:
 #
