@@ -94,6 +94,25 @@ Environment=PATH=%h/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 # becomes the only thing standing between a live probe and an unrelated sweep.
 ExecStart=/usr/bin/python3 util/soak_run_probe.py --timeout 900
 
+# A BY-DESIGN REFUSAL IS NOT A FAILURE. The wrapper's stopping rule exits 3 when
+# it declines to spend a session -- the verdict is terminal, or the ledger cannot
+# be read. Without this line `Type=oneshot` treats that as a failed unit, fires
+# `OnFailure=` above, and appends a strike to logs/soak_probe_failures.log every
+# time the timer fires. The verdict is BET-FAILING and terminal TODAY, so on a
+# host with these units installed that is a strike every ~6 hours, indefinitely,
+# for a guard that is working exactly as designed -- and a real failure would be
+# indistinguishable from it in the one file built to surface real failures.
+#
+# NOT `SuccessExitStatus=2`, which is the tempting version and is a trap: the
+# wrapper returns 2 for argparse misuse as well, so whitelisting it would make a
+# typo in the ExecStart= line above read as success forever. 3 is reserved for
+# the refusal alone; 1 (hard error) and 2 (misuse) still fail the unit.
+#
+# tests/test_soak_run_probe_stopping_rule.py::UnitFileWhitelistsTheRefusalCode
+# parses this file and pins the two halves together. Before that test, nothing in
+# the repo read a unit file at all, so a wrong choice here was uncatchable.
+SuccessExitStatus=3
+
 # Must exceed the wrapper's WHOLE sequential budget, not just its --timeout.
 # The wrapper runs dispatch (_py, 120s cap) + claude (900s) + the --reveal call
 # (_py, 120s cap) = up to 1140s. An earlier 1200 left a 60s margin, which is not
