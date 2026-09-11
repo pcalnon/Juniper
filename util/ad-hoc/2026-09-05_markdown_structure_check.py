@@ -31,7 +31,28 @@ WHAT IT CHECKS
   * H2 headings that sit INSIDE a fenced block (the actual symptom -- a file can have an
     even fence count and still swallow headings if two closes were lost);
   * markdown tables whose header row lost its `| --- | --- |` separator, which renders the
-    table as plain text and is likewise invisible to a substring check.
+    table as plain text and is likewise invisible to a substring check. A delimiter cell is
+    valid with ONE hyphen (`| - |`, `|:-:|`), so those are tables, not findings.
+
+Paths that resolve to the same file -- a symlink and its target, both tracked -- are
+examined once and the duplicate is reported as an alias, so the count measures FILES rather
+than path entries.
+
+KNOWN LIMIT -- stated because a clean run from this screen is not proof
+
+Fences are matched at the LINE level, so a fence nested inside a container block is
+invisible to this walk: `> ```bash ` inside a blockquote, and a fence indented four or more
+spaces because it sits in a list item. Cross-checked against markdown-it-py over all 1073
+tracked markdown files on 2026-09-10 (`util/ad-hoc/2026-09-10_fence_walker_crosscheck.py`),
+this walk disagrees with CommonMark on 215 lines in 10 files -- 184 blockquote-nested, 31
+list-indented, and nothing else. The boolean toggle it replaced disagreed on 1972 lines in
+89 files, and every one of the 215 is a line the toggle also got wrong: the rewrite removed
+89.1% of the divergence and introduced none.
+
+Container-relative fence tracking is deliberately NOT implemented. It needs real
+container-block state, and the residual shapes produce no finding on this tree. Anyone who
+widens this screen should re-run the crosscheck rather than trust the unit fixtures, which
+only pin the cases their author thought of.
 
 EXIT CODES
 
@@ -52,7 +73,17 @@ import re
 import sys
 from pathlib import Path
 
-SEPARATOR = re.compile(r"^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$")
+# GFM requires AT LEAST ONE hyphen per delimiter cell, not two: `| - |` and `|:-:|` are
+# valid tables and render as tables everywhere. This pattern demanded `-{2,}` until
+# 2026-09-10, so it reported every single-hyphen table as having lost its separator.
+#
+# That was not a counting error. `util/markdown_structure_delta.py` imports this screen and
+# grades a file the PR ADDS against a baseline of zero (:165), and the step runs inside the
+# `docs` job -- whose NAME, `Documentation Links`, is the REQUIRED status context. So any PR
+# adding a markdown file with a valid single-hyphen delimiter row failed a required check,
+# for a defect that was not in the PR. Verified against markdown-it-py: all three of
+# `| - |`, `|:-:|` and `| --- |` produce a real table token.
+SEPARATOR = re.compile(r"^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$")
 
 
 MARKDOWN_INFO_STRINGS = {"markdown", "md"}
@@ -65,7 +96,63 @@ def _is_markdown_example(opener_line: str) -> bool:
     symptom. Anything else -- ```bash, ```python, or a bare ``` -- has no business
     containing an H2, and that is the shape a dropped closing fence produces.
     """
-    return opener_line.strip().lstrip("`").strip().lower() in MARKDOWN_INFO_STRINGS
+    return opener_line.strip().lstrip("`~").strip().lower() in MARKDOWN_INFO_STRINGS
+
+
+# A fence delimiter: up to 3 spaces of indent, then >=3 backticks or >=3 tildes.
+_FENCE = re.compile(r"^ {0,3}(?P<run>`{3,}|~{3,})(?P<info>.*)$")
+
+
+def _fence_spans(lines: list) -> tuple:
+    """Walk fences the way CommonMark does, returning (in_fence_flags, openers, unclosed).
+
+    The original walk was a BOOLEAN TOGGLE over any line starting ```, which disagrees with
+    every real renderer in three ways, each of which produces a confident wrong answer
+    rather than an error:
+
+      * a CLOSING fence may not carry an info string, so ```bash never closes anything --
+        it is content inside whatever block is already open;
+      * a closing fence must be AT LEAST AS LONG as its opener, so ``` cannot close ````
+        (four-backtick blocks exist in this repo precisely to quote three-backtick ones);
+      * ``` and ~~~ are different fence characters and never close each other.
+
+    The cost of the toggle is on the record. Two independent agents reported "three
+    unclosed fences on main" in 2026-09-09's review; the reviewer confirmed it by re-running
+    this screen -- the very instrument under suspicion -- and the true answer was two. The
+    same toggle reports `notes/JUNIPER_2026-05-25_..._V7-IMPLEMENTATION-ROADMAP.md` as
+    swallowing two H2s, when the file is a correct ````markdown sample and renders fine.
+
+    Returns:
+        in_fence: list parallel to `lines`, each entry None or the opener's (lineno, text);
+        unclosed: the opener (lineno, text) left open at EOF, or None.
+    """
+    in_fence: list = [None] * len(lines)
+    open_at = None          # (lineno, text, char, length)
+    for idx, line in enumerate(lines):
+        m = _FENCE.match(line)
+        if m:
+            run, info = m.group("run"), m.group("info")
+            char, length = run[0], len(run)
+            if open_at is None:
+                # A backtick opener's info string may not contain a backtick (CommonMark
+                # 4.5); tilde openers have no such restriction.
+                if char == "`" and "`" in info:
+                    pass  # not a fence opener -- fall through as ordinary content
+                else:
+                    open_at = (idx + 1, line, char, length)
+                    in_fence[idx] = (open_at[0], open_at[1])
+                    continue
+            else:
+                _ln, _txt, ochar, olen = open_at
+                if char == ochar and length >= olen and not info.strip():
+                    in_fence[idx] = (open_at[0], open_at[1])   # the closer belongs to the block
+                    open_at = None
+                    continue
+                # Same-or-different char that cannot close: ordinary content.
+        if open_at is not None:
+            in_fence[idx] = (open_at[0], open_at[1])
+    unclosed = (open_at[0], open_at[1]) if open_at else None
+    return in_fence, unclosed
 
 
 def check(path: Path) -> list:
@@ -81,30 +168,22 @@ def check(path: Path) -> list:
     # this checker unwireable as a gate -- four permanent false findings on a clean
     # tree. Every other info string, and a BARE fence, is still checked: the fence that
     # swallowed 36 headings in juniper-ml#1746 was not a markdown example.
-    in_fence = False
-    opener = None
+    spans, unclosed = _fence_spans(lines)
     for i, line in enumerate(lines, 1):
-        if line.startswith("```"):
-            if not in_fence:
-                in_fence, opener = True, (i, line)
-            else:
-                in_fence, opener = False, None
+        opener = spans[i - 1]
+        if opener is None or _FENCE.match(line):
             continue
-        if in_fence and line.startswith("## ") and not _is_markdown_example(opener[1]):
+        if line.startswith("## ") and not _is_markdown_example(opener[1]):
             problems.append(
                 f"H2 swallowed by the fence opened at line {opener[0]} "
                 f"({opener[1].strip()[:20]!r}): line {i}: {line.strip()[:60]}"
             )
-    if in_fence:
-        problems.append(f"UNCLOSED code fence opened at line {opener[0]}: {opener[1][:60]!r}")
+    if unclosed:
+        problems.append(f"UNCLOSED code fence opened at line {unclosed[0]}: {unclosed[1][:60]!r}")
 
     # (3) table header with no separator row.
-    in_fence = False
     for i, line in enumerate(lines):
-        if line.startswith("```"):
-            in_fence = not in_fence
-            continue
-        if in_fence:
+        if spans[i] is not None:
             continue
         # A four-space indent is an INDENTED CODE BLOCK -- CommonMark reads it as literally as a
         # fence, so a quoted `| ... |` row inside one is not a table. Found by writing this
@@ -130,6 +209,8 @@ def main(argv=None) -> int:
     examined = 0
     unreadable: list = []
     not_markdown: list = []
+    aliases: list = []
+    seen: dict = {}
     for arg in argv:
         p = Path(arg)
         if p.suffix.lower() != ".md":
@@ -138,6 +219,24 @@ def main(argv=None) -> int:
             # guard below.
             not_markdown.append(arg)
             continue
+        # A symlink and its target are TWO tracked paths and ONE file. Repointing the ten
+        # broken notes links (2026-09-10) made `notes/development/...V7-IMPLEMENTATION-
+        # ROADMAP.md` resolve onto `notes/JUNIPER_2026-05-25_...`, which already had two
+        # findings -- so the whole-tree count rose 63 -> 65 while not one character of
+        # markdown had changed. Deduplicating by resolved path reports the file once.
+        #
+        # This is a dedup, NOT a skip: the alias is counted and named below. A silent skip
+        # is the exact failure this screen was built to catch, and adding one here to tidy
+        # a number would reintroduce it one level up.
+        try:
+            real = p.resolve(strict=True)
+        except OSError as exc:
+            unreadable.append(f"{arg}: {exc}")
+            continue
+        if real in seen:
+            aliases.append(f"{arg} -> same file as {seen[real]}")
+            continue
+        seen[real] = arg
         try:
             found = check(p)
         except OSError as exc:
@@ -156,7 +255,13 @@ def main(argv=None) -> int:
             for f in found:
                 print(f"   {f}")
     print(f"\nstructural problems: {total}")
-    print(f"examined {examined} of {len(argv)} path(s)" + (f"; skipped {len(not_markdown)} non-markdown" if not_markdown else ""))
+    print(
+        f"examined {examined} of {len(argv)} path(s)"
+        + (f"; skipped {len(not_markdown)} non-markdown" if not_markdown else "")
+        + (f"; {len(aliases)} symlink alias(es) of an already-examined file" if aliases else "")
+    )
+    for item in aliases:
+        print(f"    alias: {item}")
 
     if unreadable:
         print(f"could not read {len(unreadable)} markdown path(s):", file=sys.stderr)

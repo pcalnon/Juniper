@@ -372,6 +372,10 @@ See [`JUNIPER_2026-06-05_JUNIPER-RECURRENCE_RECURSE-DELTA-T-HANDLING.md`](JUNIPE
 
 | Suite | What it asserts | Technique |
 |-------|-----------------|-----------|
+| **Numerical correctness** | Forward pass and gradients are correct | Finite-difference gradient checks on the (hand-rolled, per C1) recurrent cell; compare to analytic gradients |
+| **Known-answer / golden** | The model solves a problem with a known solution | RCC on the **Reber grammar** (golden classification anchor); ESN readout recovers a **linear system** exactly (closed-form); LMU **delay line** reproduces a pure delay to tolerance |
+| **Regression metrics** | Regression is first-class | Assert MSE/MAE/R² computed and surfaced; assert **no `argmax`/accuracy path** is exercised for `task_type="regression"` |
+| **Time-series correctness** | No temporal leakage; windowing correct | Verify temporal split keeps test strictly after train; verify windowed targets align; adversarial "shuffle would leak" negative test |
 | **Growth-loop correctness** (GrowableModel) | Adding a unit is sound                           | After `grow_step()`: unit count +1; previously-frozen weights unchanged; training error non-increasing on the fit set (or documented exception); `unit_added` event emitted            |
 | **Determinism**                             | Reproducible                                     | Same seed → same trajectory within tolerance                                                                                                                                           |
 | **Overfit-tiny sanity**                     | The model *can* learn                            | Memorize a tiny dataset to ~0 error (catches dead training loops)                                                                                                                      |

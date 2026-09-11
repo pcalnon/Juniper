@@ -95,6 +95,7 @@ experience of using each component inform the enhancements you propose.
 **Generate the grounding bundle first (hard gate — Phase 0):**
 **Generated**: 2026-06-26
 
+```bash
   --symbols "prompt_discovery,template_data_resolver,prompt-validator,template-agent,test_status" --json
 # capture provenance.head_sha; if exit != 0, STOP and report (never proceed on an empty bundle)
 python util/agent_suite_doctor.py --repo-root . --json   # current OK/WARN/FAIL health baseline (dogfood)
