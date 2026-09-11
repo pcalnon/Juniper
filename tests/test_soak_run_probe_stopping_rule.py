@@ -91,10 +91,52 @@ class VerdictIsTerminalPrefixOnly(unittest.TestCase):
         self.assertFalse(mod.verdict_is_terminal("holds-at-0.75"))
 
     def test_ledger_non_answers_are_not_terminal(self) -> None:
+        """Still true, and deliberately unchanged: none of these is an ANSWER.
+
+        The fail-open fix went into a second predicate rather than in here. Folding
+        the non-answers into ``verdict_is_terminal`` would have been the smaller
+        diff and the wrong one: it would make the ``--dry-run`` NOTE tell an
+        operator the soak had reached a conclusion when the ledger is simply
+        unreadable, and it would redden these prefix pins for a property the
+        tokens do not have.
+        """
         for verdict in ("INCONCLUSIVE", "DEGRADED", "NO-DATA", "NO-SEEDED-DATA", ""):
             with self.subTest(verdict=verdict):
                 self.assertFalse(mod.verdict_is_terminal(verdict))
                 self.assertFalse(mod.refuses_terminal_verdict(verdict, force=False, dry_run=False))
+
+    def test_unreadable_states_refuse_through_the_second_predicate(self) -> None:
+        """INCONCLUSIVE is runnable; the other four are not.
+
+        The distinction the exit code cannot make: ``soak_ledger.py status`` exits
+        2 for DEGRADED / NO-DATA / NO-SEEDED-DATA, but it also exits 2 for argparse
+        misuse -- and exits 1 for BOTH a real crash and a perfectly runnable
+        INCONCLUSIVE soak with an open escalation.
+        """
+        for verdict in ("DEGRADED", "NO-DATA", "NO-SEEDED-DATA", ""):
+            with self.subTest(verdict=verdict):
+                self.assertTrue(mod.verdict_is_unusable(verdict))
+                self.assertTrue(mod.refuses_unusable_verdict(verdict, force=False, dry_run=False))
+        self.assertFalse(mod.verdict_is_unusable("INCONCLUSIVE"))
+        self.assertFalse(mod.refuses_unusable_verdict("INCONCLUSIVE", force=False, dry_run=False))
+
+    def test_the_two_exemptions_apply_to_the_unusable_rule_too(self) -> None:
+        """--force is an override and --dry-run spends nothing. Same as terminal."""
+        for verdict in ("DEGRADED", "NO-DATA", "NO-SEEDED-DATA", ""):
+            with self.subTest(verdict=verdict):
+                self.assertFalse(mod.refuses_unusable_verdict(verdict, force=True, dry_run=False))
+                self.assertFalse(mod.refuses_unusable_verdict(verdict, force=False, dry_run=True))
+
+    def test_unusable_is_exact_membership_not_a_prefix(self) -> None:
+        """``HOLDS-AT-`` needs a prefix test; these names do not, and must not get one.
+
+        A prefix test would silently give a future ``NO-DATA-EVER`` the meaning of
+        ``NO-DATA``. It also keeps the two rules structurally different, which is
+        the honest description of them.
+        """
+        for near_miss in ("NO-DATA-EVER", "DEGRADED-PARTIAL", "NO-SEEDED", "NODATA"):
+            with self.subTest(verdict=near_miss):
+                self.assertFalse(mod.verdict_is_unusable(near_miss))
 
 
 class RealRunIsGatedThroughMain(unittest.TestCase):
@@ -126,7 +168,7 @@ class RealRunIsGatedThroughMain(unittest.TestCase):
             "BET-FAILING  seeded=43/35 rate=60.5% ci=[0.456, 0.736]\n",
             ledger_rc=1,
         )
-        self.assertEqual(rc, 2)
+        self.assertEqual(rc, mod.RC_REFUSED)
         self.assertIn("REFUSING", err)
         self.assertIn("BET-FAILING", err)
 
@@ -135,7 +177,7 @@ class RealRunIsGatedThroughMain(unittest.TestCase):
             ["soak_run_probe.py"],
             "HOLDS-AT-0.75  seeded=40/35 rate=82.0%\n",
         )
-        self.assertEqual(rc, 2)
+        self.assertEqual(rc, mod.RC_REFUSED)
         self.assertIn("REFUSING", err)
         self.assertIn("HOLDS-AT-0.75", err)
 
@@ -181,34 +223,85 @@ class RealRunIsGatedThroughMain(unittest.TestCase):
             "BET-FAILING  seeded=43/35 rate=60.5%\n",
             ledger_rc=1,
         )
-        self.assertEqual(rc, 2)
+        self.assertEqual(rc, mod.RC_REFUSED)
         self.assertIn("REFUSING", err)
 
-    def test_degraded_fails_open_on_a_real_run(self) -> None:
-        """Documented current semantics: DEGRADED / NO-DATA / NO-SEEDED-DATA are
-        not terminal, and ``st.returncode`` is never consulted, so a real run
-        proceeds. Pinning this is what makes a silent fail-closed change visible.
+    def test_degraded_refuses_on_a_real_run(self) -> None:
+        """INVERTED 2026-09-10. This pin previously asserted the fail-open.
+
+        It was a deliberate marker, not an accident: #1690 deferred fail-closed and
+        pinned the deferral so it stayed visible instead of decaying into an
+        unexamined default. Closing the gap is what inverts it. A successor reading
+        the history should not mistake this for a regression -- the old assertion
+        and this one cannot both be green, and that was the point of writing it.
         """
         for verdict in ("DEGRADED", "NO-DATA", "NO-SEEDED-DATA"):
-            with self.subTest(verdict=verdict), self.assertRaises(_ReachedDispatch):
-                self._invoke(
+            with self.subTest(verdict=verdict):
+                rc, _, err = self._invoke(
                     ["soak_run_probe.py"],
                     f"{verdict}  seeded=0/35 rate=n/a\n",
                     ledger_rc=2,
-                    dispatch=_reached_dispatch,
                 )
+                self.assertEqual(rc, mod.RC_REFUSED)
+                self.assertIn("REFUSING", err)
+                self.assertIn(verdict, err)
+                self.assertNotIn("terminal", err)
 
-    def test_a_ledger_tool_crash_fails_open(self) -> None:
-        """Empty stdout + rc=2 is what a crashed ledger tool produces.
+    def test_a_ledger_tool_crash_refuses(self) -> None:
+        """INVERTED 2026-09-10, same deferral as above.
 
-        ``verdict=""`` is not terminal. #1690 deferred fail-closed; this pin
-        is how that deferral stays visible.
+        Empty stdout + rc=2 is what a crashed ledger tool produces, and ``""`` is
+        the token ``status_verdict`` returns for it. The refusal message must not
+        print a bare empty string where the verdict goes, or the operator is told
+        ``soak verdict is  --`` and has to read the source to find out what broke.
+        """
+        rc, _, err = self._invoke(["soak_run_probe.py"], "", ledger_rc=2)
+        self.assertEqual(rc, mod.RC_REFUSED)
+        self.assertIn("REFUSING", err)
+        self.assertIn("empty", err)
+        self.assertNotIn("terminal", err)
+
+    def test_force_reaches_dispatch_under_an_unreadable_ledger(self) -> None:
+        """The override has to work on the new refusal too, or it is a dead end."""
+        with self.assertRaises(_ReachedDispatch):
+            self._invoke(
+                ["soak_run_probe.py", "--force"],
+                "NO-DATA  seeded=0/35 rate=n/a\n",
+                ledger_rc=2,
+                dispatch=_reached_dispatch,
+            )
+
+    def test_dry_run_under_an_unreadable_ledger_notes_and_proceeds(self) -> None:
+        """#1690's exemption, extended to the second rule and NOT quietly dropped.
+
+        A dry run spends nothing, so the spend control was never in scope for it.
+        The NOTE must say the state is unreadable rather than ``terminal``: those
+        are opposite conditions and an operator acts differently on each.
+        """
+        rc, out, err = self._invoke(
+            ["soak_run_probe.py", "--dry-run"],
+            "NO-DATA  seeded=0/35 rate=n/a\n",
+            ledger_rc=2,
+            dispatch=mock.Mock(return_value=("P-TEST", "secret task must not leak")),
+        )
+        self.assertEqual(rc, 0)
+        self.assertNotIn("REFUSING", err)
+        self.assertIn("NO-DATA", err)
+        self.assertIn("not a readable state", err)
+        self.assertNotIn("secret task must not leak", out)
+
+    def test_inconclusive_with_no_escalations_still_reaches_dispatch(self) -> None:
+        """The negative control for the whole change.
+
+        If the fix had been written as an allow-list, or keyed on the exit code,
+        the ordinary runnable state is what it would have broken -- and every other
+        test here asserts a refusal, so nothing else would have caught it.
         """
         with self.assertRaises(_ReachedDispatch):
             self._invoke(
                 ["soak_run_probe.py"],
-                "",
-                ledger_rc=2,
+                "INCONCLUSIVE  seeded=40/35 rate=65.0% escalations=0\n",
+                ledger_rc=0,
                 dispatch=_reached_dispatch,
             )
 
@@ -220,6 +313,193 @@ class RealRunIsGatedThroughMain(unittest.TestCase):
                 "NOTE: BET-FAILING  seeded=43/35 rate=60.5%\n",
                 dispatch=_reached_dispatch,
             )
+
+
+class LedgerVerdictsAreAllClassified(unittest.TestCase):
+    """Every verdict ``soak_ledger.py`` can emit is classified by the guard.
+
+    THE RESIDUAL THIS CLOSES. The fix is a deny-list -- refuse on four named
+    tokens -- so a verdict added to the ledger and not named here still fails
+    open, which is the same defect class the fix itself repairs. An allow-list
+    would have been fail-closed for the unknown, but it would also have destroyed
+    ``test_a_prefixed_status_line_is_not_a_verdict``: that test's whole subject is
+    a token the guard does not recognise reaching dispatch.
+
+    So the drift is caught here instead. The verdict names are read out of
+    ``soak_ledger.py``'s AST rather than copied, because a copied list is exactly
+    the thing that goes stale silently.
+    """
+
+    LEDGER = REPO_ROOT / "util" / "soak_ledger.py"
+
+    # Runnable states: the soak has no answer YET, and a run can still change that.
+    KNOWN_RUNNABLE = frozenset({"IN-PROGRESS", "INCONCLUSIVE"})
+
+    @staticmethod
+    def _emitted_verdicts(src: str) -> set[str]:
+        """Verdict names from ``verdict, note = <name>, ...`` assignments.
+
+        ``HOLDS-AT-{DECISION_BOUNDARY}`` is an f-string: its literal head is what
+        ``verdict_is_terminal`` prefix-matches, so the head is what we collect.
+        """
+        import ast
+
+        found: set[str] = set()
+        for node in ast.walk(ast.parse(src)):
+            if not isinstance(node, ast.Assign):
+                continue
+            targets = [t for t in node.targets if isinstance(t, ast.Tuple) and t.elts and isinstance(t.elts[0], ast.Name) and t.elts[0].id == "verdict"]
+            if not targets or not isinstance(node.value, ast.Tuple) or not node.value.elts:
+                continue
+            head = node.value.elts[0]
+            if isinstance(head, ast.Constant) and isinstance(head.value, str):
+                found.add(head.value)
+            elif isinstance(head, ast.JoinedStr) and head.values:
+                lead = head.values[0]
+                if isinstance(lead, ast.Constant) and isinstance(lead.value, str):
+                    found.add(lead.value)
+        return found
+
+    def test_the_extractor_finds_the_verdicts_it_is_supposed_to(self) -> None:
+        """Negative control. A silently-empty extractor would pass every test below.
+
+        This is the ``[[reference_vacuous_pass_check_class]]`` failure: an AST walk
+        that matches nothing returns an empty set, and "every element is
+        classified" is then trivially true forever.
+        """
+        found = self._emitted_verdicts(self.LEDGER.read_text(encoding="utf-8"))
+        self.assertGreaterEqual(len(found), 6, f"extractor went blind: {found}")
+        self.assertIn("BET-FAILING", found)
+        self.assertIn("NO-DATA", found)
+
+    def test_every_emitted_verdict_is_terminal_unusable_or_known_runnable(self) -> None:
+        """Add a verdict to the ledger without classifying it here and this reddens."""
+        for verdict in sorted(self._emitted_verdicts(self.LEDGER.read_text(encoding="utf-8"))):
+            with self.subTest(verdict=verdict):
+                classes = [
+                    name
+                    for name, hit in (
+                        ("terminal", mod.verdict_is_terminal(verdict)),
+                        ("unusable", mod.verdict_is_unusable(verdict)),
+                        ("runnable", verdict in self.KNOWN_RUNNABLE),
+                    )
+                    if hit
+                ]
+                self.assertEqual(
+                    len(classes),
+                    1,
+                    f"{verdict!r} is classified {classes or 'NOT AT ALL'}; it must be " f"exactly one of terminal / unusable / runnable. An unclassified " f"verdict FAILS OPEN and spends a session.",
+                )
+
+
+class RefusalExitCodeSurvivesToTheProcess(unittest.TestCase):
+    """The refusal code as a REAL subprocess exit status, with nothing mocked.
+
+    Every other test here calls ``main()`` and reads its return value. systemd does
+    not: it reads the process's wait status, and ``SuccessExitStatus=3`` is checked
+    against that. ``raise SystemExit(main())`` makes the two equal today, and this
+    is the test that would notice if it ever stopped being -- an ``except
+    SystemExit`` swallowing it, a wrapper shell, an ``os._exit``.
+
+    Hermetic by relocation rather than by mocking. ``ROOT`` is derived from
+    ``__file__``, so a copy of the script in a throwaway ``util/`` directory finds
+    a STUB ledger next to it, and the live ``reports/soak/pointer_follow_soak.jsonl``
+    is never read or moved. That is what §10 of the 09-08 evidence-recovery note
+    recorded as not exercisable; it is exercisable this way.
+    """
+
+    STUB = "#!/usr/bin/env python3\n" "import sys\n" "sys.stdout.write({stdout!r})\n" "raise SystemExit({rc})\n"
+
+    def _run(self, argv: list[str], *, stdout: str, rc: int) -> subprocess.CompletedProcess:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "util").mkdir()
+            (root / "util" / "soak_run_probe.py").write_text(SCRIPT.read_text(encoding="utf-8"), encoding="utf-8")
+            (root / "util" / "soak_ledger.py").write_text(self.STUB.format(stdout=stdout, rc=rc), encoding="utf-8")
+            return subprocess.run(  # nosec B603 - fixed argv, no shell
+                [sys.executable, str(root / "util" / "soak_run_probe.py"), *argv],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+
+    def test_a_terminal_verdict_exits_with_the_refusal_code(self) -> None:
+        r = self._run([], stdout="BET-FAILING  seeded=43/35 rate=60.5%\n", rc=1)
+        self.assertEqual(r.returncode, mod.RC_REFUSED)
+        self.assertIn("REFUSING", r.stderr)
+
+    def test_an_empty_ledger_exits_with_the_refusal_code(self) -> None:
+        """THE CONTROL §3.A names: a readable but EMPTY ledger.
+
+        ``soak_ledger.py status`` on an empty file prints ``NO-DATA ...`` and exits
+        2 -- re-measured 2026-09-10. Before this change the wrapper read the token,
+        found it non-terminal, ignored ``st.returncode`` entirely, and dispatched a
+        billed session against a corpus with nothing in it.
+        """
+        r = self._run([], stdout="NO-DATA  seeded=0/35 rate=n/a ci=n/a escalations=0\n", rc=2)
+        self.assertEqual(r.returncode, mod.RC_REFUSED)
+        self.assertIn("NO-DATA", r.stderr)
+        self.assertIn("cannot be read", r.stderr)
+
+    def test_a_crashed_ledger_tool_exits_with_the_refusal_code(self) -> None:
+        """Empty stdout. rc 1, not 2 -- a traceback exits 1, which is also what a
+        perfectly runnable INCONCLUSIVE-with-escalations soak returns. The token is
+        what discriminates, so the stub's rc is deliberately the ambiguous one."""
+        r = self._run([], stdout="", rc=1)
+        self.assertEqual(r.returncode, mod.RC_REFUSED)
+        self.assertIn("empty", r.stderr)
+
+    def test_argparse_misuse_still_exits_2_and_is_not_whitelisted(self) -> None:
+        """The other half of why the code is 3. If misuse and refusal shared a code,
+        `SuccessExitStatus` could not whitelist one without the other."""
+        r = self._run(["--no-such-flag"], stdout="INCONCLUSIVE  seeded=40/35\n", rc=0)
+        self.assertEqual(r.returncode, 2)
+        self.assertNotEqual(r.returncode, mod.RC_REFUSED)
+
+
+class UnitFileWhitelistsTheRefusalCode(unittest.TestCase):
+    """The systemd half of the same defect, and the first test to read a unit file.
+
+    Nothing in the repo parsed one before this class, which is why the missing
+    ``SuccessExitStatus=`` survived: the guard and the unit have to agree on what
+    a refusal looks like, and no test could see both halves at once.
+    """
+
+    UNIT = REPO_ROOT / "util" / "systemd" / "juniper-soak-probe.service"
+    lines: list[str]
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.lines = [ln.strip() for ln in cls.UNIT.read_text(encoding="utf-8").splitlines() if ln.strip() and not ln.lstrip().startswith("#")]
+
+    def _directive(self, key: str) -> list[str]:
+        return [ln.split("=", 1)[1] for ln in self.lines if ln.startswith(f"{key}=")]
+
+    def test_the_unit_whitelists_exactly_the_guards_refusal_code(self) -> None:
+        """Not a hardcoded 3: read the constant, so the two move together."""
+        self.assertEqual(self._directive("SuccessExitStatus"), [str(mod.RC_REFUSED)])
+
+    def test_the_unit_does_not_whitelist_argparse_misuse(self) -> None:
+        """``SuccessExitStatus=2`` is the trap this whole exit code exists to avoid.
+
+        The wrapper returns 2 for argparse misuse, so whitelisting it would make a
+        typo in ``ExecStart=`` read as success forever -- on the unattended path,
+        firing every ~6h, with `OnFailure=` silenced for the one case it is for.
+        """
+        whitelisted = {code for value in self._directive("SuccessExitStatus") for code in value.replace(",", " ").split()}
+        self.assertNotIn("2", whitelisted)
+        self.assertNotIn("1", whitelisted)
+
+    def test_the_refusal_code_collides_with_nothing_the_unit_must_still_catch(self) -> None:
+        """The property, not the literal: 3 must differ from argparse's 2 and error 1."""
+        self.assertNotIn(mod.RC_REFUSED, (0, 1, 2))
+
+    def test_the_failure_handler_is_still_armed(self) -> None:
+        """Whitelisting the refusal must not have disarmed real-failure reporting."""
+        self.assertEqual(self._directive("OnFailure"), ["juniper-soak-probe-failed.service"])
+        self.assertEqual(self._directive("Type"), ["oneshot"])
 
 
 if __name__ == "__main__":

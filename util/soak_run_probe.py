@@ -86,7 +86,16 @@ Usage:
 Exit codes:
     0  probe ran, scoring packet written
     1  probe ran but produced no usable answer (timeout, empty, error result)
-    2  misuse, or the harness itself failed before the probe started
+    2  misuse (argparse), or the harness itself failed before the probe started
+    3  REFUSED BY DESIGN -- the stopping rule declined to spend a session
+
+3 is separate from 2 on purpose, and the systemd unit is the reason. It carries
+`SuccessExitStatus=3`, so a by-design refusal does not fire `OnFailure=` and does
+not write a strike to `logs/soak_probe_failures.log` every 6 hours for as long as
+the verdict stands. `SuccessExitStatus=2` cannot do that job: argparse also exits
+2, so a typo in the unit's `ExecStart=` would read as success forever, on the one
+path where nobody is watching. A refusal is the control working, not a failure --
+but a misuse is still a failure, and the exit code has to be able to say both.
 """
 
 from __future__ import annotations
@@ -108,6 +117,23 @@ LEDGER_TOOL = ROOT / "util" / "soak_ledger.py"
 RUNS = ROOT / "reports" / "soak" / "runs"
 DEFAULT_TIMEOUT = 900
 TERMINAL_VERDICTS = ("BET-FAILING", "HOLDS-AT-")
+
+# The ledger's own non-answers, plus the empty token a crashed ledger tool leaves
+# behind. These are NOT terminal -- the soak has no answer -- but they are equally
+# not a state to spend a billed session against, because the corpus the run would
+# join cannot be read. `""` is in the set deliberately: `status_verdict` returns it
+# for empty stdout, which is exactly what a crash produces.
+UNUSABLE_VERDICTS = ("", "DEGRADED", "NO-DATA", "NO-SEEDED-DATA")
+
+# A by-design refusal, distinct from BOTH of this script's other non-zero codes.
+# It is not 2, and that is the whole point. `main` already returns 2 for a refusal
+# AND argparse returns 2 for a misuse, so the unit file cannot tell them apart:
+# `SuccessExitStatus=2` would make a typo in `ExecStart=` read as success forever,
+# every 6 hours, with nothing to notice it. It is not 1 either -- that is a hard
+# error (no `claude` binary, dispatch failed, probe timed out). 3 means "the guard
+# worked and declined to spend", which the unit whitelists and an operator still
+# sees as non-zero.
+RC_REFUSED = 3
 
 
 def verdict_is_terminal(verdict: str) -> bool:
@@ -156,6 +182,61 @@ def refuses_terminal_verdict(verdict: str, *, force: bool, dry_run: bool) -> boo
     if force or dry_run:
         return False
     return verdict_is_terminal(verdict)
+
+
+def verdict_is_unusable(verdict: str) -> bool:
+    """Can the ledger not tell us what state the soak is in?
+
+    Exact membership, not a prefix test: every token here is a fixed name, unlike
+    ``HOLDS-AT-<boundary>``. A prefix test would make ``NO-DATA-EVER`` -- a name
+    nothing emits today -- silently mean the same thing as ``NO-DATA``.
+
+    Deliberately NOT folded into ``verdict_is_terminal``. These verdicts are the
+    opposite of terminal: the soak has no answer at all. Merging them would make
+    the ``--dry-run`` NOTE below claim the soak had reached an answer, and would
+    break the ``VerdictIsTerminalPrefixOnly`` pins for a property they do not hold.
+    """
+    return verdict in UNUSABLE_VERDICTS
+
+
+def refuses_unusable_verdict(verdict: str, *, force: bool, dry_run: bool) -> bool:
+    """Should this invocation be refused because the ledger's state is unreadable?
+
+    THE BUG THIS CLOSES: ``main`` never read ``st.returncode``, and
+    ``verdict_is_terminal`` tests only the two terminal names -- so ``DEGRADED``,
+    ``NO-DATA``, ``NO-SEEDED-DATA`` and the empty token a crashed ledger tool
+    leaves all passed the spend control and dispatched a billed session against a
+    corpus nobody could read.
+
+    **Why not key on the exit code**, which is the obvious fix and is wrong twice
+    over (all three re-measured 2026-09-10):
+
+    ========================================  ===
+    a real crash (``--ledger <a directory>``)   1
+    argparse misuse (``--probes /nope.json``)   2
+    a readable but EMPTY ledger (``NO-DATA``)   2
+    ========================================  ===
+
+    ``if st.returncode == 2`` misses the crash, which is the stated hazard. And
+    ``if st.returncode`` refuses every soak with an open escalation, because
+    ``soak_ledger.py status`` exits 1 on ``escalations or BET-FAILING`` -- a
+    legitimate, non-terminal, runnable state. The verdict TOKEN discriminates
+    where the code cannot.
+
+    The two exemptions match ``refuses_terminal_verdict`` for the same reason:
+    this rations billed sessions, ``--force`` is a deliberate override, and a dry
+    run spends nothing.
+
+    RESIDUAL, stated rather than hidden: a token outside every list here -- a
+    verdict added to ``soak_ledger.py`` and not classified -- still fails open.
+    ``LedgerVerdictsAreAllClassified`` in
+    ``tests/test_soak_run_probe_stopping_rule.py`` reads the ledger's AST and
+    goes red the moment that happens, so the drift is caught by a test rather
+    than by a wasted session.
+    """
+    if force or dry_run:
+        return False
+    return verdict_is_unusable(verdict)
 
 
 def claude_search_paths(home: Path | None = None) -> tuple[Path, ...]:
@@ -462,7 +543,7 @@ def main() -> int:
     ap.add_argument("--background", action="store_true", help="detach; poll the run dir")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--force", action="store_true",
-                    help="run even when the soak verdict is terminal")
+                    help="run even when the soak verdict is terminal or unreadable")
     ap.add_argument("--notify-cmd", default=None,
                     help="shell-free command run on completion; the run dir is appended as argv")
     args = ap.parse_args()
@@ -487,10 +568,22 @@ def main() -> int:
         print(f"REFUSING: soak verdict is {verdict} -- terminal. Further runs cannot "
               f"change it and each one spends a session.\nPass --force to override "
               f"(e.g. to re-baseline after a deliberate intervention).", file=sys.stderr)
-        return 2
-    if args.dry_run and verdict_is_terminal(verdict):
+        return RC_REFUSED
+    # The SECOND half of the spend control, and the one that was missing: a verdict
+    # that is not an answer at all. `st.returncode` is still not consulted -- see
+    # `refuses_unusable_verdict` for why the exit code cannot carry this decision.
+    if refuses_unusable_verdict(verdict, force=args.force, dry_run=args.dry_run):
+        shown = verdict or "<empty -- the ledger tool produced no output>"
+        print(f"REFUSING: soak verdict is {shown} -- the ledger's state cannot be "
+              f"read, so a run would spend a session against a corpus nobody can "
+              f"score.\nCheck `python3 util/soak_ledger.py status` first.\nPass "
+              f"--force to override.", file=sys.stderr)
+        return RC_REFUSED
+    if args.dry_run and (verdict_is_terminal(verdict) or verdict_is_unusable(verdict)):
         # Describe, but do not hide the state a real run would refuse on.
-        print(f"NOTE: soak verdict is {verdict} -- terminal. This dry run proceeds "
+        why = "terminal" if verdict_is_terminal(verdict) else "not a readable state"
+        shown = verdict or "<empty>"
+        print(f"NOTE: soak verdict is {shown} -- {why}. This dry run proceeds "
               f"(it spends no session); a real run would refuse without --force.",
               file=sys.stderr)
 
