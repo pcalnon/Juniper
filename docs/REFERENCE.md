@@ -2716,6 +2716,184 @@ Related: [Relocation Completeness (G3)](#relocation-completeness-g3),
 
 ## Test Suite Reference
 
+### Running every suite
+
+The complete ordered list, generated from `.github/workflows/ci.yml`'s `Run Python regression tests` step on 2026-09-10 -- **164 suites**. This relocated from `AGENTS.md` (the 2026-09-10 structure repair), where the hand-maintained copy had drifted to 115 and completing it in place would have left the always-loaded file 534 chars under its 38000-char ceiling.
+
+ci.yml is the authoritative list. `tests/test_ci_test_wiring_drift.py` gates that every `tests/test_*.py` on disk is invoked there; `util/ad-hoc/2026-09-10_agents_md_test_list_drift.py` reports any suite CI runs that this list does not name.
+
+> [juniper-ml#1883](https://github.com/pcalnon/juniper-ml/pull/1883) added three soak suites to the old `AGENTS.md` copy and recorded "Set difference against ci.yml is now empty." At its own merge commit `83556f26` that copy named 118 of 164 and the difference was **46**. The three were real and are included above; the generalisation from the suites being checked to the whole set was not. Re-run the drift script rather than quoting a difference.
+
+```bash
+python3 -m unittest -v tests/test_wake_the_claude.py
+python3 -m unittest -v tests/test_claude_interactive.py
+python3 -m unittest -v tests/test_env_repr_safety.py
+python3 -m unittest -v tests/test_worktree_cleanup.py
+python3 -m unittest -v tests/test_worktree_activate.py
+python3 -m unittest -v tests/test_worktree_sweep_scripts.py
+python3 -m unittest -v tests/test_p5_worktree_cleanup.py
+python3 -m unittest -v tests/test_yubikey_test_pinentry.py
+python3 -m unittest -v tests/test_cleanup_session_worktrees.py
+python3 -m unittest -v tests/test_cleanup_open_remove_stale_worktrees.py
+python3 -m unittest -v tests/test_worktree_wipeout_close.py
+python3 -m unittest -v tests/test_global_text_search.py
+python3 -m unittest -v tests/test_prune_git_branches_without_working_dirs.py
+python3 -m unittest -v tests/test_reap_pytest_orphans.py
+python3 -m unittest -v tests/test_kill_helpers.py
+python3 -m unittest -v tests/test_duplicati_scheduled_backup.py
+python3 -m unittest -v tests/test_editable_install_drift_check.py
+python3 -m unittest -v tests/test_env_floor_drift_check.py
+python3 -m unittest -v tests/test_env_drift_check.py
+python3 -m unittest -v tests/test_env_drift_check_drift.py
+python3 -m unittest -v tests/test_release_train_registry.py
+python3 -m unittest -v tests/test_release_train_detect.py
+python3 -m unittest -v tests/test_release_train_propose.py
+python3 -m unittest -v tests/test_release_train_workflow_guard.py
+python3 -m unittest -v tests/test_release_train_archive_guard.py
+python3 -m unittest -v tests/test_release_train_ceremony.py
+python3 -m unittest -v tests/test_prompt_discovery.py
+python3 -m unittest -v tests/test_symbol_overlay.py
+python3 -m unittest -v tests/test_generated_prompt_index.py
+python3 -m unittest -v tests/test_thread_handoff_archive.py
+python3 -m unittest -v tests/test_install_agents.py
+python3 -m unittest -v tests/test_agent_suite_doctor.py
+python3 -m unittest -v tests/test_agent_suite_summary.py
+python3 -m unittest -v tests/test_predict_merge.py
+python3 -m unittest -v tests/test_fleet_supervisor_contract.py
+python3 -m unittest -v tests/test_pr_budget_alarm.py
+python3 -m unittest -v tests/test_requirements_drift_check.py
+python3 -m unittest -v tests/test_requirements_consolidate.py
+python3 -m unittest -v tests/test_validate_claude_yaml_access.py
+python3 -m unittest -v tests/test_workflow_script_paths.py
+python3 -m unittest -v tests/test_ci_precommit_g4.py
+python3 -m unittest -v tests/test_main_verify_workflow_guard.py
+python3 -m unittest -v tests/test_publish_testpypi_verify.py
+python3 -m unittest -v tests/test_main_verify_battery_paths.py
+python3 -m unittest -v tests/test_ci_quality_gate.py
+python3 -m unittest -v tests/test_publish_subpackage_workflows.py
+python3 -m unittest -v tests/test_subpackage_py_typed.py
+python3 -m unittest -v tests/test_ci_sequence_safety_hatch.py
+python3 -m unittest -v tests/test_main_verify_catchup_base.py
+python3 -m unittest -v tests/test_main_verify_notify_dedup.py
+python3 -m unittest -v tests/test_ci_fleet_pr_lint.py
+python3 -m unittest -v tests/test_doc_tools_drift.py
+python3 -m unittest -v tests/test_docs_full_check_ecosystem.py
+python3 -m unittest -v tests/test_archive_guard_workflow.py
+python3 -m unittest -v tests/test_ci_tools_drift.py
+python3 -m unittest -v tests/test_service_fork_drift.py
+python3 -m unittest -v tests/test_publish_env_policy_drift.py
+python3 -m unittest -v tests/test_assert_release_tag.py
+python3 -m unittest -v tests/test_publish_release_only_trigger.py
+python3 -m unittest -v tests/test_memory_budget_check.py
+python3 -m unittest -v tests/test_memory_index_check.py
+python3 -m unittest -v tests/test_relocation_check.py
+python3 -m unittest -v tests/test_p3_relocate_section.py
+python3 -m unittest -v tests/test_hazard_triage.py
+python3 -m unittest -v tests/test_soak_ledger.py
+python3 -m unittest -v tests/test_soak_next_probe.py
+python3 -m unittest -v tests/test_soak_run_probe.py
+python3 -m unittest -v tests/test_duplicati_recovery_guards.py
+python3 -m unittest -v tests/test_lockfile_update_workflow.py
+python3 -m unittest -v tests/test_security_scan_workflow.py
+python3 -m unittest -v tests/test_coverage_gap_mapper_drift.py
+python3 -m unittest -v tests/test_subpackage_ci_workflows.py
+python3 -m unittest -v tests/test_model_core_drift.py
+python3 -m unittest -v tests/test_service_core_drift.py
+python3 -m unittest -v tests/test_pyproject_extras.py
+python3 -m unittest -v tests/test_template_library_drift.py
+python3 -m unittest -v tests/test_template_selection.py
+python3 -m unittest -v tests/test_template_select_preview.py
+python3 -m unittest -v tests/test_template_data_resolver.py
+python3 -m unittest -v tests/test_scaffold_template.py
+python3 -m unittest -v tests/test_open_signed_pr.py
+python3 -m unittest -v tests/test_wait_for_checks.py
+python3 -m unittest -v tests/test_safe_merge.py
+python3 -m unittest -v tests/test_ci_test_wiring_drift.py
+python3 -m unittest -v tests/test_ruleset_scope_guard.py
+python3 -m unittest -v tests/test_prompt_validator_contract.py
+python3 -m unittest -v tests/test_template_agent_skill_lint.py
+python3 -m unittest -v tests/test_service_smoke_skill_lint.py
+python3 -m unittest -v tests/test_ui_test_author_skill_lint.py
+python3 -m unittest -v tests/test_agents_frontmatter.py
+python3 -m unittest -v tests/test_agent_suite_path_drift.py
+python3 -m unittest -v tests/test_agents_md_version_drift.py
+python3 -m unittest -v tests/test_agents_md_header_schema.py
+python3 -m unittest -v tests/test_agents_md_touch_up.py
+python3 -m unittest -v tests/test_agents_md_tree_drift.py
+python3 -m unittest -v tests/test_juniper_plant_all.py
+python3 -m unittest -v tests/test_juniper_chop_all.py
+python3 -m unittest -v tests/test_isolated_stack_script.py
+python3 -m unittest -v tests/test_experiment_stack_script.py
+python3 -m unittest -v tests/test_run_experiment.py
+python3 -m unittest -v tests/test_read_run_metrics.py
+python3 -m unittest -v tests/test_compare_baseline.py
+python3 -m unittest -v tests/test_make_baseline.py
+python3 -m unittest -v tests/test_experiment_config_schemas.py
+python3 -m unittest -v tests/test_run_suite.py
+python3 -m unittest -v tests/test_list_runs.py
+python3 -m unittest -v tests/test_snapshot_index.py
+python3 -m unittest -v tests/test_snapshot_classify.py
+python3 -m unittest -v tests/test_snapshot_attribute.py
+python3 -m unittest -v tests/test_snapshot_backfill.py
+python3 -m unittest -v tests/test_experiment_suite_yamls.py
+python3 -m unittest -v tests/test_check_conda_env_torch.py
+python3 -m unittest -v tests/test_p5_port_memory_budget.py
+python3 -m unittest -v tests/test_p5_fleet_state.py
+python3 -m unittest -v tests/test_resident_gap_triage.py
+python3 -m unittest -v tests/test_resident_gap_scan.py
+python3 -m unittest -v tests/test_require_context_safely.py
+python3 -m unittest -v tests/test_duplicati_restore_integrity.py
+python3 -m unittest -v tests/test_duplicati_db_holder_guard.py
+python3 -m unittest -v tests/test_matrix_set_verdicts.py
+python3 -m unittest -v tests/test_e2e_matrix_fill.py
+python3 -m unittest -v tests/test_e2e_matrix_rescore.py
+python3 -m unittest -v tests/test_e2e_unfilled_rows.py
+python3 -m unittest -v tests/test_e2e_f037_render_census.py
+python3 -m unittest -v tests/test_e2e_row_coverage.py
+python3 -m unittest -v tests/test_soak_probe_evidence.py
+python3 -m unittest -v tests/test_soak_wilson_resolving.py
+python3 -m unittest -v tests/test_soak_run_probe_stopping_rule.py
+python3 -m unittest -v tests/test_soak_ledger_status_token.py
+python3 -m unittest -v tests/test_soak_analyse_date_pool.py
+python3 -m unittest -v tests/test_run_suite_gate_metrics.py
+python3 -m unittest -v tests/test_list_runs_classify_guards.py
+python3 -m unittest -v tests/test_register_close_protocol.py
+python3 -m unittest -v tests/test_stats_summary_render.py
+python3 -m unittest -v tests/test_stats_summary_git_and_confirmed.py
+python3 -m unittest -v tests/test_canopy_poller_inventory.py
+python3 -m unittest -v tests/test_cascor_freeze_tell.py
+python3 -m unittest -v tests/test_ruleset_context_audit.py
+python3 -m unittest -v tests/test_snapshot_index_root_resolution.py
+python3 -m unittest -v tests/test_equities_symbol_cap_operator.py
+python3 -m unittest -v tests/test_e2e_append_statuses.py
+python3 -m unittest -v tests/test_recurrence_kind_edges.py
+python3 -m unittest -v tests/test_e2e_topology_row_predicates.py
+python3 -m unittest -v tests/test_e2e_topology_score_contracts.py
+python3 -m unittest -v tests/test_e2e_topology_step_order.py
+python3 -m unittest -v tests/test_compare_baseline_defects.py
+python3 -m unittest -v tests/test_work_countable_contract.py
+python3 -m unittest -v tests/test_termination_branch_precondition.py
+python3 -m unittest -v tests/test_run_suite_uncountable_report.py
+python3 -m unittest -v tests/test_worktree_inuse_probe.py
+python3 -m unittest -v tests/test_e2e_finding_triage.py
+python3 -m unittest -v tests/test_e2e_finding_triage_nested_bold.py
+python3 -m unittest -v tests/test_e2e_finding_triage_priority.py
+python3 -m unittest -v tests/test_register_open_set.py
+python3 -m unittest -v tests/test_register_status_crosscheck.py
+python3 -m unittest -v tests/test_soak_next_probe_split.py
+python3 -m unittest -v tests/test_soak_run_probe_terminal.py
+python3 -m unittest -v tests/test_soak_run_probe_launch_guards.py
+python3 -m unittest -v tests/test_soak_handoff_consensus_checks.py
+python3 -m unittest -v tests/test_x7_offload_census.py
+python3 -m unittest -v tests/test_markdown_structure_delta.py
+python3 -m unittest -v tests/test_markdown_structure_screen.py
+python3 -m unittest -v tests/test_pf8_occupancy_probe.py
+python3 -m unittest -v tests/test_pf8_burst_attribution.py
+bash scripts/test_resume_file_safety.bash
+# doc-link validator regression tests live in juniper-doc-tools/tests/
+# and run under the dedicated `CI -- juniper-doc-tools` workflow.
+```
+
 Relocated verbatim from `AGENTS.md` (P3 of the shared-session-memory plan) so it is read on demand rather than loaded into every session.
 
 Two unittest entry points exist for every `tests/test_*.py` file, and they can disagree.
@@ -2927,7 +3105,7 @@ Review catch on [juniper-ml#1612](https://github.com/pcalnon/juniper-ml/pull/161
 - `tests/test_e2e_finding_triage.py` -- The E2E finding-triage dispositions, which shipped with zero tests: `accepted` is a THIRD state and not a synonym for fixed or open, the first heading wins so a later `fixed` cannot close an earlier `open`, and `--open-only` hides rows without changing the totals.
 - `tests/test_e2e_finding_triage_nested_bold.py` -- Header truncation in `util/ad-hoc/e2e_finding_triage.py`: a nested-bold heading must not be cut at the inner marker, which would split one finding's identity into two and double-count it.
 - `tests/test_e2e_finding_triage_priority.py` -- `pri_of` first-token severity, lifted out of a nested function so it can be imported: the FIRST severity token anywhere in the bolded header body wins, so a header naming another severity in prose before the parenthetical triages as that severity (F-CANOPY-037 / F-E2E-007).
-- `tests/test_markdown_structure_delta.py` -- Hermetic gate for `util/markdown_structure_delta.py`, the CI step that fails a PR which BREAKS markdown structure. Pins the three ways such a gate goes wrong: **red on arrival** (`main` carries 102 structural problems across 21 files -- 11 under `notes/`, 6 under `notes/legacy/`, 3 under `prompts/`, 1 under `notes/code-review/`, none under `docs/` -- so the comparison is per-file and per-PR -- an untouched file is not the PR's problem, a touched one must not come out worse, an ADDED one has no before and so starts at zero); **vacuous pass** (the underlying screen silently skips anything not ending `.md`, so examining zero of N touched files is an error rather than a success, and the temp materialisation keeps the original basename); and an unresolvable base ref exiting 2 rather than comparing nothing.
+- `tests/test_markdown_structure_delta.py` -- Hermetic gate for `util/markdown_structure_delta.py`, the CI step that fails a PR which BREAKS markdown structure. Pins the three ways such a gate goes wrong: **red on arrival** (`main` carries pre-existing structural problems -- **17 across 2 files** after the 2026-09-10 structure repair -- both under live `notes/`, and both known SCREEN FALSE POSITIVES rather than debt: a ` ```text ` banner whose art lines begin `## `, and a ` ````jinja2 ` template sample whose H2s are the sample. `docs/`, `notes/code-review/`, `notes/legacy/` and `prompts/` are all at **zero**, which is a real result rather than an empty enumeration -- the 2026-09-10 structure repair repaired `notes/legacy/` and `prompts/` rather than delta-scoping around them. The count is a moving floor rather than a backlog, having gone 104/23 -> 102/21 -> 63/14 -> 73/15 -> 63/14 -> 17/2 in seven days, so re-measure rather than quote -- so the comparison is per-file and per-PR -- an untouched file is not the PR's problem, a touched one must not come out worse, an ADDED one has no before and so starts at zero); **vacuous pass** (the underlying screen silently skips anything not ending `.md`, so examining zero of N touched files is an error rather than a success, and the temp materialisation keeps the original basename); and an unresolvable base ref exiting 2 rather than comparing nothing.
 - `tests/test_require_context_safely.py` -- Hermetic gate for `util/ad-hoc/2026-08-20_require_context_safely.py` (`util/` is outside every pre-commit Python hook). `gh_json` is monkeypatched; nothing talks to GitHub.
   - Pins `find_ruleset` reporting a failed per-ruleset GET as an error (never an absence — ml#1429), genuine absence / ambiguity as the negative controls, and `TARGETS` lockstep with the census `ROSTER` in `util/ad-hoc/2026-08-26_p5_fleet_state.py` (a missing repo is a silent incomplete `--status`).
   - As of [juniper-ml#1612](https://github.com/pcalnon/juniper-ml/pull/1612) also pins `observed_context_apps` (amend pre-flight): publisher from PR heads, `main` fallback, exact-name negative control, and `57789` (Bandit) must not count as a publisher of `Memory Budget`. Operator surface: [Required-Context Ruleset Writer](#required-context-ruleset-writer).

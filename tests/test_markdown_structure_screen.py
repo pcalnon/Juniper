@@ -17,11 +17,17 @@ Its ``main()`` was not, and that is where it under-reported: the file-selection 
         continue
 
 ``Path.is_file()`` FOLLOWS SYMLINKS, so a **dangling** symlink answers ``False`` and was
-skipped -- silently, without being counted. ``main`` carries ten such links (nine under
+skipped -- silently, without being counted. ``main`` carried ten such links (nine under
 ``notes/legacy/`` pointing at a ``regressions/`` directory that is not on ``main``, one under
 ``notes/development/``), so a whole-tree run examined 1024 of 1034 paths while printing a
 total that read as though it had covered all of them. The ten scored clean by never being
 looked at.
+
+The 2026-09-10 structure repair RETARGETED all ten -- ``432ed644`` had renamed both ends and a symlink body is opaque
+text, so nothing rewrote it -- and the fixtures below are synthetic, so they keep pinning the
+behaviour now that no live dangling link remains to demonstrate it. That same change added the
+SYMLINK-ALIAS rule: once the links resolved, eleven tracked paths pointed at a file another
+path already covered and the whole-tree count rose by 2 with no markdown edited.
 
 That is the same **vacuous pass** shape the delta gate already guards -- a correct predicate
 run over an incomplete site enumeration -- turned on the screen itself. Three behaviours are
@@ -175,6 +181,153 @@ class DeltaGateStillLoadsTheScreenTest(unittest.TestCase):
             p = Path(td, "x.md")
             p.write_text(BROKEN_TABLE)
             self.assertEqual(len(loaded.check(p)), 1)
+
+
+class SeparatorAcceptsValidGfmDelimitersTest(unittest.TestCase):
+    """GFM needs ONE hyphen per delimiter cell; the pattern demanded two until 2026-09-10.
+
+    This was a REQUIRED-GATE defect, not a counting error. `util/markdown_structure_delta.py`
+    grades a file the PR ADDS against a baseline of zero, and its step runs in ci.yml's
+    `docs` job -- whose NAME, `Documentation Links`, is the required status context. So a PR
+    adding any markdown file with a `| - |` or `|:-:|` delimiter row failed a required check
+    for a defect that did not exist.
+    """
+
+    def _findings(self, body):
+        with TemporaryDirectory() as td:
+            p = Path(td, "t.md")
+            p.write_text(body)
+            return screen.check(p)
+
+    def test_single_hyphen_delimiter_is_a_table(self):
+        self.assertEqual(self._findings("# T\n\n| A | B |\n| - | - |\n| 1 | 2 |\n"), [])
+
+    def test_single_hyphen_with_alignment_colons_is_a_table(self):
+        self.assertEqual(self._findings("# T\n\n| C | D |\n|:-:|:-:|\n| 3 | 4 |\n"), [])
+
+    def test_multi_hyphen_delimiter_still_accepted(self):
+        self.assertEqual(self._findings("# T\n\n| E | F |\n| --- | --- |\n| 5 | 6 |\n"), [])
+
+    def test_a_genuinely_missing_separator_is_STILL_reported(self):
+        # The negative control. Relaxing the pattern must not blind the check it exists for.
+        found = self._findings(BROKEN_TABLE)
+        self.assertEqual(len(found), 1)
+        self.assertIn("has no separator row", found[0])
+
+
+class FenceWalkerFollowsCommonMarkTest(unittest.TestCase):
+    """The boolean toggle disagreed with every real renderer; these pin the three rules.
+
+    Cost of the toggle, on the record: two agents reported "three unclosed fences on main"
+    in the 2026-09-09 review and the reviewer confirmed it by re-running this screen -- the
+    instrument under suspicion, used as its own witness. The true count is two.
+    """
+
+    def _findings(self, body):
+        with TemporaryDirectory() as td:
+            p = Path(td, "t.md")
+            p.write_text(body)
+            return screen.check(p)
+
+    def test_an_info_string_fence_cannot_close_a_block(self):
+        # ```bash is an opener or content -- never a closer. Under the toggle it ENDED the
+        # enclosing block, so the heading after it read as swallowed by a bare fence. This
+        # is the ml#1746-era shape that the toggle reports and CommonMark does not.
+        body = "# T\n\n````markdown\n```bash\necho hi\n```\n## Sample heading\n````\n"
+        self.assertEqual(self._findings(body), [])
+
+    def test_a_short_fence_cannot_close_a_longer_one(self):
+        # Under the toggle the inner ``` closed the ```` block and the final ```` re-opened
+        # one, reporting a phantom UNCLOSED fence at EOF.
+        body = "# T\n\n````markdown\n## A\n```\n## B\n````\n"
+        self.assertEqual(self._findings(body), [])
+
+    def test_tilde_and_backtick_fences_do_not_close_each_other(self):
+        body = "# T\n\n~~~\n```\n~~~\n\nprose\n"
+        self.assertEqual(self._findings(body), [])
+
+    def test_a_really_unclosed_fence_is_still_reported(self):
+        # The negative control for the whole rewrite.
+        found = self._findings("# T\n\n```bash\necho hi\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("UNCLOSED code fence opened at line 3", found[0])
+
+    def test_an_H2_swallowed_by_a_lost_fence_is_still_reported(self):
+        # ml#1746's actual damage: a dropped closer absorbing every heading after it.
+        found = self._findings("# T\n\n```bash\necho hi\n\n## Swallowed\n")
+        self.assertTrue(any("H2 swallowed" in f for f in found), found)
+
+    def test_a_markdown_sample_may_hold_H2s_at_any_fence_length(self):
+        self.assertEqual(self._findings("# T\n\n````md\n## Sample heading\n````\n"), [])
+
+    def test_a_TILDE_markdown_sample_is_exempt(self):
+        # `_is_markdown_example` stripped only backticks, so ~~~markdown read as the info
+        # string "~~~markdown" and was never exempt. The old toggle never reached this at
+        # all -- it ignored ~~~ entirely -- so the pairing below is what gives it meaning.
+        self.assertEqual(self._findings("# T\n\n~~~markdown\n## Sample heading\n~~~\n"), [])
+
+    def test_a_TILDE_non_markdown_fence_still_swallows(self):
+        # The paired positive control. Without it, the exemption above is indistinguishable
+        # from the screen simply not modelling tilde fences -- which is exactly what the
+        # code it replaced did, and why that assertion alone proves nothing.
+        found = self._findings("# T\n\n~~~bash\n## Swallowed\n~~~\n")
+        self.assertTrue(any("H2 swallowed" in f for f in found), found)
+
+
+class SymlinkAliasIsCountedNotSilentlySkippedTest(unittest.TestCase):
+    """A link and its target are two tracked paths and ONE file.
+
+    Repointing the ten broken notes links (2026-09-10) made
+    `notes/development/...V7-IMPLEMENTATION-ROADMAP.md` resolve onto
+    `notes/JUNIPER_2026-05-25_...`, which already carried two findings -- so the whole-tree
+    total rose 63 -> 65 without a character of markdown changing.
+
+    The dedup must stay LOUD. A silent skip is precisely the failure this screen was built
+    to catch, and adding one here to tidy a number would reintroduce it one level up.
+    """
+
+    def test_a_link_and_its_target_are_counted_once_and_the_alias_is_named(self):
+        with TemporaryDirectory() as td:
+            real = Path(td, "real.md")
+            real.write_text(BROKEN_TABLE)
+            link = Path(td, "link.md")
+            link.symlink_to(real)
+            code, out, _err = run([str(real), str(link)])
+        self.assertEqual(code, 1)
+        self.assertIn("structural problems: 1", out)  # not 2
+        self.assertIn("1 symlink alias(es)", out)  # and it is SAID
+        self.assertIn("alias:", out)
+
+    def test_the_alias_is_reported_even_when_the_file_is_clean(self):
+        with TemporaryDirectory() as td:
+            real = Path(td, "real.md")
+            real.write_text(CLEAN)
+            link = Path(td, "link.md")
+            link.symlink_to(real)
+            code, out, _err = run([str(real), str(link)])
+        self.assertEqual(code, 0)
+        self.assertIn("1 symlink alias(es)", out)
+
+    def test_a_lone_resolving_link_is_still_examined(self):
+        # Dedup must not turn a link passed WITHOUT its target into a skip.
+        with TemporaryDirectory() as td:
+            real = Path(td, "real.md")
+            real.write_text(BROKEN_TABLE)
+            link = Path(td, "link.md")
+            link.symlink_to(real)
+            code, out, _err = run([str(link)])
+        self.assertEqual(code, 1)
+        self.assertIn("examined 1 of 1", out)
+        self.assertNotIn("alias", out)
+
+    def test_a_dangling_link_still_refuses_rather_than_aliasing(self):
+        # The resolve() that finds aliases must not swallow the unreadable-path guard.
+        with TemporaryDirectory() as td:
+            link = Path(td, "dangling.md")
+            link.symlink_to(Path(td, "regressions", "gone.md"))
+            code, _out, err = run([str(link)])
+        self.assertEqual(code, 2)
+        self.assertIn("refusing to report on a partial examination", err)
 
 
 if __name__ == "__main__":

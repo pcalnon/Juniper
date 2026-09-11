@@ -813,7 +813,7 @@ Jinja2 is the recommended template engine because:
 
 **Example template (`templates/task.md.j2`):**
 
-```jinja2
+````jinja2
 {% extends "base.md.j2" %}
 
 {% block title %}# {{ title }}{% endblock %}
@@ -862,7 +862,7 @@ Jinja2 is the recommended template engine because:
 {% endif %}
 {% endblock %}
 
-```
+````
 
 **Example snippet (`snippets/roles/senior_engineer.md`):**
 ```markdown

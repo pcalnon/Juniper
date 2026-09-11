@@ -19,6 +19,7 @@ Use the project-specific cheatsheets instead:
 
 ## Quick-Reference Procedures for Common Developer Tasks
 
+| Field             | Value                                                          |
 |-------------------|----------------------------------------------------------------|
 | **Version:**      | 1.3.0                                                          |
 | **Status:**       | Active                                                         |
