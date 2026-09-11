@@ -36,7 +36,6 @@ from __future__ import annotations
 import argparse
 import pathlib
 import subprocess
-import sys
 
 WORKTREES = pathlib.Path("/home/pcalnon/Development/python/Juniper/worktrees")
 HELPER = pathlib.Path("/home/pcalnon/Development/python/Juniper/juniper-ml/util/open_signed_pr.py")
