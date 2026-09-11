@@ -638,7 +638,19 @@ Ruled by the owner **2026-09-09** unless noted. This subsection is the canonical
    rather than live only because `juniper-cascor-worker` declares the dependency
    (`pyproject.toml:68`) while importing nothing from it. The drift gate's own comment — *"to be
    backported to src in Wave 2"* — is **stale in direction**: `src` has been ahead since August.
-5. **Open — investigation first, then select.** The owner declined the M-vs-L framing and directed
+5. **RULED 2026-09-10 — A2-bind, with a `_default` setter.** The nine public attributes (8 emit
+   methods `logger.py:548-610` **plus `isEnabledFor`** `:1026`) become class attributes bound to a
+   default `BoundLogger`; `Logger._default = X` is a **data descriptor on the metaclass** that
+   rebinds all nine, so a replacement can never leave the class stale. Measured **faster than the
+   status quo on every call site** — 1,079 bound sites 55–77 ns and 109 class sites 74–89 ns against
+   today's 95–110 — with **one** implementation. The A2 *delegator* form was measured and rejected at
+   **+146 ns** (+168 with one `%`-arg): it pays a second frame and repacks `*args`. Prototype
+   verified (six checks, exit 0): `juniper-ml/util/ad-hoc/2026-09-10_p41_a2bind_prototype.py`;
+   measurement `…/2026-09-10_p41_a2_delegation_bench.py`. Implementation design:
+   [`JUNIPER_2026-09-09_JUNIPER-CASCOR_LOGGING-PER-LOGGER-LEVELS-DESIGN.md`](JUNIPER_2026-09-09_JUNIPER-CASCOR_LOGGING-PER-LOGGER-LEVELS-DESIGN.md)
+   §10–§11. **Nothing lands until P1.1** — per-logger state over an already-disjoint guard/emit pair
+   multiplies the states, and the design's acceptance check is guard/emit agreement *per logger*.
+   *(Superseded framing, kept for the record:)* The owner declined the M-vs-L framing and directed
    that the analysis and recommendation be written into a design document before an approach is
    chosen, with an added question about serving logging as **both** class and instance calls.
    Delivered as [`JUNIPER_2026-09-09_JUNIPER-CASCOR_LOGGING-PER-LOGGER-LEVELS-DESIGN.md`](JUNIPER_2026-09-09_JUNIPER-CASCOR_LOGGING-PER-LOGGER-LEVELS-DESIGN.md).

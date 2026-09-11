@@ -5,8 +5,8 @@
 - **Author**: Paul Calnon
 - **License**: MIT License
 - **Version**: 0.7.1
-- **Last Updated**: 2026-09-09
-- **Status**: DESIGN — analysis and recommendation for P4.1; the implementation design is fleshed out once an approach is selected (§9)
+- **Last Updated**: 2026-09-10
+- **Status**: DESIGN — decision 5 RULED 2026-09-10 as **A2-bind with a `_default` setter** (§9.1); §11 is the implementation design. Landing is gated on P1.1 (§11.7)
 - **Answers**: [`JUNIPER_2026-09-02_JUNIPER-CASCOR_LOGGING-REDESIGN-ROADMAP.md`](JUNIPER_2026-09-02_JUNIPER-CASCOR_LOGGING-REDESIGN-ROADMAP.md) §13 decision 5, and the owner's follow-on question about serving logging as **both** class and instance calls
 - **Measured at**: juniper-cascor `origin/main` `53c0338`, Python 3.13.13 (`JuniperCascor1`)
 
@@ -188,6 +188,11 @@ CodeQL thread holds `mergeStateStatus: BLOCKED` while all 17 required contexts r
 
 ## 5. Recommendation — two objects, not one overloaded name
 
+> **Superseded in part by §10.** The *principle* below — two bindings, never one name dispatching on
+> its receiver — is what was adopted. Its concrete proposal (keep the classmethods as a **second**
+> implementation) was replaced by the measured **A2-bind** form, which keeps one implementation and
+> is faster on the class path too. Read §5 for the argument, §10–§11 for what ships.
+
 **Do not overload a single name to dispatch on its receiver.** The measured cost is 3–6× on the path
 this whole arc has been making cheaper, and it buys nothing that two bindings do not already give.
 
@@ -266,7 +271,7 @@ Taken by the owner on 2026-09-09 against ROADMAP §13; §13.1 of that document i
 | 2 | P3.2 console-sink default | **On by default, off in the harness profile** — a policy switch, not runtime detection |
 | 3 | P5.1 `configure_logging` fork | **Narrow the fork to the delta**; the rotator stays |
 | 4 | P0.6 mirror policy | **Converge** — re-extract `logger.py`, retire `_INTENTIONAL_DIVERGENCE` |
-| 5 | P4.1 per-logger shape | **open** — this document is the input; see §9 |
+| 5 | P4.1 per-logger shape | **RULED 2026-09-10: A2-bind, with a `_default` setter** (§9.1, §11) |
 | 6 | Call-site migration scope | **P6.1 + P6.2 + P6.3 authorised; P6.4 open** pending the sample review |
 | 7 | §7.1 swallowed-pytest investigation | **Authorised**, as written in DESIGN §7.1 |
 
@@ -276,30 +281,186 @@ pre-#598, published on PyPI at 0.1.0 — is being brought back into line rather 
 
 ---
 
-## 9. Decision required, and what follows it
+## 9. The decision, and how it was taken
 
-**The question for the owner:** adopt §5's shape — `Logger` keeps its classmethods, a factory returns
-per-logger instances with plain instance methods, 967 call sites unchanged, 14 binds edited?
+**The question put to the owner:** which shape delivers per-logger levels? Four were tabled:
 
-The alternatives remain on the table and are cheap to state:
-
-- **(a) §5's shape — two bindings.** Recommended. M-sized. Faster on the hot path.
+- **(a) A — two bindings, two implementations.** `Logger` keeps its classmethods; a factory returns
+  per-logger instances with plain instance methods. M-sized, faster on the hot path, hazard-free —
+  but eight (in fact nine, §11.1) methods exist twice and must stay in step.
 - **(b) Named sub-loggers on the class only.** A name-keyed level map consulted by the existing
-  classmethods; no instances, no bind changes at all. Smallest change, but every call site must then
-  *pass* its name, which is a 1,188-site edit — the opposite of the trade in (a).
+  classmethods; no instances, no bind changes. Two realisations, both worse: passing the name
+  explicitly is a **1,188-site edit**, and deriving it from the caller's frame forces frame
+  resolution *before* the filter, which is precisely what **P2.1 exists to undo** — the two are
+  mutually exclusive.
 - **(c) One overloaded name, dispatching on receiver.** Rejected on two independent grounds:
   measurement (+153 to +438 ns per call, 3–6× the status quo, on the 646 k-call path) and
   verifiability (§4.2 — static analysis cannot resolve it, and reports a false positive on every
   correct class-path call).
+- **(d) A2 — two entry points, ONE implementation.** The classmethods become the default instance's
+  methods, so there is a single logging path reachable both ways. §10 shows its two mechanisms are
+  3× apart, and that the **`-bind`** form is faster than the status quo on *every* call site.
 
-**Once selected, this document is extended** with the implementation design: the concrete class
-shape, the precedence chain wired to P4.2, the `__getstate__`/`__setstate__` contract from concern 5,
-the bootstrap ordering rule from concern 3, the forkserver demonstration from concern 4, and the
-per-step mirror obligations under the ruled decision 4.
+**A correction against the first draft of this document.** §5 recommended (a), on an *estimate* that
+A2's class-path indirection would cost ~+45 ns. Measured, the delegator form costs **+146 ns** —
+the estimate was wrong by 3×. That measurement also surfaced the `-bind` form, which was not in the
+original option set and which dominates (a): same hot path, **faster** class path, one
+implementation. §5 stands as the argument for two *bindings*; §10 supersedes its choice of mechanism.
+
+### 9.1 RULED 2026-09-10 — A2-bind, with a `_default` setter
+
+The owner selected **A2**, in its `-bind` form, and directed that `_default` be a **setter that
+reassigns the bound attributes** rather than relying on mutate-in-place discipline. §11 is the
+implementation design; §10 records the measurement that chose between A2's two forms.
 
 ---
 
-## 10. References
+## 10. Why A2-**bind**, and not the A2 delegator
+
+A2 has two possible mechanisms, and they are 3× apart. Measured against juniper-cascor's **real**
+signature — `debug(cls, message=None, *args)` (`logger.py:548-610`) — because the delegator must
+*forward* `*args`, and §4 already showed variadic packing dominating dispatch. Discarded path,
+best-of-7 × 5 outer runs (`juniper-ml/util/ad-hoc/2026-09-10_p41_a2_delegation_bench.py`):
+
+| row | ns/call | vs status quo |
+|-----|--------:|--------------:|
+| **SQ-class** — status quo; what all 1,188 sites cost today | 95–110 | — |
+| **A/A2-inst** — plain instance method | **55–77** | **−40** |
+| **A2-bind** — the default's *bound method* as the class attribute | **74–89** | **−21** |
+| A2-delegator, eager default | 241–266 | **+146** |
+| A2-delegator, lazy default | 249–276 | +154 |
+
+With one `%`-argument the delegator degrades further (+168): it pays a second frame **and** repacks
+`*args`. **A2-bind pays neither** — the class attribute *is* an already-bound method, so a class
+call is an attribute lookup plus the same instance call the hot path makes.
+
+**A2-bind is therefore faster than the status quo on every call site**, which A2-delegator is not
+and option A is not:
+
+| | 1,079 bound sites | 109 class sites | implementations |
+|---|---:|---:|---:|
+| **A** | 55–77 (−40) | 95–110 (+0) | 2 |
+| **A2-bind** *(ruled)* | 55–77 (−40) | **74–89 (−21)** | **1** |
+| A2-delegator | 55–77 (−40) | 241–266 (+146) | 1 |
+
+> **The 112 bare-local sites move with the binds.** `logger = Logger` inside
+> `train_candidate_worker` (`cascade_correlation.py:3495`) and `_train_candidate_unit` (`:3740`) is
+> **worker-path** code. Converting those 9 local binds moves 112 sites onto the fast path, so the
+> fast population is **1,079**, not 967.
+
+**Two costs of A2-bind are inert in this codebase**, verified rather than assumed: **nothing
+subclasses `Logger`** (so no subclass inherits a binding to the parent's default), and **nothing
+introspects the emit methods** (no `__func__`, `ismethod`, or `signature()` use against them).
+
+---
+
+## 11. Implementation design — A2-bind
+
+### 11.1 It is NINE attributes, not eight
+
+The 8 emit methods (`trace`, `verbose`, `debug`, `info`, `warning`, `error`, `critical`, `fatal`,
+`logger.py:548-610`) **plus `isEnabledFor`** (`:1026`). Leaving `isEnabledFor` behind would make the
+8 guard sites in `candidate_unit.py` read the class default while the emit path read the instance —
+**that is exactly N-3's shape**, reintroduced one layer up. The nine move together or not at all.
+
+### 11.2 The shape
+
+Prototyped and verified in `juniper-ml/util/ad-hoc/2026-09-10_p41_a2bind_prototype.py` (exit 0):
+
+```python
+BOUND_NAMES = ("trace", "verbose", "debug", "info", "warning",
+               "error", "critical", "fatal", "isEnabledFor")   # NINE
+
+class _LoggerMeta(type):
+    # On the METACLASS: `Logger._default = X` assigns on the CLASS, and a plain
+    # property on the class only intercepts assignment on its INSTANCES.
+    def _set_default(cls, bound):
+        if not isinstance(bound, BoundLogger):
+            raise TypeError(...)
+        # CALLABLE, not merely present -- a subclass shadowing one of the nine with a
+        # non-callable passes hasattr and would bind None onto the class, turning every
+        # guard site into a TypeError at first call.
+        missing = [n for n in BOUND_NAMES if not callable(getattr(bound, n, None))]
+        if missing:
+            raise TypeError(f"... refusing to leave the class half-bound")
+        type.__setattr__(cls, "_default_instance", bound)
+        for name in BOUND_NAMES:
+            type.__setattr__(cls, name, getattr(bound, name))
+    _default = property(_get_default, _set_default)
+```
+
+The descriptor sits on the **assignment** path, which is rare. The **call** path never touches it:
+`Logger.__dict__["debug"]` is a `method` object, so a class call is a plain attribute lookup.
+
+### 11.3 What the prototype established
+
+| # | property | result |
+|---|----------|--------|
+| 1 | the call path keeps its speed | class **84–89 ns**, bound **60–67 ns**, both under the status quo's 95–110 |
+| 2 | **the setter closes the stale-binding hazard** | assigning `_default` rebinds **9/9**; the pre-setter version left them stale and silently ignored the swap |
+| 3 | per-logger levels are independent | `candidate_unit` at TRACE emits while `spiral_problem` at FATAL and the root at INFO do not |
+| 4 | **guard and emit agree, per logger** | 9/9 level×logger combinations — the anti-N-3 check |
+| 5 | the guard invariant holds | `all(getattr(Logger, n).__self__ is Logger._default for n in BOUND_NAMES)` |
+| 6 | a bad assignment is **refused and atomic** | wrong type *and* missing-callable both rejected; the invariant still holds afterwards |
+
+> One measurement caution: a single run of row 1 read **169 ns** for the class path against 84–89 ns
+> across five repeats. The host runs seven-plus concurrent sessions; that reading was noise. Any
+> re-measurement must repeat, and must report the range.
+
+### 11.4 Migration — 16 binds, zero call sites
+
+| bind | file:line |
+|------|-----------|
+| `self.logger = Logger` ×5 | `candidate_unit.py:187`, `:296`, `cascade_correlation.py:3188`, `cascor_plotter.py:73`, `log_config.py:201` |
+| `logger = Logger` ×9 | `cascade_correlation.py:632`, `:3495`, `:3610`, `:3740`, `:4136`, `:5198`, `cascor_plotter.py:92`, `utils.py:125`, `:273` |
+| **indirect** ×2 | `cascade_correlation.py:667`, `spiral_problem.py:310` — both `self.log_config.get_logger()`, which returns the class via `log_config.py:201` |
+
+**A missed bind degrades gracefully** (verified): a site left as `self.logger = Logger` still works,
+on the root level, with no `TypeError`. So the migration can be incremental and a miss is a
+lost-granularity bug, not an outage.
+
+**The factory needs a new name.** `get_logger` is taken twice — `Logger.get_logger` (`logger.py:1281`,
+body `return self`) and `LogConfig.get_logger` (`log_config.py:493`). The prototype uses
+`Logger.for_name(name, level=None)`; `bind` / `sub` are equally fine. Re-purposing `logger.py:1281`
+is also open, since its body is `return self`.
+
+### 11.5 Obligations carried from §6
+
+- **Concern 2 — P1.1 is a hard prerequisite, and this design does not relax it.** Per-logger state
+  over an already-disjoint guard/emit pair multiplies the states. Property 4 above is the acceptance
+  check: guard and emit must agree for every logger at every level.
+- **Concern 3 — bootstrap.** `Logger._default` must be assigned at class-definition time, before the
+  first class-path call, because `logger.py` logs during its own construction. The prototype assigns
+  at module scope immediately after the class body. The setter must not itself log.
+- **Concern 4 — forkserver.** The default is built at import, so it is inside the preload snapshot;
+  per-logger levels set in the **parent after forkserver start** will not reach children. P4.4's
+  demonstration must cover per-instance state specifically, in a child, under a distinct
+  `JUNIPER_CASCOR_LOG_DIR` (trap 1).
+- **Concern 5 — pickling.** `BoundLogger` is `__slots__`-based and holds only a name and an int, so
+  it pickles. `CandidateUnit.__setstate__` (stubbed at `conftest.py:912`) must rebind to the named
+  logger, not to the class.
+- **Concern 8 — the mirror.** `candidate_unit.py` bind edits are inside a byte-gated tree, so they
+  carry a mirror re-extraction and a `juniper-cascor-model` release under the ruled decision 4.
+
+### 11.6 The guard tests this design owes
+
+1. `all(getattr(Logger, n).__self__ is Logger._default for n in BOUND_NAMES)` — pins the invariant.
+2. Assigning `_default` rebinds **all nine**; count the rebindings, do not spot-check one.
+3. A `_default` missing any of the nine, or holding a non-callable, is **refused**, and the previous
+   binding survives the refusal intact.
+4. Guard/emit agreement per logger at TRACE / VERBOSE / DEBUG / INFO — the anti-N-3 test, and the
+   thing P1.5 generalises.
+5. A per-logger level demonstrated **in a forkserver child** (P4-G2).
+
+### 11.7 Sequencing
+
+P4 remains gated on **P1** (ROADMAP §2), and §6 concern 2 raises rather than lowers that gate.
+**No cascor code lands from this document until P1.1 reconciles the two level states.** What is
+deliverable now is this design plus the verified prototype; the first cascor PR is P1.1's.
+
+---
+
+## 12. References
 
 - [cascor#573](https://github.com/pcalnon/juniper-cascor/issues/573) — the issue and owner scope
 - **ROADMAP** §13 decision 5, §7 (Phase 4), P4-G1…P4-G4
@@ -308,4 +469,6 @@ per-step mirror obligations under the ruled decision 4.
 - `juniper-ml/util/ad-hoc/2026-09-09_p41_logger_binding_census.py` — the §2 census
 - `juniper-ml/util/ad-hoc/2026-09-09_p41_dualpath_mechanisms_bench.py` — the §4 table
 - `juniper-ml/util/ad-hoc/2026-09-09_p41_hybrid_descriptor_bench.py` — the naive-descriptor rows
+- `juniper-ml/util/ad-hoc/2026-09-10_p41_a2_delegation_bench.py` — the §10 table (A2-bind vs A2-delegator)
+- `juniper-ml/util/ad-hoc/2026-09-10_p41_a2bind_prototype.py` — the §11 prototype and its six checks
 - `juniper-ml/util/ad-hoc/2026-09-02_logging_doc_refutation_probe.py` — the level-state probe
