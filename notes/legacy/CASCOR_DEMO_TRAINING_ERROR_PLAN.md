@@ -1043,7 +1043,10 @@ When the user clicks "Reset Training", `_reset_state_and_history()` clears `hidd
 Add output weight reinitialization when hidden units are cleared:
 
 ```python
-# In _reset_state_and_history() or a network reset method:# Juniper Cascor Concurrency
+# In _reset_state_and_history() or a network reset method:
+```
+
+# Juniper Cascor Concurrency
 
 develop a detailed plan to perform an in-depth investigation and analysis of the juniper-cascor application's concurrent programming implementation
 

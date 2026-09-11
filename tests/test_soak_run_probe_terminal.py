@@ -144,7 +144,11 @@ class StoppingRuleCli(unittest.TestCase):
         # one that must refuse. Driving this through --dry-run would test the
         # exemption instead of the guard.
         rc, err, n = _run_main([], _FAILING_LINE, dispatch_ok=False)
-        self.assertEqual(rc, 2)
+        # 3, not 2: a by-design refusal is distinguishable from argparse misuse,
+        # so the systemd unit can whitelist one without silencing the other.
+        # Read from the module, not hardcoded -- the unit file reads it too, and
+        # tests/test_soak_run_probe_stopping_rule.py pins the two together.
+        self.assertEqual(rc, mod.RC_REFUSED)
         self.assertIn("REFUSING", err)
         self.assertIn("BET-FAILING", err)
         self.assertIn("terminal", err)
@@ -152,7 +156,7 @@ class StoppingRuleCli(unittest.TestCase):
 
     def test_holds_at_refuses(self) -> None:
         rc, err, n = _run_main([], _HOLDS_LINE, dispatch_ok=False)
-        self.assertEqual(rc, 2)
+        self.assertEqual(rc, mod.RC_REFUSED)
         self.assertIn("REFUSING", err)
         self.assertIn("HOLDS-AT-0.75", err)
         self.assertEqual(n, 0)

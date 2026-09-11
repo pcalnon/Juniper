@@ -698,7 +698,7 @@ Tip: after a crashed Juniper pytest session, run `util/reap_pytest_orphans.bash 
 
 Tip: pointer-follow soak — `python3 util/soak_run_probe.py --dry-run` then run; **score with `--reveal` only after**.
 Default pick is least-covered (pooled estimate). For characterisation / a relocation decision pass `--probe-id`.
-The 2026-09-04 runs (#1616) showed the strata are real (permutation p=0.0017) but membership is not resolved at n=2–4.
+The 2026-09-04 runs (#1616) showed the strata are real, but membership is mostly unresolved at these n. **The verdict is now `BET-FAILING`** (43/35, 60.5%), so a real run refuses without `--force` — and `--force` is an open owner decision. Two corrections to what that PR reported: its `p=0.0017` was a **parametric bootstrap**, not the permutation test it was labelled (a real label shuffle is far more extreme); and **nothing predicts stratum membership** — the "nearby test / owning script" account and all three successor candidates are refuted (`notes/JUNIPER_2026-09-09_JUNIPER-ML_SOAK-STRATUM-PREDICTOR-ANALYSIS.md`).
 Keep `stream.jsonl` if `parse_events` crashes — a string `message` raises after the session is spent.
 `status` exit 1 is often an open escalation, not a broken tool.
 Full contract: [REFERENCE — Pointer-Follow Soak](REFERENCE.md#pointer-follow-soak).

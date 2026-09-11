@@ -15,10 +15,11 @@ unittest **is** the gate for that module.
 
 The three things a gate like this gets wrong, each pinned here:
 
-* **Red on arrival.** ``main`` carries pre-existing structural problems: **63 across 14 files**
-  measured at ``e173ea81`` on 2026-09-10 -- 5 under ``notes/``, 6 under ``notes/legacy/``,
-  3 under ``prompts/``, and **zero** under both ``notes/code-review/`` and ``docs/``. That count
-  is a MOVING FLOOR, not a backlog: 104/23, 102/21, 63/14, 73/15, 63/14 across six days. No test
+* **Red on arrival.** ``main`` carries pre-existing structural problems: **17 across 2 files**
+  after the 2026-09-10 structure repair -- both of them known SCREEN FALSE POSITIVES rather than debt (a ``text``-tagged
+  banner whose art lines begin ``##``, and a four-backtick ``jinja2`` template sample whose H2s
+  are the sample). That count is a MOVING FLOOR, not a backlog: 104/23, 102/21, 63/14, 73/15,
+  63/14, 17/2 across seven days. No test
   here asserts it -- every fixture below is synthetic -- so re-measure before quoting it
   elsewhere. A gate demanding zero is unmergeable from the
   first commit, so the comparison must be per-file and per-PR: a file the PR does not touch is

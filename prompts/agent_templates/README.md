@@ -23,7 +23,7 @@ instantiates a **copy**, fills it, and validates the result before emitting it t
 
 Every template instantiates this section order (optional sections may be dropped):
 
-```
+```markdown
 # {{CATEGORY_TITLE}}
 ## Role
 ## Resources
