@@ -588,9 +588,11 @@ the relocated prose, or the code and tests.
 That is evidence for a claim the soak was not designed to test: the relocation may cost
 little **because the source is the real reference**, not because pointers are followed. If
 that holds up, the honest conclusion is about where facts should live, not about how well
-`AGENTS.md` points at them. The facts most often source-recovered were the ones with a
-nearby test or an obvious owning script; the follows clustered where the fact was a
-*policy* with no single code owner.
+`AGENTS.md` points at them. At n=35 the facts most often source-recovered appeared to be
+the ones with a nearby test or an obvious owning script, with follows clustered where the
+fact was a *policy* with no single code owner — **but that explanation was refuted on
+2026-09-09; see the box in §14.** The source-vs-prose observation stands; the account of
+which facts fall which way does not.
 
 ### A probe design flaw, recorded not hidden
 
@@ -642,13 +644,33 @@ the relocated prose* rather than from the code and its tests. The other 31.4% we
 | P15 worktree converge | 3 | 0 | discriminator contested — see §13 |
 | P02, P07, P08, P16, P18, P20, P22, P24, P25 | 24 | 24 | policy facts with no single code owner |
 
-The pattern is consistent and it is the arc's substantive conclusion: **a fact with a
-nearby test or an obvious owning script gets recovered from source; a fact that is pure
-policy gets retrieved from the prose.** Relocation is close to free for the first kind
-and load-bearing for the second.
+> **REFUTED 2026-09-09. Do not carry this explanation forward.** The table above is the
+> 2026-08-22 snapshot at n=35 and stands as a record. The *explanation* drawn from it does
+> not:
+>
+> - §8.2 of `notes/JUNIPER_2026-09-03_JUNIPER-ML_SOAK-TRIGGER-DESIGN-CONVERSATION.md`
+>   refuted it on this corpus — **P21 has a test** (`tests/test_juniper_chop_all.py`) **and
+>   follows; P02 has tests and follows 3 of 4.** `area` splits across both groups too:
+>   `ports` contains P19 (never) and P24 (follow-dominant).
+> - **P23 left the never-follow group on its third run**, so its 0/2 was small-sample noise,
+>   not a stratum property.
+> - `notes/JUNIPER_2026-09-09_JUNIPER-ML_SOAK-STRATUM-PREDICTOR-ANALYSIS.md` then tested the
+>   three successor candidates §8.2 named — grep-findability, completable-without-the-fact,
+>   contradicts-a-plausible-default — and **all three fail**, at a sample size where a
+>   perfect split would have been detected (Fisher p = 0.0020).
+>
+> **What survives:** the strata are real (heterogeneity is far beyond binomial noise). What
+> does not: any account of *which* stratum a given fact lands in. That gap is open and is
+> the blocker to decision support.
 
-That is a different claim from the one the plan set out to test, and it is more useful.
-It says *where* facts should live rather than how well `AGENTS.md` points at them.
+The pattern *as recorded above* was consistent at n=35, and the claim drawn from it was
+that **a fact with a nearby test or an obvious owning script gets recovered from source,
+while a pure-policy fact gets retrieved from the prose** — hence that relocation is close
+to free for the first kind and load-bearing for the second.
+
+That was a different claim from the one the plan set out to test, and it would have been
+more useful had it held. It did not. The honest residue is narrower: two strata exist, and
+nothing yet predicts membership.
 
 ### Five hazard escalations, deliberately left open
 
