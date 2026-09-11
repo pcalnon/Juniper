@@ -149,6 +149,9 @@ python3 -m unittest -v tests/test_soak_wilson_resolving.py
 python3 -m unittest -v tests/test_soak_run_probe_stopping_rule.py
 python3 -m unittest -v tests/test_soak_ledger_status_token.py
 python3 -m unittest -v tests/test_soak_analyse_date_pool.py
+python3 -m unittest -v tests/test_soak_ledger.py
+python3 -m unittest -v tests/test_soak_next_probe.py
+python3 -m unittest -v tests/test_soak_run_probe.py
 python3 -m unittest -v tests/test_run_suite_gate_metrics.py
 python3 -m unittest -v tests/test_list_runs_classify_guards.py
 python3 -m unittest -v tests/test_register_close_protocol.py
