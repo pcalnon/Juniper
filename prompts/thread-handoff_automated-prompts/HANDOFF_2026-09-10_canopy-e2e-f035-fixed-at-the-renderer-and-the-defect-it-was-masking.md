@@ -127,10 +127,16 @@ two cheapest and highest-value items were buried behind it.
    `max_index = len(metrics_data) - 1 if metrics_data else 0` from the store #613 repaired
    (`metrics_panel.py:1013/1060/1088`). `util/ad-hoc/2026-09-08_replay_block_redrive.py` exists and has
    **not** been run against a fixed leg. This was item 2 and should have been item 1.
-3. **Audit the other consumers of `candidate-metrics-panel-training-state-store` and of any store written
-   unconditionally off a ~1 Hz interval.** F-052 was not special: the pattern is "an Input fed by a store
-   whose writer returns a fresh value every tick". `fetch_training_state` writes TWO stores; the
-   pool-history one is identity-suppressed, that one was not. Nobody has swept for siblings.
+3. **The sibling sweep is DONE — decide what to do about the three it found.** `update_status_display`
+   (`:283`), `update_epoch_progress` (`:303`) and `update_pool_info` (`:322`) each take that same 1 Hz
+   store as their **only** Input, so all three are structurally exposed to the identical eviction. They
+   are **not** currently broken: they build a badge, a progress figure and a text block, so their round
+   trip stays under the re-request period, while `update_loss_plot` built a Plotly figure and lost. That
+   is a margin nobody chose and nobody measures — any change that slows one of them flips it to
+   intermittent-blank with no error anywhere. Measure the three round trips, then either demote the
+   Inputs (as canopy#618 did) or fix the WRITER: `fetch_training_state` returns unconditionally for this
+   store while identity-suppressing its OTHER output in the same function. Recorded in Phase 6 as a
+   latent risk, deliberately **not** filed as a finding — nothing observed is broken.
 4. **F-CASCOR-004 / F-CANOPY-049** — unchanged and untouched. cascor: log in `_send_json`, `close()` in
    `broadcast`'s drop path. canopy: **not** a new liveness rule — `StreamHealth` already degrades after
    60 s and `cascor_service_adapter.py` re-arms it every 30 s off cascor's transport pings.

@@ -7220,6 +7220,41 @@ phrase is struck.** The before/after remains suggestive and is no longer a contr
 mechanism rests on the source reading, the clean room, and now the F-052 A/B, which is
 the only genuinely single-variable measurement in the set.
 
+#### The sibling sweep, done — three more consumers sit on the same knife-edge
+
+Still-owed item 3 asked for a sweep of other consumers of `candidate-metrics-panel-training-state-store`.
+Run against canopy `main` after canopy#618 merged (`ced1dd80`), by AST over the panel's decorators:
+
+| callback | Inputs | the 1 Hz store as an Input? |
+|---|---|---|
+| `update_status_display` (`:283`) | 1 | **yes — its ONLY Input** |
+| `update_epoch_progress` (`:303`) | 1 | **yes — its ONLY Input** |
+| `update_pool_info` (`:322`) | 1 | **yes — its ONLY Input** |
+| `update_loss_plot` (`:391`) | 2 | no — demoted to State by canopy#618 |
+| `fetch_training_state` (`:259`) | 2 | n/a (it is the writer) |
+
+**All three are structurally exposed to exactly the eviction that took the loss plot**, and for the same
+reason: a store rewritten every second with a value that always differs, taken as an Input, re-`requested`s
+its consumer under one `getUniqueIdentifier`.
+
+**They are not currently broken, and the reason is the one the mechanism predicts.** Eviction bites when a
+callback's round trip exceeds its re-request period. These three build a badge, a progress figure and a
+text block; `update_loss_plot` built a Plotly figure from a filtered history. This entry's own 2026-08-24
+observation records the badge, phase, pool size, progress bar and pool info all rendering live
+candidate-phase values in a session where the loss plot rendered nothing — the cheap consumers survived
+the same 1 Hz trigger the expensive one lost to.
+
+So this is a **latent risk, not an open defect**: the three survive on a margin nobody chose and nobody
+measures, and any change that slows one of them — a richer badge, a slower `/api/state`, a busier
+renderer — flips it to intermittent-blank with no error anywhere. Worth a guard (demote the Input, as
+canopy#618 did, or make the writer identity-suppressed so the store stops changing when the data does
+not), and worth measuring the three round trips before deciding. **Not filed as a finding**: nothing
+observed is broken.
+
+The writer is the better lever. `fetch_training_state` returns `self._fetch_training_state()`
+unconditionally on both branches while its sibling output (pool history) IS identity-suppressed — the
+suppression exists in that very function and was applied to one of its two stores.
+
 #### What this leaves standing
 
 The eviction mechanism itself — re-verified from the bundle by a reviewer who read
