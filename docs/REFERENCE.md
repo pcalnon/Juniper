@@ -102,12 +102,12 @@
 
 | Extra       | Packages Installed                                                                       | Min Version       |
 |-------------|------------------------------------------------------------------------------------------|-------------------|
-| `clients`   | `juniper-data-client`                                                                    | `>=0.4.1`         |
-|             | `juniper-cascor-client`                                                                  | `>=0.5.0`         |
+| `clients`   | `juniper-data-client`                                                                    | `>=0.5.0`         |
+|             | `juniper-cascor-client`                                                                  | `>=0.8.0`         |
 | `worker`    | `juniper-cascor-worker`                                                                  | `>=0.4.0`         |
-| `servers`   | `juniper-canopy`                                                                         | `>=0.5.0`         |
-|             | `juniper-cascor`                                                                         | `>=0.5.0`         |
-|             | `juniper-data`                                                                           | `>=0.6.0`         |
+| `servers`   | `juniper-canopy`                                                                         | `>=0.7.0`         |
+|             | `juniper-cascor`                                                                         | `>=0.11.0`        |
+|             | `juniper-data`                                                                           | `>=0.14.0`        |
 | `tools`     | `juniper-ci-tools`                                                                       | `>=0.1.0`         |
 |             | `juniper-config-tools`                                                                   | `>=0.1.0,<0.2.0`  |
 |             | `juniper-doc-tools`                                                                      | `>=0.1.0,<0.2.0`  |
@@ -115,9 +115,9 @@
 |             | `juniper-observability`                                                                  | `>=0.2.0`         |
 |             | `juniper-service-core`                                                                   | `>=0.2.0,<0.8.0`  |
 | `doc-tools` | `juniper-doc-tools` (back-compat alias for the doc-tools entry in `tools`)               | `>=0.1.0,<0.2.0`  |
-| `recurrence`| `juniper-recurrence-model`                                                               | `>=0.1.5,<0.3.0`  |
-|             | `juniper-recurrence`                                                                     | `>=0.2.0,<0.5.0`  |
-|             | `juniper-recurrence-client`                                                              | `>=0.2.0,<0.3.0`  |
+| `recurrence`| `juniper-recurrence-model`                                                               | `>=0.3.0,<0.4.0`  |
+|             | `juniper-recurrence`                                                                     | `>=0.5.0,<0.6.0`  |
+|             | `juniper-recurrence-client`                                                              | `>=0.3.0,<0.4.0`  |
 | `all`       | All packages from `clients` + `worker` + `servers` + `tools` + `recurrence`              | --                |
 
 ### Installation Commands
@@ -165,11 +165,12 @@ pip install juniper-ml[all]       # Everything
 
 ## Ecosystem Compatibility
 
-`juniper-ml` 0.6.0 declares the following pins. Every package below ships from PyPI; servers and tools land under their own extras, clients and worker keep their existing groups.
+`juniper-ml` 0.8.0 declares the following pins. Every package below ships from PyPI; servers and tools land under their own extras, clients and worker keep their existing groups. The `0.6.x` row is kept for history and covers 0.7.x too -- 0.7.0/0.7.1 changed no floor. The three `recurrence` pins have no columns here; 0.8.0 sets them to `juniper-recurrence-model>=0.3.0,<0.4.0`, `juniper-recurrence>=0.5.0,<0.6.0` and `juniper-recurrence-client>=0.3.0,<0.4.0` (see the extras table above).
 
 | juniper-ml | juniper-data | juniper-cascor | juniper-canopy | juniper-data-client | juniper-cascor-client | juniper-cascor-worker | juniper-ci-tools | juniper-doc-tools  | juniper-observability |
 |------------|--------------|----------------|----------------|---------------------|-----------------------|-----------------------|------------------|--------------------|-----------------------|
 | 0.6.x      | >=0.6.0      | >=0.5.0        | >=0.5.0        | >=0.4.1             | >=0.5.0               | >=0.4.0               | >=0.1.0          | >=0.1.0,<0.2.0     | >=0.2.0               |
+| 0.8.x      | >=0.14.0     | >=0.11.0       | >=0.7.0        | >=0.5.0             | >=0.8.0               | >=0.4.0               | >=0.1.0          | >=0.1.0,<0.2.0     | >=0.2.0               |
 
 ### Service Ports
 
@@ -241,7 +242,7 @@ The split-default is intentional, not an oversight: `juniper-data` is a higher-r
 
 The three separately released HTTP clients — `juniper-data-client`, `juniper-cascor-client`, and `juniper-recurrence-client` — now share one REST `base_url` treatment. That closes defect-register `APD-DCLIENT-004` / `APD-CCLIENT-005` (sibling PRs [data-client#165](https://github.com/pcalnon/juniper-data-client/pull/165) + [#166](https://github.com/pcalnon/juniper-data-client/pull/166), [cascor-client#129](https://github.com/pcalnon/juniper-cascor-client/pull/129), [recurrence#129](https://github.com/pcalnon/juniper-recurrence/pull/129)). Register status is recorded by open [juniper-ml#1331](https://github.com/pcalnon/juniper-ml/pull/1331).
 
-**This is GitHub-main of those clients, not a `juniper-ml` extra floor.** `[clients]` still pins `juniper-data-client>=0.4.1` and `juniper-cascor-client>=0.5.0`; the latest *released* data-client wheel is `0.4.2` (2026-06-18) and still lacks the host guard. `pip install juniper-ml[clients]` can resolve a wheel that silently accepts `HTTPS://host` (TLS downgrade) or a hostless URL. Confirm `JuniperDataConfigurationError` / `JuniperCascorConfigurationError` exist before relying on the fail-fast path.
+**Shipped on PyPI, and now guaranteed by both `[clients]` floors.** Verified against the *published* wheels in a clean venv, not a checkout: `juniper-data-client` **0.5.0** and `juniper-cascor-client` **0.8.0** both expose their `Juniper*ConfigurationError`, both refuse a hostless `https://`, and both NORMALISE `HTTPS://host` to `https://host` rather than talking plaintext — so the TLS-downgrade reading of this note is withdrawn. `[clients]` pins `juniper-data-client>=0.5.0` **and `juniper-cascor-client>=0.8.0`**. The cascor-client floor was `>=0.5.0` and did **not** guarantee the guard: probing each published wheel in a throwaway venv (`util/ad-hoc/2026-09-11_cascor_client_guard_boundary.py`) shows **0.5.0, 0.6.0 and 0.7.0 all fail both halves**, and **0.8.0 is the first release carrying either**. `juniper-recurrence-client` is not in `[clients]` at all — it ships under `[recurrence]`.
 
 ### What REST constructors do
 
@@ -289,7 +290,7 @@ Base-URL normalisation/validation is aligned. The last sibling-package retry dri
 | Symptom | Cause / fix |
 |---------|-------------|
 | `Juniper*ConfigurationError: base_url must include a host` | Constructor got `""`, `http://`, `/v1`, or `http://user:secret@`. Fix the URL; this is not a retryable transport error. |
-| `HTTPS://host` talks HTTP / hostname is `https` | Wheel predates the case-insensitive scheme check. Install from GitHub main of the client, or wait for the next PyPI release past data-client `0.4.2` / cascor-client `0.7.0`. |
+| `HTTPS://host` talks HTTP / hostname is `https` | Wheel predates the case-insensitive scheme check. **Fixed in the published wheels, and now unreachable through this repo's extras**: data-client `0.5.0` and cascor-client `0.8.0` normalise the scheme (verified against PyPI, not a checkout), and `[clients]` floors at exactly those. cascor-client `0.5.0` / `0.6.0` / `0.7.0` are all unguarded — 0.8.0 is the first release with the check. |
 | Cascor REST to `:8200` on the host stack | Constructor default is the **container** port. Host `plant_all` / Docker publish `:8201` — pass `base_url="http://localhost:8201"`. |
 | WS stream accepts a hostless / schemeless URL | Expected. REST `_normalize_url` is not applied to `CascorTrainingStream` / `CascorControlStream`. |
 | Catch-all `except Exception` around client init | Configuration errors subclass the client base, but a bare `Exception` handler will swallow a hostless URL as if the service were down. |
