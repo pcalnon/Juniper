@@ -100,28 +100,27 @@ def main(argv=None) -> int:
 
     losses = 0
     print(f"screening {len(changed)} changed markdown file(s) against {args.base}\n")
-    if True:
-        for rel in changed:
-            try:
-                before_text = _git("show", f"{args.base}:{rel}")
-            except subprocess.CalledProcessError:
-                print(f"  {'ADDED':<9} {rel}  (no BEFORE -- nothing can be lost)")
-                continue
-            after = Path(rel)
-            if not after.is_file():
-                print(f"  {'DELETED':<9} {rel}  -- adjudicate the whole file", file=sys.stderr)
-                losses += 1
-                continue
-            lost = sorted(extract(before_text) - extract(after.read_text(encoding="utf-8")))
-            if lost:
-                losses += 1
-                print(f"  {'LOST ' + str(len(lost)):<9} {rel}")
-                for item in lost[:10]:
-                    print(f"              {item[:88]}")
-                if len(lost) > 10:
-                    print(f"              ... and {len(lost)-10} more")
-            else:
-                print(f"  {'ok':<9} {rel}")
+    for rel in changed:
+        try:
+            before_text = _git("show", f"{args.base}:{rel}")
+        except subprocess.CalledProcessError:
+            print(f"  {'ADDED':<9} {rel}  (no BEFORE -- nothing can be lost)")
+            continue
+        after = Path(rel)
+        if not after.is_file():
+            print(f"  {'DELETED':<9} {rel}  -- adjudicate the whole file", file=sys.stderr)
+            losses += 1
+            continue
+        lost = sorted(extract(before_text) - extract(after.read_text(encoding="utf-8")))
+        if lost:
+            losses += 1
+            print(f"  {'LOST ' + str(len(lost)):<9} {rel}")
+            for item in lost[:10]:
+                print(f"              {item[:88]}")
+            if len(lost) > 10:
+                print(f"              ... and {len(lost)-10} more")
+        else:
+            print(f"  {'ok':<9} {rel}")
 
     print(f"\n{losses} of {len(changed)} file(s) lost atoms")
     if losses:

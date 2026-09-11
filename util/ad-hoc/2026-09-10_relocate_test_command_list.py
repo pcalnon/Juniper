@@ -136,20 +136,31 @@ def main(argv=None) -> int:
 
     # 2. REFERENCE.md: insert the complete list right after the section heading's preamble.
     insert_at = anchor + 1
+    # Built as named paragraphs rather than adjacent string literals inside the list: in a
+    # list literal, implicit concatenation is indistinguishable from a MISSING COMMA, which
+    # silently welds two entries into one. CodeQL flags it for that reason (code-scanning
+    # alert 683 on this file), and in a list whose entries become markdown LINES a missing
+    # comma would merge two lines with no error anywhere.
+    intro = (
+        "The complete ordered list, generated from `.github/workflows/ci.yml`'s "
+        f"`Run Python regression tests` step on 2026-09-10 -- **{len(suites)} suites**. This "
+        "relocated from `AGENTS.md` (the 2026-09-10 structure repair), where the "
+        "hand-maintained copy had drifted to 115 and completing it in place would have left "
+        "the always-loaded file 534 chars under its 38000-char ceiling."
+    )
+    provenance = (
+        "ci.yml is the authoritative list. `tests/test_ci_test_wiring_drift.py` gates that "
+        "every `tests/test_*.py` on disk is invoked there; "
+        "`util/ad-hoc/2026-09-10_agents_md_test_list_drift.py` reports any suite CI runs "
+        "that this list does not name."
+    )
     body = [
         "",
         "### Running every suite",
         "",
-        f"The complete ordered list, generated from `.github/workflows/ci.yml`'s "
-        f"`Run Python regression tests` step on 2026-09-10 -- **{len(suites)} suites**. This "
-        "relocated from `AGENTS.md` (the 2026-09-10 structure repair), where the hand-maintained copy had "
-        "drifted to 115 and completing it in place would have left the always-loaded file "
-        "534 chars under its 38000-char ceiling.",
+        intro,
         "",
-        "ci.yml is the authoritative list. `tests/test_ci_test_wiring_drift.py` gates that "
-        "every `tests/test_*.py` on disk is invoked there; "
-        "`util/ad-hoc/2026-09-10_agents_md_test_list_drift.py` reports any suite CI runs "
-        "that this list does not name.",
+        provenance,
         "",
         "```bash",
     ]
