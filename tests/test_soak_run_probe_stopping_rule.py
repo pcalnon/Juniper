@@ -234,6 +234,14 @@ class RealRunIsGatedThroughMain(unittest.TestCase):
         unexamined default. Closing the gap is what inverts it. A successor reading
         the history should not mistake this for a regression -- the old assertion
         and this one cannot both be green, and that was the point of writing it.
+
+        The rename is a symbol REMOVAL to the per-PR sequence-safety screen, which
+        reported both inverted pins as ``FAIL/LOST`` -- correctly: a same-file rename
+        is indistinguishable from a deletion to a screen that matches on names. It is
+        waived by an enumerated ``Allow-Symbol-Loss:`` commit trailer naming both
+        methods, never by the ``allow-symbol-loss`` label, which downgrades the whole
+        screen to WARN-only for the run and would hide any *unintended* loss in the
+        same PR.
         """
         for verdict in ("DEGRADED", "NO-DATA", "NO-SEEDED-DATA"):
             with self.subTest(verdict=verdict):
