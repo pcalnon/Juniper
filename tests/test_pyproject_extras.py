@@ -106,7 +106,7 @@ def _pins_from_reference_extras_table(text: str) -> dict[str, set[str]]:
 EXPECTED_EXTRAS = {
     "clients": {
         "juniper-data-client>=0.5.0",
-        "juniper-cascor-client>=0.5.0",
+        "juniper-cascor-client>=0.8.0",
     },
     "worker": {
         "juniper-cascor-worker>=0.4.0",

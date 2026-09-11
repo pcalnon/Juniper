@@ -9,72 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Perf lane — the initial output pass's ~11-core burst is libgomp under torch, not NumPy's
-  OpenBLAS, and cascor's parent thread pin binds only the thread that ran the constructor**
-  (`notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-BURST-LIBRARY-ATTRIBUTION.md`). The
-  discriminating test left open by §4.2 of
-  `notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md` was run, and it
-  **refutes that section's leading candidate**. Pinning `OPENBLAS_NUM_THREADS=2` alone leaves the
-  burst intact (16 threads, 13.7 cores) while the OpenBLAS pool demonstrably shrinks (alive threads
-  43 → 29); pinning `OMP_NUM_THREADS=2` alone removes it entirely (2 threads, 2.0 cores); and
-  `libopenblas` appears in **0.0%** of 614 native-profile samples against `libgomp`'s 47.6% and
-  `torch::autograd::Engine`'s 44.0%. All three listener arms ran the identical complete 4000-epoch
-  pass, so this is not a vacuous comparison. Root cause: cascor pins the parent with
-  `torch.set_num_threads(2)` in the network **constructor**
-  (`juniper-cascor/src/cascade_correlation/cascade_correlation.py:617` → `:1179-1180`), while the
-  service constructs in `_create_network_locked` (`api/lifecycle/manager.py:1538`) on the request
-  thread and trains in `_run_training` (`:2476`) on the `cascor-train` executor (`:2431`) — so the
-  thread doing the work keeps OpenMP's default width of 16. In one process, unchanged otherwise,
-  moving the pass off the constructor's thread takes it from 1.53 cores / 2 threads to 9.45 / 16,
-  and constructing on that same worker thread restores 1.48 / 2. `torch.get_num_threads()` reads 2
-  throughout — it reports the library global, not the width in force on the working thread.
-  Consequence: exporting `JUNIPER_CASCOR_BLAS_THREADS` from `runtime.blas_threads` would **mask**
-  this defect rather than repair it, so "implement the `runtime:` block" is not the whole fix; the
-  narrower repair is a cascor change and remains an owner decision. Two residuals are named rather
-  than papered over: what ends the burst after the initial pass (measured in both the listener and
-  one process — 16 `_retrain_output_layer` calls produce exactly one ≥10-thread block — and *not*
-  explained by the mechanism above, which predicted the opposite), and the exact PyTorch path that
-  re-widens off the constructor thread while a plain matmul does not. New under `util/ad-hoc/`:
-  `2026-09-10_first_pass_library_attribution.py`, `2026-09-10_listener_thread_census.py`,
-  `2026-09-10_listener_burst_probe.bash`, `2026-09-10_pyspy_stack_attribute.py`; new
-  `tests/test_pf8_burst_attribution.py` (14 tests) wired into `.github/workflows/ci.yml`, the
-  `AGENTS.md` test list and `docs/REFERENCE.md`. Also corrects a reading carried by the occupancy
-  note through six consensus rounds: its "four hundred `train_output_layer … Epoch N` lines" are
-  400 INFO lines at `epoch_display_frequency` = 10, i.e. **4000 epochs**, matching the cell's
-  `output_epochs: 4000` — the pass has no early exit.
-- **Perf lane — PF-8 located and its pair run; the experiment YAML's `runtime:` block binds nothing**
-  (`notes/JUNIPER_2026-09-10_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-OCCUPANCY-PROBE.md`). Step 1 of §1.3
-  of `notes/JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md`
-  ran: one PF-1-shape run consumes **4.52 cores** under cascor's default thread budget (3 cells,
-  1.1% spread) as one ~11-core block in the listener for the *initial* output pass (160 of 1770
-  steps, before the candidate pool exists) then ~1.8 for the rest, and **2.15** under the
-  four-variable budget `run_suite` pins for a parallel arm — 34% faster per step overall, 8× on
-  that initial pass and +9.3 to +10.4% on the other 91% of steps, at an identical `step_count` 1770. Step 2
-  ran because 4.52 is inside the ~4–8 band: three aligned parallel pairs against six sequential
-  controls, same budget, all twelve cells at 1770 — **a second concurrent pinned run costs +11.3%
-  per step, +8.5 to +12.7% leaving one pair out**, inside the sweep's 20.5% quiet band and outside the
-  day's within-arm spread; advisory, as item 4.3 said. The burst is removed by the three BLAS
-  variables, which `torch.set_num_threads` does not reach and which the YAML's
-  `runtime.blas_threads` never sets: the block is validated by the driver, accepted by the service,
-  and read by nothing on either path — an owner decision (implement or retire), not a fix — and
-  **PF-3's `runtime.num_processes` matrix axis is therefore inert** (P2 item 2.2 blocked). Which
-  library carries the burst is narrowed (NumPy's OpenBLAS pool the leading candidate), not
-  identified. *(Superseded the same day by the entry above: it is libgomp under `libtorch_cpu`,
-  and OpenBLAS carries none of it.)* Micro timing reference `0003` re-cut at 1-minute load 5.3 → 7.1 (the prior cuts were
-  at 9–10); the micro tier does not see that difference (median ratio 0.99). New under
-  `util/ad-hoc/`: `2026-09-10_pf8_occupancy_sampler.py` (per-role `/proc` deltas at 1 s),
-  `2026-09-10_pf8_occupancy_analyse.py` (drive-window reduction, sweep-curve readout, two-arm
-  comparison with identity checks), `2026-09-10_pf8_occupancy_probe_suite.yaml`,
-  `2026-09-10_pf8_two_run_parallel_suite.yaml`, `2026-09-10_pf8_pair_driver.bash`,
-  `2026-09-10_micro_reference_compare.py`, `2026-09-10_torch_thread_pin_probe.py`;
-  `tests/test_pf8_occupancy_probe.py` (26 tests, wired into `.github/workflows/ci.yml`). Changed:
-  `notes/JUNIPER_2026-09-02_JUNIPER-ECOSYSTEM_PERF-LANE-P2-PLAN.md` (rows 2.2, 4.1, 4.2, the §3
-  graph and a §4 hazard), `notes/JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md`
-  (a dated blockquote in §1.3), `docs/REFERENCE.md` (PF-8 row, test reference),
-  `util/experiments/suites/perf/README.md` (PF-3 and PF-8 rows), `util/experiments/suites/perf/pf3-cascor-pool-scaling.yaml`
-  (header only: the `runtime.num_processes` axis is inert; do not launch as written), `AGENTS.md`
-  (test list, Last Updated).
-
 - **Perf lane — Wave 4 re-scoped, the micro timing reference established, PF-2 probed**
   (`notes/JUNIPER_2026-09-08_JUNIPER-ECOSYSTEM_PERF-LANE-PF8-RESCOPE-AND-MICRO-TIMING-REFERENCE.md`).
   Item 4.3 answered before any harness was built: PF-8 has no gate content (`step_count` was
@@ -153,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   retired one.** `[clients]` `juniper-data-client>=0.5.0`; `[servers]` `juniper-canopy>=0.7.0`,
   `juniper-cascor>=0.11.0`, `juniper-data>=0.14.0`; `[recurrence]`
   `juniper-recurrence-model>=0.3.0,<0.4.0`, `juniper-recurrence>=0.5.0,<0.6.0`,
-  `juniper-recurrence-client>=0.3.0,<0.4.0`. Decision 11 (§9.5 of
+  `juniper-recurrence-client>=0.3.0,<0.4.0`. `[clients]` also raises
+  `juniper-cascor-client` `>=0.5.0` -> `>=0.8.0` (see the next bullet). Decision 11 (§9.5 of
   `notes/JUNIPER_2026-08-29_JUNIPER-ECOSYSTEM_TRAIN-EVAL-TEST-PARTITION-DESIGN.md`, producer-side
   juniper-data#369) retired the `*_full` family, and every package above shipped its half of that
   change. Until now `pip install juniper-ml[recurrence]` could not resolve the new versions **at all**:
@@ -173,9 +108,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (TLS downgrade)". Checked against the *published* wheels in a clean venv: `juniper-data-client`
   0.5.0 and `juniper-cascor-client` 0.8.0 both refuse a hostless `https://` and both normalise
   `HTTPS://host` to `https://host`, so the TLS-downgrade reading is **withdrawn**. What survives is
-  narrower and now stated: the new `juniper-data-client>=0.5.0` floor guarantees the guard, while
-  `juniper-cascor-client>=0.5.0` does **not** — 0.8.0 has it, but the resolver may still pick an older
-  wheel. Raising that floor is an open decision, unrelated to decision 11.
+  narrower, and it was a live gap: the new `juniper-data-client>=0.5.0` floor guarantees the guard,
+  but `juniper-cascor-client>=0.5.0` did **not**. Each published cascor-client wheel was probed in a
+  throwaway venv (`util/ad-hoc/2026-09-11_cascor_client_guard_boundary.py`): **0.5.0, 0.6.0 and 0.7.0
+  all fail both halves** — they accept a hostless `https://` and do not normalise the scheme — and
+  **0.8.0 is the first release carrying either**. The `[clients]` floor is therefore raised to
+  `juniper-cascor-client>=0.8.0`, which closes the gap rather than documenting it. The boundary is
+  measured, not inferred from the changelog that introduced the fix.
 
 - Widened the `recurrence` extra's `juniper-recurrence` ceiling to admit the released next minor:
   `juniper-recurrence>=0.2.0,<0.5.0` (0.4.0 on PyPI). Supersedes dependabot #1323, which cannot

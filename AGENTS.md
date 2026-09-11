@@ -5,7 +5,7 @@
 **Author**: Paul Calnon
 **License**: MIT License
 **Version**: 0.7.1
-**Last Updated**: 2026-09-10
+**Last Updated**: 2026-09-07
 
 ---
 
@@ -180,8 +180,6 @@ python3 -m unittest -v tests/test_soak_run_probe_launch_guards.py
 python3 -m unittest -v tests/test_soak_handoff_consensus_checks.py
 python3 -m unittest -v tests/test_x7_offload_census.py
 python3 -m unittest -v tests/test_markdown_structure_delta.py
-python3 -m unittest -v tests/test_pf8_occupancy_probe.py
-python3 -m unittest -v tests/test_pf8_burst_attribution.py
 bash scripts/test_resume_file_safety.bash
 # doc-link validator regression tests live in juniper-doc-tools/tests/
 # and run under the dedicated `CI -- juniper-doc-tools` workflow.
@@ -361,7 +359,7 @@ This repo is part of the broader Juniper ecosystem. See the parent directory's `
 
 | Extra        | Packages                                                                                                                                                                                                     |
 |--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `clients`    | `juniper-data-client>=0.5.0`, `juniper-cascor-client>=0.5.0`                                                                                                                                                 |
+| `clients`    | `juniper-data-client>=0.5.0`, `juniper-cascor-client>=0.8.0`                                                                                                                                                 |
 | `worker`     | `juniper-cascor-worker>=0.4.0`                                                                                                                                                                               |
 | `servers`    | `juniper-canopy>=0.7.0`, `juniper-cascor>=0.11.0`, `juniper-data>=0.14.0`                                                                                                                                      |
 | `tools`      | `juniper-ci-tools>=0.1.0`, `juniper-config-tools>=0.1.0,<0.2.0`, `juniper-doc-tools>=0.1.0,<0.2.0`, `juniper-model-core>=0.1.0,<0.4.0`, `juniper-observability>=0.2.0`, `juniper-service-core>=0.2.0,<0.8.0` |
