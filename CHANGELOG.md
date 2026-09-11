@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-11
+
 ### Added
 
 - **Perf lane — nothing "stops" the first-pass burst; the training thread is re-pinned during
