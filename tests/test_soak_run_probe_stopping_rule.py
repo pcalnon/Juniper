@@ -91,10 +91,53 @@ class VerdictIsTerminalPrefixOnly(unittest.TestCase):
         self.assertFalse(mod.verdict_is_terminal("holds-at-0.75"))
 
     def test_ledger_non_answers_are_not_terminal(self) -> None:
+        """A non-answer is still NOT TERMINAL -- that predicate is unchanged.
+
+        `verdict_is_terminal` answers "is the soak finished". A crashed or empty
+        ledger does not make it finished, so these stay False and the prefix
+        rule above is untouched.
+        """
         for verdict in ("INCONCLUSIVE", "DEGRADED", "NO-DATA", "NO-SEEDED-DATA", ""):
             with self.subTest(verdict=verdict):
                 self.assertFalse(mod.verdict_is_terminal(verdict))
+
+    def test_a_non_answer_now_REFUSES_though_it_is_not_terminal(self) -> None:
+        """INVERTED 2026-09-11. The two predicates deliberately disagree here.
+
+        Not-terminal and may-proceed are different questions, and the spend
+        control keys on the second. A ledger that cannot be read is not an
+        answer, so a real run must not spend against it -- while
+        `verdict_is_terminal` stays False because the soak is not finished.
+        """
+        for verdict in ("DEGRADED", "NO-DATA", "NO-SEEDED-DATA", ""):
+            with self.subTest(verdict=verdict):
+                self.assertFalse(mod.verdict_is_terminal(verdict))
+                self.assertTrue(mod.refuses_terminal_verdict(verdict, force=False, dry_run=False))
+                self.assertEqual(mod.refusal_reason(verdict, force=False, dry_run=False), "unreadable")
+
+    def test_a_real_reading_of_an_unfinished_soak_still_proceeds(self) -> None:
+        """The other side of the same rule, and the one that keeps it useful.
+
+        `INCONCLUSIVE` / `IN-PROGRESS` ARE readings -- the soak genuinely has no
+        answer yet. Refusing on them would stop the campaign the guard exists to
+        ration, not protect it.
+        """
+        for verdict in ("INCONCLUSIVE", "IN-PROGRESS"):
+            with self.subTest(verdict=verdict):
                 self.assertFalse(mod.refuses_terminal_verdict(verdict, force=False, dry_run=False))
+                self.assertIsNone(mod.refusal_reason(verdict, force=False, dry_run=False))
+
+    def test_a_non_answer_still_exempts_a_dry_run(self) -> None:
+        """ml#1690's exemption must survive the fail-closed change.
+
+        This is the regression that matters: gating `--dry-run` on the verdict
+        is what made it exit 2 with EMPTY STDOUT and broke
+        `DryRunDoesNotLeakTheTask` on every CI Python. A dry run spends nothing,
+        so it is out of a spend control's scope however unreadable the ledger is.
+        """
+        for verdict in ("DEGRADED", "NO-DATA", "NO-SEEDED-DATA", ""):
+            with self.subTest(verdict=verdict):
+                self.assertFalse(mod.refuses_terminal_verdict(verdict, force=False, dry_run=True))
 
 
 class RealRunIsGatedThroughMain(unittest.TestCase):
@@ -184,33 +227,48 @@ class RealRunIsGatedThroughMain(unittest.TestCase):
         self.assertEqual(rc, 2)
         self.assertIn("REFUSING", err)
 
-    def test_degraded_fails_open_on_a_real_run(self) -> None:
-        """Documented current semantics: DEGRADED / NO-DATA / NO-SEEDED-DATA are
-        not terminal, and ``st.returncode`` is never consulted, so a real run
-        proceeds. Pinning this is what makes a silent fail-closed change visible.
+    def test_degraded_fails_CLOSED_on_a_real_run(self) -> None:
+        """INVERTED 2026-09-11 -- this pin previously asserted fail-OPEN.
+
+        DEGRADED / NO-DATA / NO-SEEDED-DATA are not terminal, and
+        ``st.returncode`` is still never consulted (deliberately -- a genuine
+        crash exits 1, not 2, so the return code cannot carry this). The VERDICT
+        TOKEN now does: a real run refuses rather than spending a session
+        against a ledger that could not be read.
         """
         for verdict in ("DEGRADED", "NO-DATA", "NO-SEEDED-DATA"):
-            with self.subTest(verdict=verdict), self.assertRaises(_ReachedDispatch):
-                self._invoke(
+            with self.subTest(verdict=verdict):
+                # No dispatch stub: the default raises if dispatch is
+                # reached, which is itself the assertion that we refused first.
+                rc, _out, err = self._invoke(
                     ["soak_run_probe.py"],
                     f"{verdict}  seeded=0/35 rate=n/a\n",
                     ledger_rc=2,
-                    dispatch=_reached_dispatch,
                 )
+                self.assertEqual(rc, 2)
+                self.assertIn("REFUSING", err)
+                self.assertIn("could not be read", err)
+                # The operator must not be told the soak is finished when the
+                # instrument merely broke -- those need opposite next actions.
+                self.assertNotIn("terminal", err)
 
-    def test_a_ledger_tool_crash_fails_open(self) -> None:
-        """Empty stdout + rc=2 is what a crashed ledger tool produces.
+    def test_a_ledger_tool_crash_fails_CLOSED(self) -> None:
+        """INVERTED 2026-09-11 -- previously pinned fail-OPEN.
 
-        ``verdict=""`` is not terminal. #1690 deferred fail-closed; this pin
-        is how that deferral stays visible.
+        Empty stdout is what a crashed ledger tool leaves behind, and it is the
+        load-bearing member of the non-answer set: a spend control that cannot
+        read its own input must not spend. #1690 deferred this; it is now done.
+        The message names the empty output explicitly so the operator is not
+        left reading `soak verdict is  --`.
         """
-        with self.assertRaises(_ReachedDispatch):
-            self._invoke(
-                ["soak_run_probe.py"],
-                "",
-                ledger_rc=2,
-                dispatch=_reached_dispatch,
-            )
+        rc, _out, err = self._invoke(
+            ["soak_run_probe.py"],
+            "",
+            ledger_rc=2,
+        )
+        self.assertEqual(rc, 2)
+        self.assertIn("REFUSING", err)
+        self.assertIn("no output", err)
 
     def test_a_prefixed_status_line_is_not_a_verdict(self) -> None:
         """Only ``stdout.split()[0]`` is consulted. A leading label hides the token."""

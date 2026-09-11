@@ -86,7 +86,28 @@ Usage:
 Exit codes:
     0  probe ran, scoring packet written
     1  probe ran but produced no usable answer (timeout, empty, error result)
-    2  misuse, or the harness itself failed before the probe started
+    2  misuse, the harness failed before the probe started, OR the spend control
+       refused by design -- a terminal verdict, or a ledger it could not read
+
+THE SYSTEMD HALF IS STILL OPEN, and this file cannot settle it alone.
+`util/systemd/juniper-soak-probe.service` is `Type=oneshot` with no
+`SuccessExitStatus=`, so once the units are installed every by-design refusal
+writes a strike to the failure log -- and the fail-closed change above ADDS a
+second way to reach that refusal. Three options, none yet ruled:
+
+  a) `SuccessExitStatus=2` -- NOT free. argparse also exits 2, so a typo in
+     `ExecStart=` would read as success forever.
+  b) refuse with exit 0 -- costs six `assertEqual(rc, 2)` sites, and makes
+     "refused" indistinguishable from "ran" for anyone checking the code.
+  c) a DISTINCT code for a by-design refusal (say 3) plus `SuccessExitStatus=3`.
+     This is the only one that keeps all three signals separate: a typo still
+     fails the unit, a refusal still succeeds it, and a manual operator can tell
+     the two apart. It changes the documented contract above and the same six
+     assertions, so it is a deliberate decision, not a drive-by.
+
+Option (c) was not considered when the handoff framed this as a choice between
+(a) and (b); recorded here so whoever rules on it has the better menu. Nothing
+is broken today -- the units are not installed on this host.
 """
 
 from __future__ import annotations
@@ -108,6 +129,25 @@ LEDGER_TOOL = ROOT / "util" / "soak_ledger.py"
 RUNS = ROOT / "reports" / "soak" / "runs"
 DEFAULT_TIMEOUT = 900
 TERMINAL_VERDICTS = ("BET-FAILING", "HOLDS-AT-")
+
+# Verdicts that are not an ANSWER: the instrument could not be read, or holds no
+# usable data. `""` belongs here and is the load-bearing member -- it is what a
+# CRASHED `soak_ledger.py status` leaves in stdout, and a crash is exactly when
+# the spend control must not be trusting its own input.
+#
+# `INCONCLUSIVE` and `IN-PROGRESS` are deliberately ABSENT: they are real
+# readings of a soak that has not finished, and a run should proceed on them.
+NON_ANSWER_VERDICTS = ("", "NO-DATA", "DEGRADED", "NO-SEEDED-DATA")
+
+
+def verdict_is_unreadable(verdict: str) -> bool:
+    """Did `status` fail to tell us anything about the soak's state?
+
+    Kept separate from `verdict_is_terminal` because the two answer different
+    questions -- "the soak is finished" vs "the instrument is not talking" --
+    and only the first is a statement about the experiment.
+    """
+    return verdict in NON_ANSWER_VERDICTS
 
 
 def verdict_is_terminal(verdict: str) -> bool:
@@ -144,18 +184,45 @@ def terminal_verdict(status_stdout: str) -> str | None:
     return verdict if verdict_is_terminal(verdict) else None
 
 
+def refusal_reason(verdict: str, *, force: bool, dry_run: bool) -> str | None:
+    """Why this invocation must not spend a session, or None to proceed.
+
+    TWO reasons, and the operator needs to know which -- "the question is
+    answered" and "I cannot tell whether the question is answered" call for
+    opposite next actions (stand down vs fix the instrument).
+    """
+    if force or dry_run:
+        return None
+    if verdict_is_terminal(verdict):
+        return "terminal"
+    if verdict_is_unreadable(verdict):
+        return "unreadable"
+    return None
+
+
 def refuses_terminal_verdict(verdict: str, *, force: bool, dry_run: bool) -> bool:
-    """Should this invocation be refused because the soak already has its answer?
+    """Should this invocation be refused?
 
     Split out of `main` so the ordering hazard below is testable without a live
     ledger. The rule rations BILLED SESSIONS, so the two exemptions are not
     symmetric conveniences: `force` is a deliberate operator override, while
     `dry_run` spends nothing at all and therefore was never in scope for a
     spend control.
+
+    FAILS CLOSED ON A NON-ANSWER since 2026-09-11. It used to consult only
+    `verdict_is_terminal`, and `main` never reads `st.returncode`, so a crashed
+    or degraded `soak_ledger.py status` produced `""` / `NO-DATA` / `DEGRADED` /
+    `NO-SEEDED-DATA`, none of which is terminal -- and an unattended timer then
+    spent a real session on every firing while the instrument was broken. A
+    spend control that cannot read its own input must not spend.
+
+    Why not key on `st.returncode` instead, which looks like the obvious fix:
+    a genuine crash exits **1**, not 2 (measured: `--ledger <a directory>` ->
+    `IsADirectoryError`, rc 1), so `== 2` misses the stated hazard; and rc 1
+    ALSO means "escalations are open at any verdict", so keying on truthiness
+    would refuse every escalated soak. The verdict token is the signal.
     """
-    if force or dry_run:
-        return False
-    return verdict_is_terminal(verdict)
+    return refusal_reason(verdict, force=force, dry_run=dry_run) is not None
 
 
 def claude_search_paths(home: Path | None = None) -> tuple[Path, ...]:
@@ -483,10 +550,22 @@ def main() -> int:
     # 0.75 boundary -- with no code change at all.
     st = _py(str(LEDGER_TOOL), "status")
     verdict = status_verdict(st.stdout)
-    if refuses_terminal_verdict(verdict, force=args.force, dry_run=args.dry_run):
+    reason = refusal_reason(verdict, force=args.force, dry_run=args.dry_run)
+    if reason == "terminal":
         print(f"REFUSING: soak verdict is {verdict} -- terminal. Further runs cannot "
               f"change it and each one spends a session.\nPass --force to override "
               f"(e.g. to re-baseline after a deliberate intervention).", file=sys.stderr)
+        return 2
+    if reason == "unreadable":
+        # NOT the same message. A terminal verdict means stand down; this means
+        # the instrument is broken and the next action is to repair it. Telling
+        # an operator the soak is "terminal" when `status` actually crashed
+        # would send them to the wrong place entirely.
+        shown = verdict or "(empty -- `soak_ledger.py status` produced no output)"
+        print(f"REFUSING: soak verdict is {shown} -- the ledger could not be read, so "
+              f"this run cannot be scored against a known state.\nFix the instrument "
+              f"(`python3 util/soak_ledger.py status`) rather than passing --force; "
+              f"--force here spends a session against a broken ledger.", file=sys.stderr)
         return 2
     if args.dry_run and verdict_is_terminal(verdict):
         # Describe, but do not hide the state a real run would refuse on.

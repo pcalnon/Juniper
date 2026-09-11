@@ -448,9 +448,30 @@ class TerminalVerdictDoesNotGateADryRun(unittest.TestCase):
         self.assertFalse(mod.refuses_terminal_verdict("BET-FAILING", force=True, dry_run=False))
 
     def test_a_non_terminal_verdict_never_refuses(self) -> None:
-        for verdict in ("INCONCLUSIVE", "IN-PROGRESS", ""):
+        """A real READING of an unfinished soak proceeds.
+
+        `""` was removed from this list on 2026-09-11 and now has its own member
+        below. It is not a reading -- it is what a crashed `status` leaves in
+        stdout — so it belongs with the non-answers, not here. This class covers
+        the dry-run exemption generally; a failure here does NOT mean the
+        exemption broke, which is what the class name might suggest.
+        """
+        for verdict in ("INCONCLUSIVE", "IN-PROGRESS"):
             with self.subTest(verdict=verdict):
                 self.assertFalse(mod.refuses_terminal_verdict(verdict, force=False, dry_run=False))
+
+    def test_an_unreadable_verdict_refuses_a_real_run_but_not_a_dry_run(self) -> None:
+        """The fail-closed change must not re-gate `--dry-run`.
+
+        Gating the dry run on the verdict is exactly the ml#1644 regression
+        ml#1690 removed: it exited 2 with empty stdout on every CI Python. The
+        spend control rations billed sessions, and a dry run spends none however
+        broken the ledger is.
+        """
+        for verdict in ("", "NO-DATA", "DEGRADED", "NO-SEEDED-DATA"):
+            with self.subTest(verdict=verdict):
+                self.assertTrue(mod.refuses_terminal_verdict(verdict, force=False, dry_run=False))
+                self.assertFalse(mod.refuses_terminal_verdict(verdict, force=False, dry_run=True))
 
     def _dry_run_under(self, verdict_line: str) -> tuple[int, str, str]:
         """Drive `main()` with the ledger's verdict STUBBED, leaving dispatch real.
